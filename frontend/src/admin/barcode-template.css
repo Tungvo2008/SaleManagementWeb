@@ -1,0 +1,145 @@
+.bct {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.bctTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.bctTitle {
+  font-size: 20px;
+  font-weight: 800;
+}
+.bctSub {
+  color: #6b7280;
+  font-size: 13px;
+}
+.bctTopActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.bctBtn {
+  border: 1px solid #c9d2e3;
+  background: #fff;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.bctBtnPrimary {
+  border-color: #356ae6;
+  background: #356ae6;
+  color: #fff;
+}
+.bctBtnDanger {
+  border-color: #ef4444;
+  color: #b91c1c;
+}
+.bctGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 1.2fr;
+  gap: 12px;
+}
+.bctPanel {
+  border: 1px solid #dbe2ef;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+.bctPanelHead {
+  padding: 12px 14px;
+  font-weight: 800;
+  border-bottom: 1px solid #e5eaf3;
+}
+.bctPanelBody {
+  padding: 12px 14px;
+}
+.bctForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.bctForm label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.bctForm span {
+  color: #5f6a7a;
+  font-size: 12px;
+}
+.bctForm input,
+.bctForm select {
+  min-height: 36px;
+  border: 1px solid #d4dbe8;
+  border-radius: 10px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+.bctChecks {
+  display: grid;
+  gap: 10px;
+}
+.bctChecks label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+}
+.bctPreviewWrap .bctPanelBody {
+  background: #f8fafc;
+}
+.bctPreviewPage {
+  border: 1px dashed #c8d2e3;
+  border-radius: 12px;
+  background: #fff;
+  padding: 8px;
+  overflow: auto;
+}
+.bctPreviewGrid {
+  display: grid;
+  justify-content: start;
+}
+.bctLabel {
+  border: 1px dashed #aeb9cb;
+  border-radius: 6px;
+  padding: 2mm;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+}
+.bctName {
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.1;
+  max-height: 2.2em;
+  overflow: hidden;
+}
+.bctMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  color: #4b5563;
+}
+.bctCode {
+  margin-top: 2mm;
+  align-self: end;
+  text-align: center;
+  font-size: 9px;
+  color: #111827;
+}
+.bctHint {
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 12px;
+}
+@media (max-width: 1400px) {
+  .bctGrid {
+    grid-template-columns: 1fr;
+  }
+}

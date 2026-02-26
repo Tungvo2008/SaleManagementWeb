@@ -1,0 +1,139 @@
+.ord{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.ordTop{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ordLeft{
+  display:flex;
+  align-items:flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ordHint{ font-size: 12px; opacity:.8; }
+
+.ordFilter{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ordLabel{ font-size: 12px; opacity: .75; }
+.ordDate{
+  border-radius: 12px;
+  border: 1px solid var(--adm-btn-border);
+  background: #ffffff;
+  color: inherit;
+  padding: 10px 10px;
+}
+
+.ordSearch{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ordSearchRow{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+.ordSearchInput{
+  border-radius: 12px;
+  border: 1px solid var(--adm-btn-border);
+  background: #ffffff;
+  color: inherit;
+  padding: 10px 10px;
+  width: min(360px, 100%);
+}
+
+.ordActions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.ordActionBtn{
+  border-radius: 12px;
+  border: 1px solid var(--adm-btn-border);
+  background: var(--adm-btn-bg);
+  color: var(--adm-text);
+  padding: 10px 10px;
+  cursor:pointer;
+  font-weight: 900;
+}
+.ordActionBtn:hover{ background: #f8fafc; }
+
+.ordMono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.ordRight{ text-align:right; }
+
+.ordMiniBtn{
+  border-radius: 10px;
+  border: 1px solid var(--adm-btn-border);
+  background: var(--adm-btn-bg);
+  color: var(--adm-text);
+  padding: 8px 10px;
+  cursor:pointer;
+  font-weight: 900;
+}
+.ordMiniBtn:hover{ background: #f8fafc; }
+
+.ordReceipt{
+  display:flex;
+  flex-direction:column;
+  gap: 12px;
+}
+.ordReceiptHead{
+  display:flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+.ordReceiptTitle{ font-weight: 900; }
+.ordReceiptMeta{ font-size: 12px; opacity: .75; margin-top: 4px; }
+.ordReceiptTotal{ font-weight: 950; font-size: 18px; }
+
+.ordReceiptTable{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ordReceiptRow{
+  display:grid;
+  grid-template-columns: 1fr 90px 120px 140px;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,.10);
+  background: #ffffff;
+}
+.ordReceiptHeadRow{
+  background: rgba(47,107,255,.12);
+  border-color: rgba(47,107,255,.22);
+  font-weight: 800;
+}
+.ordReceiptSub{ font-size: 12px; opacity: .70; margin-top: 4px; }
+
+.ordReceiptTotals{
+  border: 1px solid rgba(15,23,42,.10);
+  background: #f8fbff;
+  border-radius: 14px;
+  padding: 10px 10px;
+  display:grid;
+  gap: 8px;
+}
+.ordReceiptTotRow{ display:flex; justify-content: space-between; gap: 10px; font-size: 13px; opacity: .95; }
+.ordReceiptGrand b{ font-size: 15px; }
+
+@media (max-width: 760px){
+  .ordReceiptRow{ grid-template-columns: 1fr; }
+}

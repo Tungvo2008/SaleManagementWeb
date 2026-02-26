@@ -1,0 +1,135 @@
+.imgp{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.imgpTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.imgpHint{ font-size: 12px; opacity:.8; }
+
+.imgpActions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content:flex-end;
+  align-items: center;
+}
+
+.imgpActionBtn{
+  border-radius: 12px;
+  border: 1px solid var(--adm-btn-border);
+  background: var(--adm-btn-bg);
+  color: var(--adm-text);
+  padding: 10px 14px;
+  min-height: 44px;
+  cursor:pointer;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.imgpActionBtn:hover{ background: #f8fafc; }
+
+.imgpMono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.imgpName{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 800; }
+.imgpText{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.imgpThumbWrap{
+  width: 64px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,.12);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  background: rgba(255,255,255,.9);
+}
+
+.imgpThumb{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imgpEmpty{
+  color: rgba(15,23,42,.5);
+  font-size: 12px;
+}
+
+.imgpPreviewFrame{
+  border: 1px solid rgba(15,23,42,.12);
+  border-radius: 12px;
+  min-height: 200px;
+  background: #f8fbff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.imgpPreviewFrame img{
+  width: 100%;
+  height: 100%;
+  max-height: 320px;
+  object-fit: contain;
+}
+
+.imgpFile{
+  width: 100%;
+  border: 1px solid rgba(15,23,42,.14);
+  border-radius: 12px;
+  padding: 10px;
+  background: #ffffff;
+}
+
+.imgpFileHidden{
+  display: none;
+}
+
+.imgpDropzone{
+  border: 2px dashed rgba(56,104,232,.35);
+  border-radius: 14px;
+  background: #f8fbff;
+  min-height: 110px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+
+.imgpDropzone:focus{
+  outline: none;
+  border-color: #3868e8;
+}
+
+.imgpDropzoneActive{
+  border-color: #3868e8;
+  background: #eef4ff;
+}
+
+.imgpDropTitle{
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.imgpDropSub{
+  font-size: 12px;
+  color: #5b6575;
+}
+
+.imgpDropFile{
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #111827;
+}

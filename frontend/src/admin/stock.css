@@ -1,0 +1,46 @@
+.stk{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.stkTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.stkHint{ font-size: 12px; opacity:.8; }
+
+.stkSearch{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+.stkSearch input{
+  width: min(420px, 100%);
+}
+
+.stkActionBtn{
+  border-radius: 12px;
+  border: 1px solid var(--adm-btn-border);
+  background: var(--adm-btn-bg);
+  color: var(--adm-text);
+  padding: 10px 10px;
+  cursor:pointer;
+  font-weight: 900;
+}
+.stkActionBtn:hover{ background: #f8fafc; }
+.stkActionPrimary{
+  border-color: rgba(47,107,255,.45);
+  background: linear-gradient(180deg, rgba(47,107,255,.95), rgba(47,107,255,.82));
+  color: #ffffff;
+}
+
+.stkMono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.stkName{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.stkRight{ text-align:right; }
+
+/* grid/table layout is handled by DataGrid */

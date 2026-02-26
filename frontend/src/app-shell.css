@@ -1,0 +1,60 @@
+.appShell {
+  min-height: 100vh;
+  padding: 14px;
+}
+
+.appShellGrid {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 10px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.appTopbar {
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  border-radius: 16px;
+  background: rgba(var(--accent-rgb), 0.9);
+  box-shadow: 0 10px 24px rgba(17, 57, 155, 0.24);
+  color: #fff;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.appTitle {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.appTabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.appTab {
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.appTabActive {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: #fff;
+  color: #1d4ed8;
+}
+
+.appBody {
+  min-height: 0;
+  overflow: hidden;
+}

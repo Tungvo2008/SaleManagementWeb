@@ -1,0 +1,148 @@
+:root{
+  --adm-bg: #f3f6fb;
+  --adm-panel: #ffffff;
+  --adm-panel2: #f8fbff;
+  --adm-text: #0f172a;
+  --adm-muted: rgba(15,23,42,.62);
+  --adm-line: rgba(15,23,42,.10);
+  --adm-accent: #2f6bff;
+  --adm-accent-soft: rgba(47,107,255,.12);
+  --adm-btn-bg: #ffffff;
+  --adm-btn-border: rgba(15,23,42,.14);
+}
+
+.admShell{
+  display:flex;
+  min-height: calc(100vh - 44px);
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(47,107,255,.14), transparent 55%),
+    radial-gradient(900px 500px at 80% 10%, rgba(16,185,129,.08), transparent 55%),
+    var(--adm-bg);
+}
+
+.admNav{
+  width: 260px;
+  padding: 18px 14px;
+  border-right: 1px solid var(--adm-line);
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  display:flex;
+  flex-direction:column;
+  gap: 14px;
+}
+
+.admBrand{
+  padding: 14px 12px;
+  border: 1px solid var(--adm-line);
+  border-radius: 14px;
+  background: rgba(47,107,255,.05);
+}
+.admBrandTop{ color: var(--adm-text); font-weight: 700; letter-spacing: .2px;}
+.admBrandSub{ color: var(--adm-muted); font-size: 12px; margin-top: 4px;}
+
+.admNavSection{ display:flex; flex-direction:column; gap: 6px; }
+.admNavLabel{ color: var(--adm-muted); font-size: 12px; padding: 6px 10px; text-transform: uppercase; letter-spacing: .8px;}
+
+.admNavBtn{
+  text-align:left;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--adm-text);
+  cursor:pointer;
+}
+.admNavBtn:hover{
+  background: rgba(15,23,42,.05);
+  border-color: rgba(15,23,42,.08);
+}
+.admNavBtnActive{
+  background: rgba(47,107,255,.12);
+  border-color: rgba(47,107,255,.30);
+}
+
+.admNavFooter{ margin-top:auto; padding-top: 10px; }
+.admReceiveBtn{
+  width:100%;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(15,23,42,.18);
+  background: #ffffff;
+  color: var(--adm-text);
+  font-weight: 700;
+  cursor:pointer;
+  margin-bottom: 8px;
+}
+.admReceiveBtn:hover{ background: #f8fafc; }
+.admPosBtn{
+  width:100%;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(47,107,255,.45);
+  background: linear-gradient(180deg, rgba(47,107,255,.95), rgba(47,107,255,.82));
+  color: #ffffff;
+  font-weight: 700;
+  cursor:pointer;
+}
+.admPosBtn:hover{ filter: brightness(1.05); }
+
+.admMain{
+  flex:1;
+  padding: 18px 18px 26px 18px;
+  overflow:auto;
+}
+
+.admTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  padding-bottom: 14px;
+}
+.admTitle{
+  color: var(--adm-text);
+  font-size: 22px;
+  font-weight: 800;
+}
+.admHint{
+  color: var(--adm-muted);
+  font-size: 12px;
+  border: 1px dashed rgba(15,23,42,.16);
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.72);
+}
+
+.admUserBox{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.admUserLine{
+  display:flex;
+  flex-direction:column;
+  gap: 2px;
+  align-items:flex-end;
+}
+.admUserName{
+  color: var(--adm-text);
+  font-weight: 800;
+  font-size: 13px;
+}
+.admUserRole{
+  color: var(--adm-muted);
+  font-size: 12px;
+}
+.admLogoutBtn{
+  border-radius: 12px;
+  border: 1px solid var(--adm-btn-border);
+  background: var(--adm-btn-bg);
+  color: var(--adm-text);
+  padding: 10px 10px;
+  cursor:pointer;
+  font-weight: 800;
+}
+.admLogoutBtn:hover{
+  background: #f8fafc;
+}
+.admBody{
+  color: var(--adm-text);
+}

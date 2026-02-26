@@ -1,0 +1,86 @@
+.pri{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.priTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.priHint{ font-size: 12px; opacity:.8; }
+
+.priActions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content:flex-end;
+  align-items: center;
+}
+
+.priActionBtn{
+  border-radius: 12px;
+  border: 1px solid var(--adm-btn-border);
+  background: var(--adm-btn-bg);
+  color: var(--adm-text);
+  padding: 10px 14px;
+  min-height: 44px;
+  cursor:pointer;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.priActionBtn:hover{ background: #f8fafc; }
+
+.priActionPrimary{
+  border-color: rgba(47,107,255,.45);
+  background: linear-gradient(180deg, rgba(47,107,255,.95), rgba(47,107,255,.82));
+  color: #ffffff;
+}
+
+.priBulk{
+  border: 1px solid var(--adm-line);
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.priBulkTitle{
+  font-size: 13px;
+  color: var(--adm-muted);
+  font-weight: 700;
+}
+
+.priBulkRow{
+  display:grid;
+  grid-template-columns: 220px 180px auto;
+  gap: 10px;
+}
+
+.priNotice{
+  border: 1px solid rgba(22,163,74,.35);
+  background: rgba(22,163,74,.08);
+  color: #14532d;
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.priMono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.priName{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 800; }
+
+.priHelp{
+  font-size: 12px;
+  color: var(--adm-muted);
+}
+
+@media (max-width: 900px){
+  .priBulkRow{
+    grid-template-columns: 1fr;
+  }
+}

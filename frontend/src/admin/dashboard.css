@@ -1,0 +1,277 @@
+.dash{
+  display:flex;
+  flex-direction:column;
+  gap: 14px;
+}
+
+.dashGrid{
+  display:grid;
+  grid-template-columns: 320px 1fr;
+  gap: 12px;
+  min-height: 0;
+  align-items: start;
+}
+
+@media (max-width: 1100px){
+  .dashGrid{
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashLeft{
+  border: 1px solid var(--adm-line);
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 0;
+  display:grid;
+  grid-template-rows: auto 1fr;
+}
+
+.dashLeftHead{
+  padding: 12px 12px;
+  border-bottom: 1px solid var(--adm-line);
+  background: #f8fbff;
+}
+.dashLeftTitle{ font-weight: 900; }
+.dashLeftSub{ font-size: 12px; opacity: .75; margin-top: 4px; }
+
+.dashLeftList{
+  padding: 10px 10px;
+  overflow: auto;
+  display:flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 72vh;
+}
+
+.dashInv{
+  border-radius: 14px;
+  border: 1px solid rgba(15,23,42,.10);
+  background: #ffffff;
+  color: inherit;
+  padding: 10px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+.dashInv:hover{
+  border-color: rgba(15,23,42,.18);
+  background: #f8fafc;
+}
+.dashInvActive{
+  border-color: rgba(47,107,255,.38);
+  background: rgba(47,107,255,.10);
+}
+.dashInvTop{
+  display:flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+.dashInvId{ font-weight: 950; }
+.dashInvWhen{ font-size: 12px; opacity: .8; }
+.dashInvMid{
+  display:flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+  align-items: baseline;
+}
+.dashInvTotal{ font-weight: 950; }
+.dashInvSub{ font-size: 12px; opacity: .75; margin-top: 6px; }
+
+.dashRightCol{
+  display:flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.dashHeader{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap: 12px;
+}
+.dashFilter{ display:flex; flex-direction:column; gap: 6px; }
+.dashLabel{ font-size: 12px; opacity: .75; }
+.dashDate{
+  border-radius: 12px;
+  border: 1px solid var(--adm-btn-border);
+  background: #ffffff;
+  color: inherit;
+  padding: 10px 10px;
+}
+.dashStatus{ font-size: 12px; opacity:.8; }
+
+.dashCards{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1100px){
+  .dashCards{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 680px){
+  .dashCards{ grid-template-columns: 1fr; }
+}
+
+.dashCard{
+  border: 1px solid var(--adm-line);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 14px 14px;
+}
+.dashCardTitle{ font-size: 12px; opacity:.75; text-transform: uppercase; letter-spacing:.8px; }
+.dashCardValue{ font-size: 24px; font-weight: 800; margin-top: 8px; }
+.dashCardSub{ font-size: 12px; opacity:.65; margin-top: 6px; }
+
+.dashPanel{
+  border: 1px solid var(--adm-line);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 14px 14px;
+}
+.dashPanelTitle{ font-weight: 800; margin-bottom: 10px; }
+.dashEmpty{ opacity:.7; padding: 10px 0; }
+
+.dashTools{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-bottom: 6px;
+}
+.dashToolBtn{
+  border-radius: 12px;
+  border: 1px solid var(--adm-btn-border);
+  background: var(--adm-btn-bg);
+  color: var(--adm-text);
+  padding: 10px 10px;
+  cursor:pointer;
+  font-weight: 900;
+}
+.dashToolBtn:hover{ background: #f8fafc; }
+
+.dashTable{ display:flex; flex-direction:column; gap: 6px; }
+.dashRow{
+  display:grid;
+  grid-template-columns: 1.2fr .4fr .6fr;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,.10);
+  background: #ffffff;
+}
+.dashRowHead{
+  background: rgba(47,107,255,.12);
+  border-color: rgba(47,107,255,.22);
+  font-weight: 800;
+}
+.dashMono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.dashRight{ text-align:right; }
+
+.dashReceiptActions{
+  display:flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dashOrdersTable{
+  display:flex;
+  flex-direction:column;
+  gap: 6px;
+}
+.dashOrdersRow{
+  display:grid;
+  grid-template-columns: 90px 220px 140px 120px 1fr 80px;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,.10);
+  background: #ffffff;
+  align-items: center;
+}
+.dashOrdersHead{
+  background: rgba(47,107,255,.12);
+  border-color: rgba(47,107,255,.22);
+  font-weight: 800;
+}
+.dashMiniBtn{
+  border-radius: 10px;
+  border: 1px solid var(--adm-btn-border);
+  background: var(--adm-btn-bg);
+  color: var(--adm-text);
+  padding: 8px 10px;
+  cursor:pointer;
+  font-weight: 900;
+}
+.dashMiniBtn:hover{ background: #f8fafc; }
+
+.dashReceipt{
+  display:flex;
+  flex-direction:column;
+  gap: 12px;
+}
+.dashReceiptHead{
+  display:flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+.dashReceiptTitle{ font-weight: 900; }
+.dashReceiptMeta{ font-size: 12px; opacity: .75; margin-top: 4px; }
+.dashReceiptTotal{ font-weight: 950; font-size: 18px; }
+
+.dashReceiptTable{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dashReceiptRow{
+  display:grid;
+  grid-template-columns: 1fr 90px 120px 140px;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,.10);
+  background: #ffffff;
+}
+.dashReceiptHeadRow{
+  background: rgba(47,107,255,.12);
+  border-color: rgba(47,107,255,.22);
+  font-weight: 800;
+}
+.dashReceiptSub{ font-size: 12px; opacity: .70; margin-top: 4px; }
+
+.dashReceiptTotals{
+  border: 1px solid rgba(15,23,42,.10);
+  background: #f8fbff;
+  border-radius: 14px;
+  padding: 10px 10px;
+  display:grid;
+  gap: 8px;
+}
+.dashReceiptTotRow{ display:flex; justify-content: space-between; gap: 10px; font-size: 13px; opacity: .95; }
+.dashReceiptGrand b{ font-size: 15px; }
+
+@media (max-width: 1100px){
+  .dashOrdersRow{
+    grid-template-columns: 90px 1fr 120px 120px 1fr 80px;
+  }
+}
+@media (max-width: 760px){
+  .dashOrdersRow{
+    grid-template-columns: 90px 1fr 80px;
+    grid-auto-rows: auto;
+    align-items: start;
+  }
+  .dashOrdersRow > div:nth-child(3),
+  .dashOrdersRow > div:nth-child(4),
+  .dashOrdersRow > div:nth-child(5){
+    display:none;
+  }
+  .dashReceiptRow{
+    grid-template-columns: 1fr;
+  }
+}

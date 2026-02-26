@@ -1,0 +1,87 @@
+.loginWrap{
+  min-height: 100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 22px;
+}
+
+.loginCard{
+  width: min(430px, 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(18,20,23,.12);
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 20px 60px rgba(18,20,23,.14);
+  padding: 18px 18px 16px 18px;
+}
+
+.loginTitle{
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -.01em;
+}
+.loginSub{
+  color: rgba(18,20,23,.7);
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.loginField{
+  margin-top: 14px;
+  display:flex;
+  flex-direction:column;
+  gap: 6px;
+}
+.loginLabel{
+  font-size: 12px;
+  color: rgba(18,20,23,.75);
+}
+.loginInput{
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(18,20,23,.16);
+  background: rgba(255,255,255,.92);
+  font-size: 14px;
+  outline: none;
+}
+.loginInput:focus{
+  border-color: rgba(var(--accent-rgb), .6);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), .14);
+}
+
+.loginErr{
+  margin-top: 12px;
+  border: 1px solid rgba(180,35,24,.25);
+  background: rgba(180,35,24,.08);
+  color: #7a1f18;
+  padding: 10px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.loginBtn{
+  margin-top: 14px;
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--accent-rgb), .35);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), .92), rgba(var(--accent-rgb), .78));
+  color: #fff;
+  font-weight: 900;
+  font-size: 14px;
+  cursor:pointer;
+}
+.loginBtn:disabled{
+  opacity: .7;
+  cursor: default;
+}
+
+.loginHint{
+  margin-top: 12px;
+  font-size: 12px;
+  color: rgba(18,20,23,.68);
+}
+.loginMono{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+

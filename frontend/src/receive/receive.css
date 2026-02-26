@@ -1,0 +1,518 @@
+.rcvShell{
+  height: 100%;
+  overflow: hidden;
+  display:flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: posIn 220ms ease-out both;
+}
+
+.rcvModalOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  background: rgba(15, 23, 42, 0.40);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.rcvModal{
+  width: min(920px, calc(100vw - 36px));
+  max-height: calc(100vh - 36px);
+  border-radius: 18px;
+  border: 1px solid rgba(var(--accent-rgb), 0.24);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.88)),
+    radial-gradient(600px 180px at 0% 0%, rgba(var(--accent-rgb), 0.12), transparent 70%);
+  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.30);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.rcvModalWide{
+  width: min(1120px, calc(100vw - 30px));
+}
+
+.rcvModalXwide{
+  width: min(1460px, calc(100vw - 24px));
+}
+
+.rcvModalHead{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--stroke);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.55));
+}
+
+.rcvModalTitle{
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.rcvModalBody{
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 16px 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.rcvModalFooter{
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.rcvHeader{
+  display:flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 12px;
+  border: 1px solid rgba(var(--accent-rgb), 0.22);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+}
+.rcvTitle{ font-weight: 900; letter-spacing: -0.01em; }
+.rcvHeaderRight{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.rcvTabs{ display:flex; gap: 10px; flex-wrap: wrap; }
+.rcvQuick{ display:flex; gap: 10px; flex-wrap: wrap; }
+
+.rcvGrid{
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  display:grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 1100px){
+  .rcvGrid{ grid-template-columns: 1fr; }
+}
+
+.rcvCard{
+  min-height: 0;
+  display:grid;
+  grid-template-rows: auto 1fr;
+}
+.rcvCard .cardBody{
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-content: flex-start;
+}
+
+.rcvCard .split{
+  align-items: start;
+}
+
+.rcvResults{
+  margin-top: 2px;
+  display:flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.rcvRow{
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.82);
+  border-radius: 14px;
+  padding: 10px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+.rcvRow:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(18, 20, 23, 0.10);
+}
+.rcvRowActive{
+  border-color: rgba(var(--accent-rgb), .55);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.10);
+}
+.rcvRowTop{
+  display:flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+.rcvRowName{
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+.rcvRowSub{
+  margin-top: 8px;
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rcvPicked{
+  border: 1px solid rgba(var(--accent-rgb), .18);
+  background: rgba(var(--accent-rgb), .08);
+  border-radius: 14px;
+  padding: 10px 10px;
+}
+.rcvPickedName{
+  font-weight: 950;
+  letter-spacing: -0.01em;
+}
+.rcvPickedMeta{
+  margin-top: 8px;
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rcvActions{
+  display:flex;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.rcvActions .btn{
+  min-height: 42px;
+  padding: 10px 14px;
+}
+.rcvFootHint{
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.rcvSupplierRow{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+.rcvSupplierMeta{
+  display:flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+}
+.rcvSupplierName{
+  font-weight: 900;
+}
+
+.rcvVarTable{
+  display:flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rcvVarHead{
+  display:grid;
+  grid-template-columns: 2.2fr 1.2fr 1.6fr .8fr .9fr .9fr .8fr 1.1fr .6fr;
+  gap: 8px;
+  padding: 10px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: rgba(var(--accent-rgb), 0.08);
+  font-weight: 900;
+  font-size: 12px;
+  color: rgba(18,20,23,.85);
+}
+.rcvVarRow{
+  display:grid;
+  grid-template-columns: 2.2fr 1.2fr 1.6fr .8fr .9fr .9fr .8fr 1.1fr .6fr;
+  gap: 8px;
+  align-items: start;
+  padding: 8px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.78);
+}
+.rcvVarInput{
+  padding: 10px 10px;
+}
+.rcvVarBarcodeCell{
+  display:flex;
+  gap: 8px;
+  align-items: center;
+}
+.rcvVarImgCell{
+  display:flex;
+  align-items:center;
+}
+.rcvFile{
+  width: 100%;
+  font-size: 12px;
+}
+.rcvTinyBtn{
+  padding: 10px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.rcvVarRollExtra{
+  grid-column: 1 / -1;
+  margin-top: 6px;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--accent-rgb), .18);
+  background: rgba(var(--accent-rgb), .06);
+  padding: 10px 10px;
+  display:grid;
+  gap: 8px;
+}
+
+.prdTabBar{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.prdTabBtn{
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 10px 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.prdTabBtn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(18, 20, 23, 0.10);
+}
+
+.prdTabBtnActive{
+  border-color: rgba(var(--accent-rgb), 0.35);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.18), rgba(var(--accent-rgb), 0.08));
+}
+
+.prdSection{
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  display: grid;
+  gap: 10px;
+}
+
+.prdSectionTitle{
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.prdGrid2{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.prdGrid3{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.prdToggleRow{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.prdInlineSelectRow{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.prdInlineSelectRow .input{
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.prdInlineActionBtn{
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+.prdToggleRow input[type="checkbox"]{
+  width: 18px;
+  height: 18px;
+}
+
+.prdSingleCard{
+  border: 1px solid rgba(var(--accent-rgb), .20);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(var(--accent-rgb), 0.05);
+}
+
+.prdAttrsList{
+  display: grid;
+  gap: 10px;
+}
+
+.prdAttrRow{
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.prdRowList{
+  display: grid;
+  gap: 12px;
+}
+
+.prdRowCard{
+  border: 1px solid rgba(var(--accent-rgb), .20);
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.prdRowHead{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.prdRowTitle{
+  font-weight: 900;
+}
+
+.prdRowMeta{
+  font-size: 12px;
+  color: var(--muted);
+  text-align: right;
+}
+
+.prdRowGridTop{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.prdRowGridBottom{
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.prdSection .input{
+  min-height: 44px;
+}
+
+.prdSection .rcvFile{
+  min-height: 44px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.prdFileHidden{ display: none; }
+
+.prdDropzone{
+  border: 2px dashed rgba(var(--accent-rgb), .30);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  min-height: 96px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+
+.prdDropzone:focus{
+  outline: none;
+  border-color: rgba(var(--accent-rgb), .65);
+  background: rgba(var(--accent-rgb), 0.06);
+}
+
+.prdDropzoneActive{
+  border-color: rgba(var(--accent-rgb), .65);
+  background: rgba(var(--accent-rgb), 0.06);
+}
+
+.prdDropTitle{
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.prdDropSub{
+  font-size: 12px;
+  color: rgba(15,23,42,.65);
+}
+
+.prdDropFile{
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+@media (max-width: 1100px){
+  .rcvVarHead, .rcvVarRow{
+    grid-template-columns: 1fr;
+  }
+  .rcvVarBarcodeCell{
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 1240px){
+  .prdGrid3, .prdRowGridTop, .prdRowGridBottom{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px){
+  .rcvModalOverlay{
+    padding: 8px;
+  }
+  .rcvModal,
+  .rcvModalWide,
+  .rcvModalXwide{
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    border-radius: 14px;
+  }
+  .prdGrid2,
+  .prdGrid3,
+  .prdAttrRow,
+  .prdRowGridTop,
+  .prdRowGridBottom{
+    grid-template-columns: 1fr;
+  }
+}

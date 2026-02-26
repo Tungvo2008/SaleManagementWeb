@@ -1,0 +1,205 @@
+.tplShell {
+  min-height: calc(100vh - 36px);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+}
+
+.tplTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--stroke);
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+}
+
+.tplTitle {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.tplSub {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.tplTopActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tplBtn {
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tplBtnPrimary {
+  border-color: rgba(var(--accent-rgb), 0.35);
+  background: rgba(var(--accent-rgb), 0.12);
+  color: #123695;
+}
+
+.tplBtnDanger {
+  border-color: rgba(180, 35, 24, 0.3);
+  background: rgba(180, 35, 24, 0.08);
+  color: #8f1f16;
+}
+
+.tplGrid {
+  display: grid;
+  grid-template-columns: 360px 320px 1fr;
+  gap: 12px;
+  min-height: 0;
+}
+
+@media (max-width: 1200px) {
+  .tplGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tplPanel {
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+}
+
+.tplPanelHead {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--stroke);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.tplPanelBody {
+  padding: 12px 14px;
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+}
+
+.tplField {
+  display: grid;
+  gap: 6px;
+}
+
+.tplField span {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.tplField input,
+.tplField select {
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink);
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.tplCheck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.tplPreview .tplPanelBody {
+  display: grid;
+  place-items: start center;
+}
+
+.previewPaper {
+  border: 1px dashed rgba(18, 20, 23, 0.2);
+  border-radius: 12px;
+  background: #fff;
+  color: #121417;
+  padding: 12px;
+  font-size: 12px;
+}
+
+.pvCenter {
+  text-align: center;
+}
+
+.pvStore {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.pvMuted {
+  color: #5d6066;
+}
+
+.pvDivider {
+  margin: 8px 0;
+  border-top: 1px dashed rgba(18, 20, 23, 0.24);
+}
+
+.pvTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.pvTable th,
+.pvTable td {
+  border-bottom: 1px solid rgba(18, 20, 23, 0.12);
+  padding: 6px 0;
+  vertical-align: top;
+}
+
+.pvRight {
+  text-align: right;
+}
+
+.pvName {
+  font-weight: 700;
+}
+
+.pvMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #5d6066;
+  margin-top: 2px;
+}
+
+.pvTotals {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.pvTotals > div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.pvGrand {
+  font-weight: 800;
+}
+

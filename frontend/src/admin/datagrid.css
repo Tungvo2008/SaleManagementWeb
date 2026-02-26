@@ -1,0 +1,173 @@
+.dgWrap{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.dgToolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+}
+
+.dgBtn{
+  border-radius: 12px;
+  border: 1px solid var(--adm-btn-border);
+  background: var(--adm-btn-bg);
+  color: var(--adm-text);
+  padding: 10px 10px;
+  cursor:pointer;
+  font-weight: 900;
+}
+.dgBtn:hover{ background: #f8fafc; }
+
+.dgGrid{
+  border: 1px solid var(--adm-line);
+  border-radius: 16px;
+  overflow: auto;
+  background: #ffffff;
+  display:grid;
+  --dgHeadH: 48px;
+  --dgFilterH: 44px;
+}
+
+.dgHeadCell{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(47,107,255,.12);
+  border-bottom: 1px solid var(--adm-line);
+  font-weight: 900;
+  height: var(--dgHeadH);
+  box-sizing: border-box;
+}
+
+.dgHeadSortable{
+  padding: 6px 12px;
+}
+
+.dgHeadTitle{
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dgSortBtn{
+  display:flex;
+  align-items:center;
+  justify-content: flex-start;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 900;
+  padding: 0;
+  cursor:pointer;
+  min-width: 0;
+}
+.dgSortBtn:hover{
+  opacity: .95;
+}
+
+.dgSortIcon{
+  width: 22px;
+  height: 22px;
+  display:grid;
+  place-items:center;
+  border-radius: 8px;
+  border: 1px solid rgba(15,23,42,.14);
+  background: rgba(15,23,42,.04);
+  font-size: 12px;
+  opacity: .75;
+  flex: 0 0 auto;
+}
+.dgSortIconOn{
+  opacity: 1;
+  border-color: rgba(15,23,42,.22);
+  background: rgba(15,23,42,.08);
+}
+
+.dgResize{
+  width: 10px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(15,23,42,.10);
+  border: 1px solid rgba(15,23,42,.14);
+  cursor: col-resize;
+}
+.dgResize:hover{
+  background: rgba(15,23,42,.14);
+}
+
+.dgCell{
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(15,23,42,.08);
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  align-self: stretch;
+}
+
+.dgFilterCell{
+  position: sticky;
+  top: var(--dgHeadH);
+  z-index: 1;
+  padding: 8px 10px;
+  background: #f8fbff;
+  border-bottom: 1px solid rgba(15,23,42,.08);
+  height: var(--dgFilterH);
+  box-sizing: border-box;
+  display:flex;
+  align-items:center;
+}
+
+.dgFilterInput{
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,.14);
+  background: #ffffff;
+  color: inherit;
+  padding: 8px 10px;
+  outline: none;
+  min-width: 0;
+}
+.dgFilterInput:focus{
+  border-color: rgba(75,123,255,.55);
+  box-shadow: 0 0 0 3px rgba(75,123,255,.20);
+}
+
+.dgFilterBlank{ width: 100%; height: 100%; }
+
+.dgRight{
+  text-align: right;
+}
+
+.dgNoSelect{
+  user-select: none;
+}
+
+.dgCols{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 720px){
+  .dgCols{ grid-template-columns: 1fr; }
+}
+
+.dgColRow{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,.10);
+  background: rgba(15,23,42,.03);
+}

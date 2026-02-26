@@ -1,0 +1,75 @@
+.rcvh {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rcvhTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rcvhHint {
+  color: #556070;
+  font-size: 13px;
+}
+
+.rcvhActions {
+  display: flex;
+  gap: 8px;
+}
+
+.rcvhFilters {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.rcvhField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rcvhLabel {
+  font-size: 12px;
+  color: #5b6575;
+}
+
+.rcvhFieldBtn {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.rcvhBtn {
+  border: 1px solid #c8d2e3;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rcvhBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.rcvhBtnPrimary {
+  background: #3868e8;
+  border-color: #3868e8;
+  color: #fff;
+}
+
+.rcvhMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+}
+
+@media (max-width: 1400px) {
+  .rcvhFilters {
+    grid-template-columns: repeat(3, minmax(120px, 1fr));
+  }
+}
