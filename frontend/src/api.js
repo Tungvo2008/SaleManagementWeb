@@ -37,10 +37,15 @@ export async function api(path, { method = "GET", body, headers, ...rest } = {})
   const data = await parseBody(res)
 
   if (!res.ok) {
-    const msg =
-      (data && typeof data === "object" && (data.detail || data.message)) ||
-      (typeof data === "string" ? data : null) ||
-      `HTTP ${res.status}`
+    let msg = null
+    if (data && typeof data === "object") {
+      const d = data.detail ?? data.message
+      if (typeof d === "string") msg = d
+      else if (d && typeof d === "object" && typeof d.message === "string") msg = d.message
+      else if (typeof data.message === "string") msg = data.message
+    }
+    if (!msg && typeof data === "string") msg = data
+    if (!msg) msg = `HTTP ${res.status}`
     const err = new Error(msg)
     err.status = res.status
     err.data = data

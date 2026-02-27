@@ -16,6 +16,7 @@ import SuppliersPage from "./admin/SuppliersPage"
 import OrdersPage from "./admin/OrdersPage"
 import AuditPage from "./admin/AuditPage"
 import EmployeesPage from "./admin/EmployeesPage"
+import ExcelPage from "./admin/ExcelPage"
 import ReceivePrintPage from "./receive/ReceivePrintPage"
 import LoginPage from "./LoginPage"
 import { me, logout } from "./auth"
@@ -67,6 +68,7 @@ function getHashRoute() {
     if (page === "pricing") return { mode: "app", page: "pricing" }
     if (page === "customers") return { mode: "app", page: "customers" }
     if (page === "suppliers") return { mode: "app", page: "suppliers" }
+    if (page === "excel") return { mode: "app", page: "excel" }
     if (page === "orders") return { mode: "app", page: "orders" }
     if (page === "audit") return { mode: "app", page: "audit" }
     if (page === "employees") return { mode: "app", page: "employees" }
@@ -129,6 +131,7 @@ function App() {
     if (route.page === "pricing") return "Quản lý giá"
     if (route.page === "customers") return "Khách hàng"
     if (route.page === "suppliers") return "Nhà cung cấp"
+    if (route.page === "excel") return "Nhập/Xuất Excel"
     if (route.page === "orders") return "Hoá đơn"
     if (route.page === "audit") return "Nhật ký hệ thống"
     if (route.page === "employees") return "Nhân viên"
@@ -318,6 +321,8 @@ function App() {
           <CustomersPage />
         ) : route.page === "suppliers" ? (
           <SuppliersPage />
+        ) : route.page === "excel" ? (
+          <ExcelPage />
         ) : route.page === "orders" ? (
           <OrdersPage />
         ) : route.page === "audit" ? (

@@ -187,6 +187,16 @@ export default function ProductsPage() {
           <button className="prodActionBtn" disabled={busy || loading} onClick={() => loadAll()}>
             Tải lại
           </button>
+          <button
+            className="prodActionBtn"
+            disabled={busy || loading}
+            onClick={() => {
+              const qq = encodeURIComponent((q || "").trim())
+              window.location.href = `/api/v1/excel/export/products?q=${qq}`
+            }}
+          >
+            Xuất Excel
+          </button>
           <button className="prodActionBtn prodActionPrimary" disabled={busy || loading} onClick={() => setShowCreateProduct(true)}>
             + Tạo sản phẩm
           </button>

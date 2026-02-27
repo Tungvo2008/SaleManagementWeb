@@ -4,6 +4,7 @@ from app.api.v1.routes import (
     auth,
     employees,
     uploads,
+    excel,
     products,
     categories,
     locations,
@@ -25,6 +26,7 @@ api_router.include_router(health.router, tags=["health"])
 api_router.include_router(auth.router, tags=["auth"])
 api_router.include_router(employees.router, prefix="/employees", tags=["employees"], dependencies=[Depends(require_admin)])
 api_router.include_router(uploads.router, prefix="/uploads", tags=["uploads"], dependencies=[Depends(require_manager)])
+api_router.include_router(excel.router, prefix="/excel", tags=["excel"], dependencies=[Depends(require_manager)])
 api_router.include_router(categories.router, prefix="/categories", tags=["categories"], dependencies=[Depends(require_pos)])
 api_router.include_router(products.router, prefix="/products", tags=["products"], dependencies=[Depends(require_manager)])
 api_router.include_router(locations.router, prefix="/locations", tags=["locations"], dependencies=[Depends(require_manager)])

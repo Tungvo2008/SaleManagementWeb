@@ -61,6 +61,9 @@ export default function AdminShell({ active, title, onGoto, user, onLogout, chil
             <NavButton active={active === "suppliers"} onClick={() => onGoto("suppliers")}>
               Nhà cung cấp
             </NavButton>
+            <NavButton active={active === "excel"} onClick={() => onGoto("excel")}>
+              Nhập/Xuất Excel
+            </NavButton>
             {isAdmin ? (
               <NavButton active={active === "audit"} onClick={() => onGoto("audit")}>
                 Nhật ký hệ thống

@@ -1,0 +1,150 @@
+.xl {
+  padding: 14px 18px;
+}
+
+.xlTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.xlHint {
+  font-size: 14px;
+  color: #223;
+}
+
+.xlGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.xlCard {
+  background: #fff;
+  border: 1px solid #e7e7ee;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.xlCardTitle {
+  padding: 12px 14px;
+  font-weight: 800;
+  border-bottom: 1px solid #eef0f6;
+  background: linear-gradient(180deg, #fbfbfe, #f6f7fd);
+}
+
+.xlCardBody {
+  padding: 12px 14px;
+}
+
+.xlRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.xlFile {
+  flex: 1;
+  min-width: 280px;
+  padding: 10px;
+  border: 1px solid #e2e4ea;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.xlBtn {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #d8dbea;
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.xlBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.xlBtnPrimary {
+  background: #2e6bff;
+  border-color: #2e6bff;
+  color: #fff;
+}
+
+.xlBtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.xlNote {
+  color: #445;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+.xlErr {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #ffd0d0;
+  background: #fff2f2;
+  border-radius: 12px;
+  color: #8f2d2d;
+  font-weight: 700;
+}
+
+.xlOk {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #c7f3d5;
+  background: #effdf4;
+  border-radius: 12px;
+  color: #145b2a;
+  font-weight: 700;
+}
+
+.xlErrBox {
+  margin-top: 10px;
+  border-top: 1px dashed #e5e7ef;
+  padding-top: 10px;
+}
+
+.xlErrTitle {
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.xlErrTable {
+  border: 1px solid #eef0f6;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.xlErrHead,
+.xlErrRow {
+  display: grid;
+  grid-template-columns: 140px 80px 160px 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.xlErrHead {
+  background: #f7f8fd;
+  font-weight: 800;
+  border-bottom: 1px solid #eef0f6;
+}
+.xlErrRow {
+  border-bottom: 1px solid #f0f2f7;
+}
+.xlErrRow:last-child {
+  border-bottom: none;
+}
+
+.xlMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+}
+

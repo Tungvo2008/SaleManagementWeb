@@ -168,6 +168,19 @@ export default function RollsPage() {
           <button className="rolActionBtn" disabled={busy || loading} onClick={() => loadData()}>
             Tải lại
           </button>
+          <button
+            className="rolActionBtn"
+            disabled={busy || loading}
+            onClick={() => {
+              const qs = []
+              if (variantId) qs.push(`variant_id=${encodeURIComponent(variantId)}`)
+              if (locationId && locationId !== "__none__") qs.push(`location_id=${encodeURIComponent(locationId)}`)
+              const url = `/api/v1/excel/export/stock_units${qs.length ? "?" + qs.join("&") : ""}`
+              window.location.href = url
+            }}
+          >
+            Xuất Excel
+          </button>
           <button className="rolActionBtn rolActionPrimary" disabled={busy || loading} onClick={() => setShowReceive(true)}>
             + Nhập cuộn
           </button>

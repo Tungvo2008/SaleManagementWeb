@@ -73,6 +73,15 @@ export default function CategoriesPage() {
           <button className="catActionBtn" disabled={busy || loading} onClick={() => loadAll()}>
             Tải lại
           </button>
+          <button
+            className="catActionBtn"
+            disabled={busy || loading}
+            onClick={() => {
+              window.location.href = "/api/v1/excel/export/categories"
+            }}
+          >
+            Xuất Excel
+          </button>
           <button className="catActionBtn catActionPrimary" disabled={busy || loading} onClick={() => setShowCreate(true)}>
             + Thêm danh mục
           </button>

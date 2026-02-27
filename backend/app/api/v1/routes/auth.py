@@ -30,24 +30,24 @@ REFRESH_COOKIE = "refresh_token"
 
 
 def _set_auth_cookies(*, response: Response, access_token: str, refresh_token: str, refresh_exp: datetime) -> None:
-    # Dev defaults (proxy via CRA). In prod: Secure=True (HTTPS) and consider domain.
+    cookie_kwargs = {
+        "httponly": True,
+        "samesite": settings.COOKIE_SAMESITE,
+        "secure": bool(settings.COOKIE_SECURE),
+        "path": "/",
+        "domain": settings.COOKIE_DOMAIN,
+    }
     response.set_cookie(
         key=ACCESS_COOKIE,
         value=access_token,
-        httponly=True,
-        samesite="lax",
-        secure=False,
-        path="/",
+        **cookie_kwargs,
         # client-side hint; server enforces exp in JWT
         max_age=int(settings.ACCESS_TOKEN_TTL_MINUTES) * 60,
     )
     response.set_cookie(
         key=REFRESH_COOKIE,
         value=refresh_token,
-        httponly=True,
-        samesite="lax",
-        secure=False,
-        path="/",
+        **cookie_kwargs,
         # Use max_age instead of expires to avoid timezone-aware datetime issues.
         # Server is the source of truth (DB expires_at).
         max_age=int(settings.REFRESH_TOKEN_TTL_DAYS) * 24 * 60 * 60,

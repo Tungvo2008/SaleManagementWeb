@@ -70,6 +70,16 @@ export default function SuppliersPage() {
           <button className="prtActionBtn" disabled={busy || loading} onClick={() => loadAll(q)}>
             Tải lại
           </button>
+          <button
+            className="prtActionBtn"
+            disabled={busy || loading}
+            onClick={() => {
+              const qq = encodeURIComponent((q || "").trim())
+              window.location.href = `/api/v1/excel/export/suppliers?q=${qq}`
+            }}
+          >
+            Xuất Excel
+          </button>
           <button className="prtActionBtn prtActionPrimary" disabled={busy || loading} onClick={() => setShowCreate(true)}>
             + Thêm nhà cung cấp
           </button>
