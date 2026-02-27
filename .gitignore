@@ -29,6 +29,9 @@ yarn-error.log*
 pnpm-debug.log*
 
 # ===== General env/secrets/keys =====
+/.env
+/.env.*
+!/.env.example
 *.pem
 *.key
 *.p12
