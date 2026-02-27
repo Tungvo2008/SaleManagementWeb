@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { del, get, patch, post } from "../api"
 import Modal from "./Modal"
 import DataGrid from "./DataGrid"
+import ExcelToolsModal from "./ExcelToolsModal"
 import "./partners.css"
 
 function fmtMoney(v) {
@@ -20,6 +21,8 @@ export default function SuppliersPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [editRow, setEditRow] = useState(null)
   const [deleteRow, setDeleteRow] = useState(null)
+  const [showExcel, setShowExcel] = useState(false)
+  const snapRef = useRef(null)
 
   const titleHint = useMemo(() => {
     if (loading) return "Đang tải..."
@@ -74,11 +77,10 @@ export default function SuppliersPage() {
             className="prtActionBtn"
             disabled={busy || loading}
             onClick={() => {
-              const qq = encodeURIComponent((q || "").trim())
-              window.location.href = `/api/v1/excel/export/suppliers?q=${qq}`
+              setShowExcel(true)
             }}
           >
-            Xuất Excel
+            Excel
           </button>
           <button className="prtActionBtn prtActionPrimary" disabled={busy || loading} onClick={() => setShowCreate(true)}>
             + Thêm nhà cung cấp
@@ -88,6 +90,9 @@ export default function SuppliersPage() {
 
       <DataGrid
         id="partners.suppliers"
+        onSnapshot={(s) => {
+          snapRef.current = s
+        }}
         columns={[
           { key: "id", title: "ID", width: 90, minWidth: 70, render: (v) => <span className="prtMono">{v.id}</span> },
           { key: "code", title: "Mã", width: 130, minWidth: 110, render: (v) => <span className="prtMono">{v.code || ""}</span> },
@@ -183,6 +188,19 @@ export default function SuppliersPage() {
               setBusy(false)
             }
           }}
+        />
+      ) : null}
+
+      {showExcel ? (
+        <ExcelToolsModal
+          title="Excel · Nhà cung cấp"
+          resource="suppliers"
+          templateUrl="/api/v1/excel/template/suppliers"
+          importUrl="/api/v1/excel/import/suppliers"
+          exportFilename="nha-cung-cap.xlsx"
+          getSnapshot={() => snapRef.current}
+          onImported={() => loadAll(q).catch(() => {})}
+          onClose={() => setShowExcel(false)}
         />
       ) : null}
     </div>

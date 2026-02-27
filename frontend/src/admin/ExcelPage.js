@@ -2,8 +2,20 @@ import { useMemo, useState } from "react"
 import { post } from "../api"
 import "./excel.css"
 
-function download(url) {
-  window.location.href = url
+async function downloadGet(url, filename) {
+  const res = await fetch(url, { method: "GET", credentials: "include" })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(text || `HTTP ${res.status}`)
+  }
+  const blob = await res.blob()
+  const a = document.createElement("a")
+  a.href = URL.createObjectURL(blob)
+  a.download = filename || "download.xlsx"
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(a.href), 1500)
 }
 
 function ErrorTable({ errors }) {
@@ -67,7 +79,7 @@ export default function ExcelPage() {
   return (
     <div className="xl">
       <div className="xlTop">
-        <div className="xlHint">Nhập/Xuất dữ liệu bằng Excel (dùng định dạng XML Spreadsheet 2003).</div>
+        <div className="xlHint">Nhập/Xuất dữ liệu bằng Excel (dùng định dạng .xlsx).</div>
       </div>
 
       <div className="xlGrid">
@@ -77,7 +89,15 @@ export default function ExcelPage() {
             <div className="xlNote">
               File mẫu có nhiều sheet: sản phẩm, khách hàng, nhà cung cấp, cuộn... Cột bắt buộc được tô màu và có dấu <b>*</b>.
             </div>
-            <button className="xlBtn xlBtnPrimary" onClick={() => download("/api/v1/excel/template")} disabled={busy}>
+            <button
+              className="xlBtn xlBtnPrimary"
+              onClick={() => {
+                setErr(null)
+                setOkMsg(null)
+                downloadGet("/api/v1/excel/template", "mau-nhap-du-lieu.xlsx").catch((e) => setErr(e?.message || "Không tải được file mẫu"))
+              }}
+              disabled={busy}
+            >
               Tải Excel mẫu
             </button>
           </div>
@@ -90,7 +110,7 @@ export default function ExcelPage() {
               <input
                 className="xlFile"
                 type="file"
-                accept=".xls,.xml,application/vnd.ms-excel,text/xml,application/xml"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xls,.xml,application/vnd.ms-excel,text/xml,application/xml"
                 onChange={(e) => setFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
                 disabled={busy}
               />
@@ -109,22 +129,46 @@ export default function ExcelPage() {
           <div className="xlCardBody">
             <div className="xlNote">Xuất nhanh từng bảng ra Excel.</div>
             <div className="xlBtns">
-              <button className="xlBtn" onClick={() => download("/api/v1/excel/export/products")} disabled={busy}>
+              <button
+                className="xlBtn"
+                onClick={() => downloadGet("/api/v1/excel/export/products", "san-pham.xlsx").catch((e) => setErr(e?.message || "Không xuất được"))}
+                disabled={busy}
+              >
                 Xuất Sản phẩm
               </button>
-              <button className="xlBtn" onClick={() => download("/api/v1/excel/export/stock_units")} disabled={busy}>
+              <button
+                className="xlBtn"
+                onClick={() => downloadGet("/api/v1/excel/export/stock_units", "cuon-stock-units.xlsx").catch((e) => setErr(e?.message || "Không xuất được"))}
+                disabled={busy}
+              >
                 Xuất Cuộn (StockUnit)
               </button>
-              <button className="xlBtn" onClick={() => download("/api/v1/excel/export/customers")} disabled={busy}>
+              <button
+                className="xlBtn"
+                onClick={() => downloadGet("/api/v1/excel/export/customers", "khach-hang.xlsx").catch((e) => setErr(e?.message || "Không xuất được"))}
+                disabled={busy}
+              >
                 Xuất Khách hàng
               </button>
-              <button className="xlBtn" onClick={() => download("/api/v1/excel/export/suppliers")} disabled={busy}>
+              <button
+                className="xlBtn"
+                onClick={() => downloadGet("/api/v1/excel/export/suppliers", "nha-cung-cap.xlsx").catch((e) => setErr(e?.message || "Không xuất được"))}
+                disabled={busy}
+              >
                 Xuất Nhà cung cấp
               </button>
-              <button className="xlBtn" onClick={() => download("/api/v1/excel/export/categories")} disabled={busy}>
+              <button
+                className="xlBtn"
+                onClick={() => downloadGet("/api/v1/excel/export/categories", "danh-muc.xlsx").catch((e) => setErr(e?.message || "Không xuất được"))}
+                disabled={busy}
+              >
                 Xuất Danh mục
               </button>
-              <button className="xlBtn" onClick={() => download("/api/v1/excel/export/locations")} disabled={busy}>
+              <button
+                className="xlBtn"
+                onClick={() => downloadGet("/api/v1/excel/export/locations", "ke.xlsx").catch((e) => setErr(e?.message || "Không xuất được"))}
+                disabled={busy}
+              >
                 Xuất Kệ (Location)
               </button>
             </div>

@@ -1,0 +1,102 @@
+.xlt {
+  display: grid;
+  gap: 10px;
+}
+
+.xltNote {
+  font-size: 13px;
+  color: #334;
+  line-height: 1.45;
+}
+
+.xltImportBox {
+  border: 1px solid #e7e7ee;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fbfbfe;
+}
+
+.xltRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.xltFile {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e2e4ea;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.xltCheck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  margin: 10px 0;
+}
+
+.xltErr {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #ffd0d0;
+  background: #fff2f2;
+  border-radius: 12px;
+  color: #8f2d2d;
+  font-weight: 700;
+}
+
+.xltOk {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #c7f3d5;
+  background: #effdf4;
+  border-radius: 12px;
+  color: #145b2a;
+  font-weight: 700;
+}
+
+.xltErrBox {
+  margin-top: 10px;
+  border-top: 1px dashed #e5e7ef;
+  padding-top: 10px;
+}
+
+.xltErrTitle {
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.xltErrTable {
+  border: 1px solid #eef0f6;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.xltErrHead,
+.xltErrRow {
+  display: grid;
+  grid-template-columns: 140px 80px 160px 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.xltErrHead {
+  background: #f7f8fd;
+  font-weight: 800;
+  border-bottom: 1px solid #eef0f6;
+}
+.xltErrRow {
+  border-bottom: 1px solid #f0f2f7;
+}
+.xltErrRow:last-child {
+  border-bottom: none;
+}
+
+.xltMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+}
+

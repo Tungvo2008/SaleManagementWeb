@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { get } from "../api"
 import Modal from "./Modal"
 import DataGrid from "./DataGrid"
+import ExcelToolsModal from "./ExcelToolsModal"
 import { defaultReceiptTemplate, normalizeReceiptTemplate, loadReceiptTemplate } from "../pos/receiptTemplate"
 import "./orders.css"
 
@@ -38,6 +39,8 @@ export default function OrdersPage() {
   const [rows, setRows] = useState([])
   const [viewReceipt, setViewReceipt] = useState(null)
   const [viewBusy, setViewBusy] = useState(false)
+  const [showExcel, setShowExcel] = useState(false)
+  const snapRef = useRef(null)
   const receiptTemplate = useMemo(() => loadReceiptTemplate(), [])
 
   const filtered = useMemo(() => {
@@ -128,11 +131,17 @@ export default function OrdersPage() {
           <button className="ordActionBtn" disabled={loading} onClick={() => loadAll()}>
             Tải lại
           </button>
+          <button className="ordActionBtn" disabled={loading} onClick={() => setShowExcel(true)}>
+            Excel
+          </button>
         </div>
       </div>
 
       <DataGrid
         id="orders.checked_out"
+        onSnapshot={(s) => {
+          snapRef.current = s
+        }}
         columns={[
           { key: "id", title: "ID", width: 90, minWidth: 70, render: (o) => <span className="ordMono">#{o.id}</span> },
           {
@@ -141,6 +150,8 @@ export default function OrdersPage() {
             width: 200,
             minWidth: 180,
             getValue: (o) => o.checked_out_at || null,
+            exportValue: (o) =>
+              o.checked_out_at ? new Date(o.checked_out_at + "Z").toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "",
             render: (o) => (
               <span className="ordMono">
                 {o.checked_out_at
@@ -156,9 +167,18 @@ export default function OrdersPage() {
             width: 120,
             minWidth: 110,
             getValue: (o) => o.customer_id || null,
+            exportValue: (o) => (o.customer_id ? `KH#${o.customer_id}` : ""),
             render: (o) => <span className="ordMono">{o.customer_id ? `KH#${o.customer_id}` : "—"}</span>,
           },
-          { key: "grand_total", title: "Tổng", width: 140, minWidth: 120, align: "right", render: (o) => <span className="ordMono">{fmtMoney(o.grand_total)}</span> },
+          {
+            key: "grand_total",
+            title: "Tổng",
+            width: 140,
+            minWidth: 120,
+            align: "right",
+            getValue: (o) => Number(o.grand_total || 0) || 0,
+            render: (o) => <span className="ordMono">{fmtMoney(o.grand_total)}</span>,
+          },
           {
             key: "actions",
             title: "Thao tác",
@@ -179,6 +199,18 @@ export default function OrdersPage() {
 
       {viewReceipt ? (
         <ReceiptModal receipt={viewReceipt} template={receiptTemplate} onClose={() => setViewReceipt(null)} />
+      ) : null}
+
+      {showExcel ? (
+        <ExcelToolsModal
+          title="Excel · Hoá đơn"
+          resource="hoa_don"
+          exportFilename="hoa-don.xlsx"
+          getSnapshot={() => snapRef.current}
+          showTemplate={false}
+          showImport={false}
+          onClose={() => setShowExcel(false)}
+        />
       ) : null}
     </div>
   )

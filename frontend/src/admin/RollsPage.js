@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { get, patch, post } from "../api"
 import DataGrid from "./DataGrid"
 import Modal from "./Modal"
+import ExcelToolsModal from "./ExcelToolsModal"
 import "./rolls.css"
 
 function asNum(v) {
@@ -51,6 +52,8 @@ export default function RollsPage() {
   const [transferRow, setTransferRow] = useState(null)
   const [adjustRow, setAdjustRow] = useState(null)
   const [editRow, setEditRow] = useState(null)
+  const [showExcel, setShowExcel] = useState(false)
+  const snapRef = useRef(null)
 
   async function loadData() {
     setLoading(true)
@@ -168,18 +171,8 @@ export default function RollsPage() {
           <button className="rolActionBtn" disabled={busy || loading} onClick={() => loadData()}>
             Tải lại
           </button>
-          <button
-            className="rolActionBtn"
-            disabled={busy || loading}
-            onClick={() => {
-              const qs = []
-              if (variantId) qs.push(`variant_id=${encodeURIComponent(variantId)}`)
-              if (locationId && locationId !== "__none__") qs.push(`location_id=${encodeURIComponent(locationId)}`)
-              const url = `/api/v1/excel/export/stock_units${qs.length ? "?" + qs.join("&") : ""}`
-              window.location.href = url
-            }}
-          >
-            Xuất Excel
+          <button className="rolActionBtn" disabled={busy || loading} onClick={() => setShowExcel(true)}>
+            Excel
           </button>
           <button className="rolActionBtn rolActionPrimary" disabled={busy || loading} onClick={() => setShowReceive(true)}>
             + Nhập cuộn
@@ -224,6 +217,9 @@ export default function RollsPage() {
 
       <DataGrid
         id="inventory.rolls"
+        onSnapshot={(s) => {
+          snapRef.current = s
+        }}
         rows={filtered}
         rowKey={(r) => r.id}
         columns={[
@@ -285,6 +281,19 @@ export default function RollsPage() {
               setBusy(false)
             }
           }}
+        />
+      ) : null}
+
+      {showExcel ? (
+        <ExcelToolsModal
+          title="Excel · Quản lý cuộn"
+          resource="stock_units"
+          templateUrl="/api/v1/excel/template/stock_units"
+          importUrl="/api/v1/excel/import/stock_units"
+          exportFilename="cuon-stock-units.xlsx"
+          getSnapshot={() => snapRef.current}
+          onImported={() => loadData().catch(() => {})}
+          onClose={() => setShowExcel(false)}
         />
       ) : null}
 

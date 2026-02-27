@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { del, get, patch, post } from "../api"
 import Modal from "./Modal"
 import ProductCreateModal from "./ProductCreateModal"
+import ExcelToolsModal from "./ExcelToolsModal"
 import "./products.css"
 
 function fmtMoney(v) {
@@ -29,6 +30,7 @@ export default function ProductsPage() {
   const [createVariantParentId, setCreateVariantParentId] = useState("")
   const [editVariant, setEditVariant] = useState(null)
   const [deleteVariant, setDeleteVariant] = useState(null)
+  const [showExcel, setShowExcel] = useState(false)
 
   const variantsById = useMemo(() => {
     const m = new Map()
@@ -150,6 +152,40 @@ export default function ProductsPage() {
 
   const visibleVariantsCount = useMemo(() => tree.reduce((acc, g) => acc + g.variants.length, 0), [tree])
 
+  const exportVariants = useMemo(() => {
+    const out = []
+    for (const group of tree) {
+      const standalone = isStandaloneGroup(group)
+      if (standalone) {
+        const v = group.variants[0]
+        out.push({ ...v, parent_name: null })
+        continue
+      }
+      // Xuất Excel nên ưu tiên đầy đủ dữ liệu biến thể (không phụ thuộc việc nhóm đang gập/mở).
+      // Việc "gập/mở" chỉ là UI để nhìn cho gọn.
+      for (const v of group.variants) out.push({ ...v, parent_name: group.parent?.name || null })
+    }
+    return out
+  }, [tree])
+
+  const exportSnapshot = useMemo(() => {
+    const visibleCols = [
+      { key: "id", title: "ID", getValue: (r) => r.id },
+      { key: "parent_name", title: "Nhóm (Parent)", getValue: (r) => r.parent_name || "" },
+      { key: "name", title: "Tên", getValue: (r) => r.name || "" },
+      { key: "sku", title: "SKU", getValue: (r) => r.sku || "" },
+      { key: "barcode", title: "Barcode", getValue: (r) => r.barcode || "" },
+      { key: "uom", title: "Đơn vị", getValue: (r) => r.uom || "" },
+      { key: "stock", title: "Tồn", getValue: (r) => r.stock ?? "" },
+      { key: "price", title: "Giá", getValue: (r) => r.price ?? "" },
+      { key: "roll_price", title: "Giá cuộn", getValue: (r) => r.roll_price ?? "" },
+      { key: "cost_price", title: "Giá nhập", getValue: (r) => r.cost_price ?? "" },
+      { key: "track_stock_unit", title: "Theo cuộn", getValue: (r) => (r.track_stock_unit ? 1 : 0) },
+      { key: "is_active", title: "Active", getValue: (r) => (r.is_active ? 1 : 0) },
+    ]
+    return { visibleCols, rows: exportVariants, cfg: {} }
+  }, [exportVariants])
+
   function toggleParent(parentId) {
     setExpandedParentIds((prev) => {
       const next = new Set(prev)
@@ -187,15 +223,8 @@ export default function ProductsPage() {
           <button className="prodActionBtn" disabled={busy || loading} onClick={() => loadAll()}>
             Tải lại
           </button>
-          <button
-            className="prodActionBtn"
-            disabled={busy || loading}
-            onClick={() => {
-              const qq = encodeURIComponent((q || "").trim())
-              window.location.href = `/api/v1/excel/export/products?q=${qq}`
-            }}
-          >
-            Xuất Excel
+          <button className="prodActionBtn" disabled={busy || loading} onClick={() => setShowExcel(true)}>
+            Excel
           </button>
           <button className="prodActionBtn prodActionPrimary" disabled={busy || loading} onClick={() => setShowCreateProduct(true)}>
             + Tạo sản phẩm
@@ -441,6 +470,19 @@ export default function ProductsPage() {
               setBusy(false)
             }
           }}
+        />
+      ) : null}
+
+      {showExcel ? (
+        <ExcelToolsModal
+          title="Excel · Sản phẩm"
+          resource="products"
+          templateUrl="/api/v1/excel/template/products"
+          importUrl="/api/v1/excel/import/products"
+          exportFilename="san-pham.xlsx"
+          getSnapshot={() => exportSnapshot}
+          onImported={() => loadAll().catch(() => {})}
+          onClose={() => setShowExcel(false)}
         />
       ) : null}
     </div>

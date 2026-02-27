@@ -1,87 +1,92 @@
-.loginWrap{
+.loginWrap {
   min-height: 100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 22px;
 }
 
-.loginCard{
+.loginCard {
   width: min(430px, 100%);
   border-radius: 18px;
-  border: 1px solid rgba(18,20,23,.12);
-  background: rgba(255,255,255,.78);
-  box-shadow: 0 20px 60px rgba(18,20,23,.14);
+  border: 1px solid rgba(18, 20, 23, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 20px 60px rgba(18, 20, 23, 0.14);
   padding: 18px 18px 16px 18px;
 }
 
-.loginTitle{
+.loginTitle {
   font-size: 22px;
   font-weight: 900;
-  letter-spacing: -.01em;
+  letter-spacing: -0.01em;
 }
-.loginSub{
-  color: rgba(18,20,23,.7);
+.loginSub {
+  color: rgba(18, 20, 23, 0.7);
   font-size: 13px;
   margin-top: 6px;
 }
 
-.loginField{
+.loginField {
   margin-top: 14px;
-  display:flex;
-  flex-direction:column;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
-.loginLabel{
+.loginLabel {
   font-size: 12px;
-  color: rgba(18,20,23,.75);
+  color: rgba(18, 20, 23, 0.75);
 }
-.loginInput{
+.loginInput {
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(18,20,23,.16);
-  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(18, 20, 23, 0.16);
+  background: rgba(255, 255, 255, 0.92);
   font-size: 14px;
   outline: none;
 }
-.loginInput:focus{
-  border-color: rgba(var(--accent-rgb), .6);
-  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), .14);
+.loginInput:focus {
+  border-color: rgba(var(--accent-rgb), 0.6);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.14);
 }
 
-.loginErr{
+.loginErr {
   margin-top: 12px;
-  border: 1px solid rgba(180,35,24,.25);
-  background: rgba(180,35,24,.08);
+  border: 1px solid rgba(180, 35, 24, 0.25);
+  background: rgba(180, 35, 24, 0.08);
   color: #7a1f18;
   padding: 10px 10px;
   border-radius: 12px;
   font-size: 13px;
 }
 
-.loginBtn{
+.loginBtn {
   margin-top: 14px;
   width: 100%;
   padding: 12px 12px;
   border-radius: 14px;
-  border: 1px solid rgba(var(--accent-rgb), .35);
-  background: linear-gradient(180deg, rgba(var(--accent-rgb), .92), rgba(var(--accent-rgb), .78));
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--accent-rgb), 0.92),
+    rgba(var(--accent-rgb), 0.78)
+  );
   color: #fff;
   font-weight: 900;
   font-size: 14px;
-  cursor:pointer;
+  cursor: pointer;
 }
-.loginBtn:disabled{
-  opacity: .7;
+.loginBtn:disabled {
+  opacity: 0.7;
   cursor: default;
 }
 
-.loginHint{
+.loginHint {
   margin-top: 12px;
-  font-size: 12px;
-  color: rgba(18,20,23,.68);
+  font-size: 20px;
+  color: rgba(18, 20, 23, 0.68);
 }
-.loginMono{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+.loginMono {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 }
-

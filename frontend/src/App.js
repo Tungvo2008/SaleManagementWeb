@@ -120,6 +120,7 @@ function App() {
   }, [])
 
   const title = useMemo(() => {
+    if (route.mode === "login") return "Đăng nhập"
     if (route.mode === "pos") return "POS bán hàng - Gia dụng Tín Thành"
     if (route.mode === "receive") return "Nhập hàng & In mã vạch"
     if (route.page === "categories") return "Danh mục"
@@ -139,6 +140,12 @@ function App() {
     if (route.page === "barcode-template") return "Mẫu tem mã vạch"
     return "Tổng quan"
   }, [route])
+
+  // Cập nhật title của tab trình duyệt theo trang đang mở.
+  useEffect(() => {
+    const brand = "Quản lý cửa hàng"
+    document.title = title ? `${title} · ${brand}` : brand
+  }, [title])
 
   function goto(next) {
     if (next === "login") {

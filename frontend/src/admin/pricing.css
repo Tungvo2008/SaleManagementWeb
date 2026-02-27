@@ -40,6 +40,11 @@
   background: linear-gradient(180deg, rgba(47,107,255,.95), rgba(47,107,255,.82));
   color: #ffffff;
 }
+.priActionBtn.priActionPrimary:hover{
+  background: linear-gradient(180deg, rgba(47,107,255,1), rgba(47,107,255,.86));
+  color: #ffffff;
+}
+.priActionBtn.priActionPrimary:active{ filter: brightness(0.98); }
 
 .priBulk{
   border: 1px solid var(--adm-line);

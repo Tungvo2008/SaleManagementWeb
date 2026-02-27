@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { get, patch, post } from "../api"
 import Modal from "./Modal"
 import DataGrid from "./DataGrid"
+import ExcelToolsModal from "./ExcelToolsModal"
 import "./stock.css"
 
 function fmtQty(v) {
@@ -22,6 +23,8 @@ export default function StockPage() {
   const [busy, setBusy] = useState(false)
   const [rows, setRows] = useState([])
   const [q, setQ] = useState("")
+  const [showExcel, setShowExcel] = useState(false)
+  const snapRef = useRef(null)
 
   const [locations, setLocations] = useState([])
   const [showMove, setShowMove] = useState(false)
@@ -96,6 +99,9 @@ export default function StockPage() {
           <button className="stkActionBtn" disabled={busy || loading} onClick={() => loadStock()}>
             Tải lại
           </button>
+          <button className="stkActionBtn" disabled={busy || loading} onClick={() => setShowExcel(true)}>
+            Excel
+          </button>
           <button className="stkActionBtn" disabled={busy || loading} onClick={() => setShowAdjust(true)}>
             ± Điều chỉnh
           </button>
@@ -110,6 +116,9 @@ export default function StockPage() {
 
       <DataGrid
         id="inventory.stock"
+        onSnapshot={(s) => {
+          snapRef.current = s
+        }}
         columns={[
           { key: "variant_id", title: "ID", width: 90, minWidth: 70, render: (r) => <span className="stkMono">{r.variant_id}</span> },
           { key: "parent_name", title: "Nhóm", minWidth: 180, flex: 1.2, render: (r) => <span className="stkName">{r.parent_name || ""}</span> },
@@ -184,6 +193,18 @@ export default function StockPage() {
               setBusy(false)
             }
           }}
+        />
+      ) : null}
+
+      {showExcel ? (
+        <ExcelToolsModal
+          title="Excel · Tồn kho"
+          resource="ton_kho"
+          exportFilename="ton-kho.xlsx"
+          getSnapshot={() => snapRef.current}
+          showTemplate={false}
+          showImport={false}
+          onClose={() => setShowExcel(false)}
         />
       ) : null}
     </div>

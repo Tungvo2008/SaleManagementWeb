@@ -35,6 +35,11 @@
   background: linear-gradient(180deg, rgba(47,107,255,.95), rgba(47,107,255,.82));
   color: #ffffff;
 }
+.prodActionBtn.prodActionPrimary:hover{
+  background: linear-gradient(180deg, rgba(47,107,255,1), rgba(47,107,255,.86));
+  color: #ffffff;
+}
+.prodActionBtn.prodActionPrimary:active{ filter: brightness(0.98); }
 
 .prodMono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 .prodName{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

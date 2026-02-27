@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { del, get, patch, post } from "../api"
 import Modal from "./Modal"
 import DataGrid from "./DataGrid"
+import ExcelToolsModal from "./ExcelToolsModal"
 import "./categories.css"
 
 export default function CategoriesPage() {
@@ -14,6 +15,8 @@ export default function CategoriesPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [editRow, setEditRow] = useState(null)
   const [deleteRow, setDeleteRow] = useState(null)
+  const [showExcel, setShowExcel] = useState(false)
+  const snapRef = useRef(null)
 
   async function loadAll() {
     setLoading(true)
@@ -77,10 +80,10 @@ export default function CategoriesPage() {
             className="catActionBtn"
             disabled={busy || loading}
             onClick={() => {
-              window.location.href = "/api/v1/excel/export/categories"
+              setShowExcel(true)
             }}
           >
-            Xuất Excel
+            Excel
           </button>
           <button className="catActionBtn catActionPrimary" disabled={busy || loading} onClick={() => setShowCreate(true)}>
             + Thêm danh mục
@@ -90,6 +93,9 @@ export default function CategoriesPage() {
 
       <DataGrid
         id="catalog.categories"
+        onSnapshot={(s) => {
+          snapRef.current = s
+        }}
         columns={[
           { key: "id", title: "ID", width: 90, minWidth: 70, render: (r) => <span className="catMono">{r.id}</span> },
           { key: "name", title: "Tên", fill: true, minWidth: 260, render: (r) => <span className="catName">{r.name}</span> },
@@ -188,6 +194,19 @@ export default function CategoriesPage() {
               setBusy(false)
             }
           }}
+        />
+      ) : null}
+
+      {showExcel ? (
+        <ExcelToolsModal
+          title="Excel · Danh mục"
+          resource="categories"
+          templateUrl="/api/v1/excel/template/categories"
+          importUrl="/api/v1/excel/import/categories"
+          exportFilename="danh-muc.xlsx"
+          getSnapshot={() => snapRef.current}
+          onImported={() => loadAll().catch(() => {})}
+          onClose={() => setShowExcel(false)}
         />
       ) : null}
     </div>

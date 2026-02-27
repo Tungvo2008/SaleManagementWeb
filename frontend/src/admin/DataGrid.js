@@ -34,7 +34,7 @@ function toComparable(v) {
   return { kind: "str", v: String(v).toLowerCase() }
 }
 
-export default function DataGrid({ id, columns, rows, rowKey }) {
+export default function DataGrid({ id, columns, rows, rowKey, onSnapshot }) {
   const defaults = useMemo(() => {
     const visibleKeys = columns.filter((c) => c.defaultVisible !== false).map((c) => c.key)
     const widths = {}
@@ -276,6 +276,19 @@ export default function DataGrid({ id, columns, rows, rowKey }) {
       })
       .map((x) => x.r)
   }, [filteredRows, cfg.sortKey, cfg.sortDir, columns])
+
+  // Optional: expose the current view (visible columns + filtered/sorted rows)
+  // so pages can export exactly what the user is seeing.
+  useEffect(() => {
+    if (typeof onSnapshot !== "function") return
+    onSnapshot({
+      id,
+      visibleCols,
+      rows: sortedRows,
+      cfg,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, onSnapshot, visibleCols, sortedRows, cfg.sortKey, cfg.sortDir, cfg.filters, cfg.visibleKeys, cfg.widths])
 
   return (
     <div className="dgWrap">

@@ -66,6 +66,13 @@
   background: linear-gradient(180deg, rgba(47,107,255,.95), rgba(47,107,255,.82));
   color: #ffffff;
 }
+.admBtn.admBtnPrimary:hover{
+  background: linear-gradient(180deg, rgba(47,107,255,1), rgba(47,107,255,.86));
+  color: #ffffff;
+}
+.admBtn.admBtnPrimary:active{
+  filter: brightness(0.98);
+}
 .admBtnDanger{
   border-color: rgba(180,35,24,.45);
   background: linear-gradient(180deg, rgba(180,35,24,.14), rgba(180,35,24,.08));
