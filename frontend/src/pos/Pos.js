@@ -141,7 +141,7 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;")
 }
 
-function ReceiptModal({ receipt, onClose, template }) {
+function ReceiptModal({ receipt, onClose, onRefund, template }) {
   if (!receipt) return null
   const cfg = normalizeReceiptTemplate(template || defaultReceiptTemplate)
   return (
@@ -151,6 +151,17 @@ function ReceiptModal({ receipt, onClose, template }) {
       onClose={onClose}
       footer={
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          {receipt.status === "checked_out" ? (
+            <button
+              className="btn"
+              onClick={() => {
+                if (!onRefund) return
+                onRefund(receipt.order_id)
+              }}
+            >
+              Refund
+            </button>
+          ) : null}
           <button
             className="btn btnPrimary"
             onClick={() => {
@@ -584,6 +595,7 @@ function BillHistoryModal({
             <tr>
               <th>Mã bill</th>
               <th>Thời gian</th>
+              <th>Khách hàng</th>
               <th>Thanh toán</th>
               <th className="right">Tổng</th>
               <th className="right">...</th>
@@ -596,6 +608,16 @@ function BillHistoryModal({
                   <b>#{r.id}</b>
                 </td>
                 <td>{r.checked_out_at ? new Date(r.checked_out_at).toLocaleString("vi-VN") : new Date(r.created_at).toLocaleString("vi-VN")}</td>
+                <td>
+                  {r.customer_name ? (
+                    <>
+                      <div className="tName">{r.customer_name}</div>
+                      <div className="hint">{r.customer_phone || "—"}</div>
+                    </>
+                  ) : (
+                    "Khách lẻ"
+                  )}
+                </td>
                 <td>{r.payment_method || "—"}</td>
                 <td className="right" style={{ fontWeight: 900 }}>
                   {fmtVnd(r.grand_total)} đ
@@ -614,7 +636,7 @@ function BillHistoryModal({
             ))}
             {!rows.length ? (
               <tr>
-                <td colSpan={5}>
+                <td colSpan={6}>
                   <div className="hint">Không có dữ liệu.</div>
                 </td>
               </tr>
@@ -2232,7 +2254,19 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
         />
       ) : null}
 
-      <ReceiptModal receipt={receiptModal} onClose={() => setReceiptModal(null)} template={receiptTemplate} />
+      <ReceiptModal
+        receipt={receiptModal}
+        onClose={() => setReceiptModal(null)}
+        onRefund={async (orderId) => {
+          try {
+            setReceiptModal(null)
+            await openRefund(orderId)
+          } catch (e) {
+            showErr(e)
+          }
+        }}
+        template={receiptTemplate}
+      />
       <Toast kind={toast.kind} message={toast.message} onClose={() => setToast((t) => ({ ...t, message: "" }))} />
     </div>
   )

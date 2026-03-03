@@ -19,10 +19,12 @@ class OrderOut(BaseModel):
     grand_total: Decimal
     created_at: datetime
     updated_at: datetime
-    payment_method: Literal["cash","bank","bank_transfer","momo"] | None = None
+    payment_method: str | None = None
     paid_amount: Decimal | None = None
     change_amount: Decimal | None = None
     checked_out_at: datetime | None = None
+    customer_name: str | None = None
+    customer_phone: str | None = None
     
     class Config:
         from_attributes = True

@@ -224,7 +224,14 @@ def list_orders(
     limit: int = 200,
     db: Session = Depends(get_db),
 ):
-    q = select(Order)
+    q = (
+        select(
+            Order,
+            Customer.name.label("customer_name"),
+            Customer.phone.label("customer_phone"),
+        )
+        .outerjoin(Customer, Customer.id == Order.customer_id)
+    )
     if status is not None:
         q = q.where(Order.status == status)
     if date is not None and status == "checked_out":
@@ -271,7 +278,31 @@ def list_orders(
         # default newest
         q = q.order_by(Order.id.desc())
     q = q.limit(max(1, min(int(limit or 200), 1000)))
-    return list(db.scalars(q).all())
+    rows = db.execute(q).all()
+    out: list[OrderOut] = []
+    for order, customer_name, customer_phone in rows:
+        out.append(
+            OrderOut(
+                id=order.id,
+                status=order.status,
+                customer_id=order.customer_id,
+                note=order.note,
+                subtotal=order.subtotal,
+                discount_mode=order.discount_mode,
+                discount_value=order.discount_value,
+                discount_total=order.discount_total,
+                grand_total=order.grand_total,
+                created_at=order.created_at,
+                updated_at=order.updated_at,
+                payment_method=order.payment_method,
+                paid_amount=order.paid_amount,
+                change_amount=order.change_amount,
+                checked_out_at=order.checked_out_at,
+                customer_name=customer_name,
+                customer_phone=customer_phone,
+            )
+        )
+    return out
 
 @router.patch("/{order_id}", response_model=OrderOut)
 def update_order(order_id: int, payload: OrderUpdate, db: Session = Depends(get_db)):
