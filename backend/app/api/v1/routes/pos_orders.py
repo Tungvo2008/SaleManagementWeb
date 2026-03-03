@@ -43,6 +43,8 @@ router = APIRouter(prefix="/orders")
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 UTC_TZ = ZoneInfo("UTC")
+ALLOWED_PRICING_MODES = {"normal", "meter", "roll"}
+ALLOWED_DISCOUNT_MODES = {"amount", "percent"}
 
 def _recalc_order(order: Order) -> None:
     subtotal = order.subtotal if order.subtotal is not None else Decimal("0")
@@ -862,8 +864,14 @@ def get_receipt(order_id: int, db: Session = Depends(get_db)):
 
     items: list[ReceiptItemOut] = []
     for it in order_items:
+        pricing_mode = it.pricing_mode if it.pricing_mode in ALLOWED_PRICING_MODES else "normal"
+        discount_mode = it.discount_mode if it.discount_mode in ALLOWED_DISCOUNT_MODES else None
+        qty = it.qty or Decimal("0")
+        unit_price = it.unit_price or Decimal("0")
+        line_total = it.line_total or Decimal("0")
+        discount_total = it.discount_total or Decimal("0")
         refunded_qty = it.refunded_qty or Decimal("0")
-        refundable_qty = (it.qty or Decimal("0")) - refunded_qty
+        refundable_qty = qty - refunded_qty
         if refundable_qty < 0:
             refundable_qty = Decimal("0")
         items.append(
@@ -871,14 +879,14 @@ def get_receipt(order_id: int, db: Session = Depends(get_db)):
                 item_id=it.id,
                 name=it.name_snapshot,
                 sku=it.sku_snapshot,
-                pricing_mode=it.pricing_mode,
-                qty=it.qty,
+                pricing_mode=pricing_mode,
+                qty=qty,
                 uom=it.uom_snapshot,
-                unit_price=it.unit_price,
-                discount_mode=it.discount_mode,
+                unit_price=unit_price,
+                discount_mode=discount_mode,
                 discount_value=it.discount_value,
-                discount_total=it.discount_total or Decimal("0"),
-                line_total=it.line_total,
+                discount_total=discount_total,
+                line_total=line_total,
                 refunded_qty=refunded_qty,
                 refundable_qty=refundable_qty,
                 barcode=barcode_by_id.get(it.stock_unit_id) if it.stock_unit_id is not None else None,
