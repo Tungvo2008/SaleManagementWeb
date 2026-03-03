@@ -609,6 +609,7 @@ function CreateProductModal({
 
   function ImageDropzone({ file, disabled, onPick }) {
     const inputRef = useRef(null)
+    const cameraRef = useRef(null)
     const [dragOver, setDragOver] = useState(false)
 
     function pickFile(f) {
@@ -655,14 +656,37 @@ function CreateProductModal({
           aria-disabled={disabled ? "true" : "false"}
         >
           <div className="prdDropTitle">Kéo thả ảnh vào đây</div>
-          <div className="prdDropSub">hoặc bấm để chọn file (jpg/png/webp)</div>
+          <div className="prdDropSub">hoặc bấm để chọn file (trên điện thoại bạn có thể chụp ảnh)</div>
           {file ? <div className="prdDropFile">Đã chọn: {file.name}</div> : null}
         </div>
+
+        <div className="prdDropBtns">
+          <button type="button" className="btn" disabled={disabled} onClick={() => cameraRef.current?.click()}>
+            Chụp ảnh
+          </button>
+          <button type="button" className="btn" disabled={disabled} onClick={() => inputRef.current?.click()}>
+            Chọn ảnh
+          </button>
+        </div>
+
         <input
           ref={inputRef}
           className="prdFileHidden"
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          accept="image/*"
+          disabled={disabled}
+          onChange={(e) => {
+            const f = e.target.files && e.target.files[0] ? e.target.files[0] : null
+            e.target.value = ""
+            pickFile(f)
+          }}
+        />
+        <input
+          ref={cameraRef}
+          className="prdFileHidden"
+          type="file"
+          accept="image/*"
+          capture="environment"
           disabled={disabled}
           onChange={(e) => {
             const f = e.target.files && e.target.files[0] ? e.target.files[0] : null
@@ -1289,6 +1313,7 @@ export default function ReceivePrintPage() {
   const [showCreateProduct, setShowCreateProduct] = useState(false)
 
   const searchTimerRef = useRef(null)
+  const rightCardRef = useRef(null)
 
   function showErr(e) {
     setToast({ kind: "error", message: e?.message || "Có lỗi xảy ra" })
@@ -1515,6 +1540,11 @@ export default function ReceivePrintPage() {
                     onClick={() => {
                       setPicked(v)
                       setTab(v.track_stock_unit ? "rolls" : "normal")
+                      // On mobile (stacked layout), auto-scroll to the right panel to reduce extra scrolling.
+                      try {
+                        const narrow = window.matchMedia && window.matchMedia("(max-width: 1100px)").matches
+                        if (narrow) setTimeout(() => rightCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0)
+                      } catch {}
                     }}
                     disabled={busy}
                   >
@@ -1544,7 +1574,7 @@ export default function ReceivePrintPage() {
           </div>
         </div>
 
-        <div className="card rcvCard">
+        <div ref={rightCardRef} className="card rcvCard">
           <div className="cardHeader">
             <div className="cardTitle">Nhập kho</div>
             <div className="pill">{picked ? `Đã chọn #${picked.variant_id}` : "Chưa chọn"}</div>

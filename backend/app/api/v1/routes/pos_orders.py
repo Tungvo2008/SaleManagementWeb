@@ -3,9 +3,10 @@ from __future__ import annotations
 from decimal import Decimal
 from datetime import datetime, date as date_type, time, timedelta
 from zoneinfo import ZoneInfo
+from collections import defaultdict
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select, or_, cast, String
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
@@ -17,7 +18,15 @@ from app.models.inventory import Inventory
 from app.models.customer import Customer
 
 
-from app.schemas.order import OrderCreate, OrderOut, OrderCheckoutIn, OrderUpdate
+from app.schemas.order import (
+    OrderCreate,
+    OrderOut,
+    OrderCheckoutIn,
+    OrderUpdate,
+    OrderRefundIn,
+    OrderRefundOut,
+    OrderRefundLineOut,
+)
 from app.schemas.order_item import (
     OrderItemOut,
     OrderItemCreateNormal,
@@ -208,12 +217,14 @@ def list_orders(
     date: date_type | None = None,
     date_from: date_type | None = None,
     date_to: date_type | None = None,
+    search: str | None = Query(None, alias="q"),
+    sort: str = "newest",
     limit: int = 200,
     db: Session = Depends(get_db),
 ):
     q = select(Order)
     if status is not None:
-        q = q.where(Order.status==status)
+        q = q.where(Order.status == status)
     if date is not None and status == "checked_out":
         start_local = datetime.combine(date, time.min, tzinfo=VN_TZ)
         end_local = start_local + timedelta(days=1)
@@ -237,7 +248,26 @@ def list_orders(
             end_local = datetime.combine(date_to, time.min, tzinfo=VN_TZ) + timedelta(days=1)
             end_utc = end_local.astimezone(UTC_TZ).replace(tzinfo=None)
             q = q.where(Order.checked_out_at < end_utc)
-    q = q.order_by(Order.id.desc())
+    if search is not None and search.strip():
+        needle = f"%{search.strip()}%"
+        q = q.outerjoin(Customer, Customer.id == Order.customer_id).where(
+            or_(
+                cast(Order.id, String).ilike(needle),
+                Order.note.ilike(needle),
+                Customer.name.ilike(needle),
+                Customer.phone.ilike(needle),
+            )
+        )
+
+    if sort == "oldest":
+        q = q.order_by(Order.id.asc())
+    elif sort == "total_desc":
+        q = q.order_by(Order.grand_total.desc(), Order.id.desc())
+    elif sort == "total_asc":
+        q = q.order_by(Order.grand_total.asc(), Order.id.desc())
+    else:
+        # default newest
+        q = q.order_by(Order.id.desc())
     q = q.limit(max(1, min(int(limit or 200), 1000)))
     return list(db.scalars(q).all())
 
@@ -832,6 +862,10 @@ def get_receipt(order_id: int, db: Session = Depends(get_db)):
 
     items: list[ReceiptItemOut] = []
     for it in order_items:
+        refunded_qty = it.refunded_qty or Decimal("0")
+        refundable_qty = (it.qty or Decimal("0")) - refunded_qty
+        if refundable_qty < 0:
+            refundable_qty = Decimal("0")
         items.append(
             ReceiptItemOut(
                 item_id=it.id,
@@ -845,6 +879,8 @@ def get_receipt(order_id: int, db: Session = Depends(get_db)):
                 discount_value=it.discount_value,
                 discount_total=it.discount_total or Decimal("0"),
                 line_total=it.line_total,
+                refunded_qty=refunded_qty,
+                refundable_qty=refundable_qty,
                 barcode=barcode_by_id.get(it.stock_unit_id) if it.stock_unit_id is not None else None,
             )
         )
@@ -873,6 +909,154 @@ def get_receipt(order_id: int, db: Session = Depends(get_db)):
         discount_total=discount_total,
         grand_total=grand_total,
     )
+
+
+@router.post("/{order_id}/refund", response_model=OrderRefundOut)
+def refund_order_items(order_id: int, payload: OrderRefundIn, db: Session = Depends(get_db)):
+    """
+    Partial refund for a checked-out order:
+    - restore inventory for selected lines/quantities
+    - write Inventory(type="refund") logs
+    - track cumulative refunded_qty on each order_item to prevent over-refund
+    """
+    order = _get_checked_out_order_or_409(order_id, db)
+    order_items = list(db.scalars(select(OrderItem).where(OrderItem.order_id == order.id)).all())
+    if not order_items:
+        raise HTTPException(422, "Order is empty")
+
+    by_item_id = {it.id: it for it in order_items}
+    request_qty_by_item: dict[int, Decimal] = defaultdict(lambda: Decimal("0"))
+    for row in payload.items:
+        request_qty_by_item[row.item_id] += row.qty
+
+    if not request_qty_by_item:
+        raise HTTPException(422, "Refund items is empty")
+
+    lines: list[OrderRefundLineOut] = []
+    refund_total = Decimal("0")
+    note_tail = f" · {payload.note.strip()}" if payload.note and payload.note.strip() else ""
+
+    try:
+        for item_id, req_qty in request_qty_by_item.items():
+            item = by_item_id.get(item_id)
+            if item is None:
+                raise HTTPException(404, f"Order item not found: {item_id}")
+            if req_qty <= 0:
+                raise HTTPException(422, "Refund qty must be > 0")
+
+            sold_qty = item.qty or Decimal("0")
+            refunded_qty = item.refunded_qty or Decimal("0")
+            refundable_qty = sold_qty - refunded_qty
+            if sold_qty <= 0:
+                raise HTTPException(422, f"Invalid sold qty at item {item.id}")
+            if refundable_qty <= 0:
+                raise HTTPException(409, f"Item {item.id} has no refundable quantity left")
+            if req_qty > refundable_qty:
+                raise HTTPException(409, f"Refund qty exceeds refundable qty at item {item.id}")
+
+            # Proportional refund amount from the original net line_total.
+            line_refund_amount = (item.line_total / sold_qty) * req_qty
+            inventory_note = f"refund order {order.id} item {item.id}{note_tail}"
+
+            if item.pricing_mode == "normal":
+                variant = _assert_sellable_variant(db.get(Product, item.variant_id))
+                if variant.stock is None:
+                    variant.stock = Decimal("0")
+                variant.stock += req_qty
+                db.add(
+                    Inventory(
+                        type="refund",
+                        variant_id=variant.id,
+                        qty=req_qty,
+                        note=inventory_note,
+                    )
+                )
+
+            elif item.pricing_mode == "meter":
+                if item.stock_unit_id is None:
+                    raise HTTPException(422, f"Missing stock_unit_id at item {item.id}")
+                su = db.get(StockUnit, item.stock_unit_id)
+                variant = _assert_sellable_variant(db.get(Product, item.variant_id))
+                if su is None:
+                    raise HTTPException(404, "Stock Unit not found")
+                if su.variant_id != variant.id:
+                    raise HTTPException(422, "Variant/StockUnit Mismatched")
+
+                new_remaining = su.remaining_qty + req_qty
+                if new_remaining > su.initial_qty:
+                    raise HTTPException(409, f"Cannot refund item {item.id}: stock unit would exceed initial_qty")
+                su.remaining_qty = new_remaining
+                su.is_depleted = su.remaining_qty <= 0
+
+                if variant.stock is None:
+                    variant.stock = Decimal("0")
+                variant.stock += req_qty
+
+                db.add(
+                    Inventory(
+                        type="refund",
+                        variant_id=variant.id,
+                        stock_unit_id=su.id,
+                        to_location_id=su.location_id,
+                        qty=req_qty,
+                        note=inventory_note,
+                    )
+                )
+
+            elif item.pricing_mode == "roll":
+                # Roll line in current design is always 1 full roll.
+                if sold_qty != Decimal("1") or req_qty != Decimal("1"):
+                    raise HTTPException(422, f"Roll refund currently supports full-line refund only (item {item.id})")
+                if item.stock_unit_id is None:
+                    raise HTTPException(422, f"Missing stock_unit_id at item {item.id}")
+                su = db.get(StockUnit, item.stock_unit_id)
+                variant = _assert_sellable_variant(db.get(Product, item.variant_id))
+                if su is None:
+                    raise HTTPException(404, "Stock Unit not found")
+                if su.variant_id != variant.id:
+                    raise HTTPException(422, "Variant/StockUnit Mismatched")
+
+                restore_qty = su.initial_qty
+                new_remaining = su.remaining_qty + restore_qty
+                if new_remaining > su.initial_qty:
+                    raise HTTPException(409, f"Cannot refund item {item.id}: stock unit has changed")
+                su.remaining_qty = new_remaining
+                su.is_depleted = su.remaining_qty <= 0
+
+                if variant.stock is None:
+                    variant.stock = Decimal("0")
+                variant.stock += restore_qty
+
+                db.add(
+                    Inventory(
+                        type="refund",
+                        variant_id=variant.id,
+                        stock_unit_id=su.id,
+                        to_location_id=su.location_id,
+                        qty=restore_qty,
+                        note=inventory_note,
+                    )
+                )
+
+            else:
+                raise HTTPException(422, f"Invalid pricing mode at item {item.id}")
+
+            item.refunded_qty = refunded_qty + req_qty
+            refund_total += line_refund_amount
+            lines.append(
+                OrderRefundLineOut(
+                    item_id=item.id,
+                    refunded_qty=req_qty,
+                    refund_amount=line_refund_amount,
+                )
+            )
+
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    return OrderRefundOut(order_id=order.id, refund_total=refund_total, lines=lines)
 
 
 @router.post("/{order_id}/void", response_model=OrderOut)

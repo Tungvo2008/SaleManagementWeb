@@ -18,6 +18,8 @@ class ReceiptItemOut(BaseModel):
     discount_value: Decimal | None = None
     discount_total: Decimal
     line_total: Decimal
+    refunded_qty: Decimal = Decimal("0")
+    refundable_qty: Decimal = Decimal("0")
     barcode: str | None
 
 class ReceiptOut(BaseModel):

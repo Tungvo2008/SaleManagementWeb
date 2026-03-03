@@ -18,6 +18,7 @@ import AuditPage from "./admin/AuditPage"
 import EmployeesPage from "./admin/EmployeesPage"
 import ExcelPage from "./admin/ExcelPage"
 import ReceivePrintPage from "./receive/ReceivePrintPage"
+import MobileImagesPage from "./receive/MobileImagesPage"
 import LoginPage from "./LoginPage"
 import { me, logout } from "./auth"
 import {
@@ -52,7 +53,11 @@ function getHashRoute() {
   if (hash.startsWith("#/login")) return { mode: "login" }
   if (hash.startsWith("#/app/login")) return { mode: "login" }
   if (hash.startsWith("#/pos")) return { mode: "pos" }
-  if (hash.startsWith("#/receive")) return { mode: "receive" }
+  if (hash.startsWith("#/receive")) {
+    const p = hash.replace("#/receive", "").split("?")[0] || ""
+    if (p.startsWith("/images")) return { mode: "receive", page: "images" }
+    return { mode: "receive", page: "receive" }
+  }
 
   // Admin pages
   if (hash.startsWith("#/app/")) {
@@ -122,7 +127,7 @@ function App() {
   const title = useMemo(() => {
     if (route.mode === "login") return "Đăng nhập"
     if (route.mode === "pos") return "POS bán hàng - Gia dụng Tín Thành"
-    if (route.mode === "receive") return "Nhập hàng & In mã vạch"
+    if (route.mode === "receive") return route.page === "images" ? "Ảnh sản phẩm (mobile)" : "Nhập hàng & In mã vạch"
     if (route.page === "categories") return "Danh mục"
     if (route.page === "products") return "Sản phẩm"
     if (route.page === "stock") return "Tồn kho"
@@ -270,6 +275,15 @@ function App() {
         <div className="appTopbar">
           <div className="appTitle">{title}</div>
           <div className="appTabs">
+            {route.page === "images" ? (
+              <button className="appTab" onClick={() => (window.location.hash = "#/receive")}>
+                Nhập hàng
+              </button>
+            ) : (
+              <button className="appTab" onClick={() => (window.location.hash = "#/receive/images")}>
+                Ảnh sản phẩm
+              </button>
+            )}
             <button className="appTab" onClick={() => goto("dashboard")}>
               Về trang chủ
             </button>
@@ -282,7 +296,7 @@ function App() {
           </div>
         </div>
         <div className="appBody">
-          <ReceivePrintPage />
+          {route.page === "images" ? <MobileImagesPage /> : <ReceivePrintPage />}
         </div>
       </div>
     )

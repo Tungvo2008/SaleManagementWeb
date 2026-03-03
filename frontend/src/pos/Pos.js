@@ -55,6 +55,21 @@ function nearlyEqual(a, b) {
   return Math.abs(a - b) < 0.000001
 }
 
+function todayYmd() {
+  const d = new Date()
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, "0")
+  const dd = String(d.getDate()).padStart(2, "0")
+  return `${yyyy}-${mm}-${dd}`
+}
+
+function monthStartYmd() {
+  const d = new Date()
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, "0")
+  return `${yyyy}-${mm}-01`
+}
+
 function useHotkeys(map) {
   useEffect(() => {
     function onKeyDown(e) {
@@ -505,6 +520,241 @@ function RollPickerModal({ su, onClose, onAddMeter, onAddRoll }) {
   )
 }
 
+function BillHistoryModal({
+  rows,
+  busy,
+  q,
+  setQ,
+  dateFrom,
+  setDateFrom,
+  dateTo,
+  setDateTo,
+  sort,
+  setSort,
+  onSearch,
+  onOpenReceipt,
+  onOpenRefund,
+  onClose,
+}) {
+  return (
+    <Modal
+      wide
+      title="Bill cũ (đã thanh toán)"
+      onClose={onClose}
+      footer={
+        <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
+          <div className="hint" style={{ margin: 0 }}>
+            Chọn bill để xem chi tiết hoặc hoàn hàng một phần.
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className="btn" disabled={busy} onClick={onClose}>
+              Đóng
+            </button>
+          </div>
+        </div>
+      }
+    >
+      <div className="billFilters">
+        <input
+          className="input"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Tìm theo mã bill / ghi chú / tên khách / SĐT..."
+        />
+        <input className="input" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+        <input className="input" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+        <UiSelect
+          value={sort}
+          onChange={(v) => setSort(String(v))}
+          options={[
+            { value: "newest", label: "Mới nhất" },
+            { value: "oldest", label: "Cũ nhất" },
+            { value: "total_desc", label: "Tổng tiền giảm dần" },
+            { value: "total_asc", label: "Tổng tiền tăng dần" },
+          ]}
+        />
+        <button className="btn btnPrimary" disabled={busy} onClick={onSearch}>
+          Tìm
+        </button>
+      </div>
+
+      <div className="tableWrap">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Mã bill</th>
+              <th>Thời gian</th>
+              <th>Thanh toán</th>
+              <th className="right">Tổng</th>
+              <th className="right">...</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td>
+                  <b>#{r.id}</b>
+                </td>
+                <td>{r.checked_out_at ? new Date(r.checked_out_at).toLocaleString("vi-VN") : new Date(r.created_at).toLocaleString("vi-VN")}</td>
+                <td>{r.payment_method || "—"}</td>
+                <td className="right" style={{ fontWeight: 900 }}>
+                  {fmtVnd(r.grand_total)} đ
+                </td>
+                <td className="right">
+                  <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                    <button className="btn" disabled={busy} onClick={() => onOpenReceipt(r.id)}>
+                      Mở bill
+                    </button>
+                    <button className="btn btnPrimary" disabled={busy} onClick={() => onOpenRefund(r.id)}>
+                      Refund
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {!rows.length ? (
+              <tr>
+                <td colSpan={5}>
+                  <div className="hint">Không có dữ liệu.</div>
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </Modal>
+  )
+}
+
+function RefundModal({ receipt, busy, onClose, onSubmit }) {
+  const [qtyMap, setQtyMap] = useState({})
+  const [note, setNote] = useState("")
+  const [err, setErr] = useState("")
+
+  const refundableItems = useMemo(() => {
+    const all = receipt?.items || []
+    return all.filter((it) => asNum(it.refundable_qty) > 0)
+  }, [receipt])
+
+  function setQty(itemId, v) {
+    setQtyMap((prev) => ({ ...prev, [itemId]: v }))
+  }
+
+  function submit() {
+    setErr("")
+    const lines = []
+    for (const it of refundableItems) {
+      const raw = qtyMap[it.item_id]
+      if (raw === undefined || raw === null || String(raw).trim() === "") continue
+      const qty = Number(raw)
+      if (!Number.isFinite(qty) || qty <= 0) {
+        setErr(`Số lượng refund không hợp lệ ở dòng #${it.item_id}`)
+        return
+      }
+      if (qty > asNum(it.refundable_qty)) {
+        setErr(`Dòng #${it.item_id} vượt quá số còn được refund`)
+        return
+      }
+      if (it.pricing_mode === "roll" && qty !== 1) {
+        setErr(`Dòng #${it.item_id} (cuộn) chỉ hỗ trợ refund 1 cuộn`)
+        return
+      }
+      lines.push({ item_id: it.item_id, qty: String(qty) })
+    }
+    if (!lines.length) {
+      setErr("Chưa nhập số lượng refund")
+      return
+    }
+    onSubmit({ items: lines, note: note.trim() || null })
+  }
+
+  return (
+    <Modal
+      wide
+      title={`Refund bill #${receipt?.order_id || ""}`}
+      onClose={onClose}
+      footer={
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
+          <button className="btn" disabled={busy} onClick={onClose}>
+            Huỷ
+          </button>
+          <button className="btn btnPrimary" disabled={busy} onClick={submit}>
+            Xác nhận refund
+          </button>
+        </div>
+      }
+    >
+      {err ? <div className="payStatus payStatusErr">{err}</div> : null}
+
+      <div className="hint">
+        Chỉ hoàn những dòng có <b>còn được refund</b>. Hàng hoàn sẽ được cộng lại tồn kho.
+      </div>
+
+      <div className="tableWrap">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Hàng</th>
+              <th className="right">Đã bán</th>
+              <th className="right">Đã refund</th>
+              <th className="right">Còn refund</th>
+              <th className="right">Refund lần này</th>
+            </tr>
+          </thead>
+          <tbody>
+            {refundableItems.map((it) => (
+              <tr key={it.item_id}>
+                <td>
+                  <div className="tName">{it.name}</div>
+                  <div className="tMeta">
+                    <span className="pill">#{it.item_id}</span>
+                    <span className="pill">{it.pricing_mode}</span>
+                    {it.sku ? <span className="pill">SKU: {it.sku}</span> : null}
+                  </div>
+                </td>
+                <td className="right">
+                  {fmtQty(it.qty)} {it.uom || ""}
+                </td>
+                <td className="right">
+                  {fmtQty(it.refunded_qty)} {it.uom || ""}
+                </td>
+                <td className="right">
+                  <b>
+                    {fmtQty(it.refundable_qty)} {it.uom || ""}
+                  </b>
+                </td>
+                <td className="right">
+                  <input
+                    className="input refundQtyInput"
+                    value={qtyMap[it.item_id] ?? ""}
+                    onChange={(e) => setQty(it.item_id, clampMoneyInput(e.target.value))}
+                    onFocus={selectAllOnFocus}
+                    placeholder={it.pricing_mode === "roll" ? "1" : "0"}
+                  />
+                </td>
+              </tr>
+            ))}
+            {!refundableItems.length ? (
+              <tr>
+                <td colSpan={5}>
+                  <div className="hint">Bill này đã refund hết hoặc không còn dòng nào có thể refund.</div>
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <div className="hint" style={{ marginTop: 0 }}>
+          Ghi chú refund
+        </div>
+        <input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Lý do hoàn hàng..." />
+      </div>
+    </Modal>
+  )
+}
+
 export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
   const [drafts, setDrafts] = useState([])
   const [order, setOrder] = useState(null)
@@ -539,6 +789,15 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
   const [lineDiscItem, setLineDiscItem] = useState(null)
   const [lineDiscMode, setLineDiscMode] = useState("none") // none|amount|percent
   const [lineDiscValue, setLineDiscValue] = useState("0")
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [historyBusy, setHistoryBusy] = useState(false)
+  const [historyRows, setHistoryRows] = useState([])
+  const [historyQ, setHistoryQ] = useState("")
+  const [historyDateFrom, setHistoryDateFrom] = useState(monthStartYmd())
+  const [historyDateTo, setHistoryDateTo] = useState(todayYmd())
+  const [historySort, setHistorySort] = useState("newest")
+  const [refundReceipt, setRefundReceipt] = useState(null)
+  const [refundBusy, setRefundBusy] = useState(false)
 
   const scanRef = useRef(null)
   const searchTimerRef = useRef(null)
@@ -560,6 +819,8 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     setCustomerModalOpen(false)
     setInvoiceDiscOpen(false)
     setLineDiscItem(null)
+    setHistoryOpen(false)
+    setRefundReceipt(null)
   }
 
   useHotkeys({
@@ -670,6 +931,67 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     const r = await get(`/api/v1/pos/orders/${orderId}/receipt`)
     setReceipt(r)
     return r
+  }
+
+  async function loadCheckedOrders() {
+    setHistoryBusy(true)
+    try {
+      const params = new URLSearchParams()
+      params.set("status", "checked_out")
+      if (historyDateFrom) params.set("date_from", historyDateFrom)
+      if (historyDateTo) params.set("date_to", historyDateTo)
+      if (historyQ.trim()) params.set("q", historyQ.trim())
+      if (historySort) params.set("sort", historySort)
+      params.set("limit", "500")
+      const list = await get(`/api/v1/pos/orders/?${params.toString()}`)
+      setHistoryRows(Array.isArray(list) ? list : [])
+    } finally {
+      setHistoryBusy(false)
+    }
+  }
+
+  async function openOrderHistory() {
+    setHistoryOpen(true)
+    await loadCheckedOrders()
+  }
+
+  async function openOldReceipt(orderId) {
+    setHistoryBusy(true)
+    try {
+      const r = await get(`/api/v1/pos/orders/${orderId}/receipt`)
+      setReceiptModal(r)
+      setHistoryOpen(false)
+    } finally {
+      setHistoryBusy(false)
+    }
+  }
+
+  async function openRefund(orderId) {
+    setRefundBusy(true)
+    try {
+      const r = await get(`/api/v1/pos/orders/${orderId}/receipt`)
+      setRefundReceipt(r)
+      setHistoryOpen(false)
+    } finally {
+      setRefundBusy(false)
+    }
+  }
+
+  async function submitRefund(payload) {
+    if (!refundReceipt?.order_id) return
+    setRefundBusy(true)
+    try {
+      const out = await post(`/api/v1/pos/orders/${refundReceipt.order_id}/refund`, payload)
+      const latestReceipt = await get(`/api/v1/pos/orders/${refundReceipt.order_id}/receipt`)
+      setRefundReceipt(latestReceipt)
+      if (receiptModal?.order_id === refundReceipt.order_id) {
+        setReceiptModal(latestReceipt)
+      }
+      await loadCheckedOrders()
+      showInfo(`Đã refund ${fmtVnd(out.refund_total)} đ`)
+    } finally {
+      setRefundBusy(false)
+    }
   }
 
   async function loadCustomers(nextQ = customerQ) {
@@ -1023,6 +1345,19 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
             <div className="posTotalValue">{fmtVnd(grandTotal)} đ</div>
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+            <button
+              className="btn"
+              disabled={busy || historyBusy || refundBusy}
+              onClick={async () => {
+                try {
+                  await openOrderHistory()
+                } catch (e) {
+                  showErr(e)
+                }
+              }}
+            >
+              Bill cũ / Refund
+            </button>
             <button className="btn" disabled={busy || !order || order.status !== "draft"} onClick={cancelDraft}>
               Huỷ đơn
             </button>
@@ -1843,6 +2178,58 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
           </div>
           {paymentError ? <div className="payStatus payStatusErr">{paymentError}</div> : null}
         </Modal>
+      ) : null}
+
+      {historyOpen ? (
+        <BillHistoryModal
+          rows={historyRows}
+          busy={historyBusy || refundBusy}
+          q={historyQ}
+          setQ={setHistoryQ}
+          dateFrom={historyDateFrom}
+          setDateFrom={setHistoryDateFrom}
+          dateTo={historyDateTo}
+          setDateTo={setHistoryDateTo}
+          sort={historySort}
+          setSort={setHistorySort}
+          onSearch={async () => {
+            try {
+              await loadCheckedOrders()
+            } catch (e) {
+              showErr(e)
+            }
+          }}
+          onOpenReceipt={async (orderId) => {
+            try {
+              await openOldReceipt(orderId)
+            } catch (e) {
+              showErr(e)
+            }
+          }}
+          onOpenRefund={async (orderId) => {
+            try {
+              await openRefund(orderId)
+            } catch (e) {
+              showErr(e)
+            }
+          }}
+          onClose={() => setHistoryOpen(false)}
+        />
+      ) : null}
+
+      {refundReceipt ? (
+        <RefundModal
+          receipt={refundReceipt}
+          busy={refundBusy || historyBusy}
+          onClose={() => setRefundReceipt(null)}
+          onSubmit={async (payload) => {
+            try {
+              await submitRefund(payload)
+            } catch (e) {
+              showErr(e)
+            }
+          }}
+        />
       ) : null}
 
       <ReceiptModal receipt={receiptModal} onClose={() => setReceiptModal(null)} template={receiptTemplate} />

@@ -19,7 +19,7 @@ class OrderOut(BaseModel):
     grand_total: Decimal
     created_at: datetime
     updated_at: datetime
-    payment_method: Literal["cash","bank","momo"] | None = None
+    payment_method: Literal["cash","bank","bank_transfer","momo"] | None = None
     paid_amount: Decimal | None = None
     change_amount: Decimal | None = None
     checked_out_at: datetime | None = None
@@ -40,3 +40,25 @@ class OrderUpdate(BaseModel):
     # New: store discount intent (amount or percent).
     discount_mode: Literal["amount","percent"] | None = None
     discount_value: Decimal | None = Field(None, ge=0)
+
+
+class OrderRefundItemIn(BaseModel):
+    item_id: int
+    qty: Decimal = Field(..., gt=0)
+
+
+class OrderRefundIn(BaseModel):
+    items: list[OrderRefundItemIn] = Field(..., min_length=1)
+    note: str | None = None
+
+
+class OrderRefundLineOut(BaseModel):
+    item_id: int
+    refunded_qty: Decimal
+    refund_amount: Decimal
+
+
+class OrderRefundOut(BaseModel):
+    order_id: int
+    refund_total: Decimal
+    lines: list[OrderRefundLineOut]

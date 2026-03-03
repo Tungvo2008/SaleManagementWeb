@@ -29,6 +29,7 @@ class OrderItem(Base):
     discount_value: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     discount_total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, server_default=text("0"))
     line_total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    refunded_qty: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, server_default=text("0"))
 
     name_snapshot: Mapped[str] = mapped_column(String(255), nullable=False)
     sku_snapshot: Mapped[str | None] = mapped_column(String(64), nullable=True)
