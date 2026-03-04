@@ -2,7 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react"
 import { del, get, patch, post } from "../api"
 import { fmtQty, fmtVnd } from "./money"
 import "./pos.css"
-import { defaultReceiptTemplate, normalizeReceiptTemplate } from "./receiptTemplate"
+import {
+  defaultReceiptTemplate,
+  normalizeReceiptTemplate,
+} from "./receiptTemplate"
 import UiSelect from "../ui/Select"
 
 const LS_ORDER_ID = "pos.orderId"
@@ -104,13 +107,33 @@ function Toast({ kind, message, onClose }) {
   if (!message) return null
   return (
     <div className={`toast ${kind === "error" ? "toastErr" : ""}`}>
-      <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ fontWeight: 800 }}>{kind === "error" ? "Lỗi" : "Thông báo"}</div>
-        <button className="btn" onClick={onClose} style={{ padding: "6px 10px" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div style={{ fontWeight: 800 }}>
+          {kind === "error" ? "Lỗi" : "Thông báo"}
+        </div>
+        <button
+          className="btn"
+          onClick={onClose}
+          style={{ padding: "6px 10px" }}
+        >
           Đóng
         </button>
       </div>
-      <div style={{ marginTop: 8, color: kind === "error" ? "var(--danger)" : "var(--muted)" }}>{message}</div>
+      <div
+        style={{
+          marginTop: 8,
+          color: kind === "error" ? "var(--danger)" : "var(--muted)",
+        }}
+      >
+        {message}
+      </div>
     </div>
   )
 }
@@ -118,7 +141,10 @@ function Toast({ kind, message, onClose }) {
 function Modal({ title, children, footer, onClose, wide }) {
   return (
     <div className="modalOverlay" onMouseDown={onClose}>
-      <div className={`modal ${wide ? "modalWide" : ""}`} onMouseDown={(e) => e.stopPropagation()}>
+      <div
+        className={`modal ${wide ? "modalWide" : ""}`}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <div className="cardHeader">
           <div className="modalTitle">{title}</div>
           <button className="btn" onClick={onClose}>
@@ -217,23 +243,23 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
         <tr>
           <td>
             <div style="font-weight:700">${escapeHtml(it.name)}</div>
-            <div class="muted">${
-              [
-                cfg.showPricingMode ? it.pricing_mode : null,
-                (Number(it.discount_total || 0) > 0) ? `KM:${fmtVnd(it.discount_total)}đ` : null,
-                cfg.showBarcode && it.barcode ? it.barcode : null,
-                cfg.showSku && it.sku ? it.sku : null,
-              ]
-                .filter(Boolean)
-                .map(escapeHtml)
-                .join(" · ")
-            }</div>
+            <div class="muted">${[
+              cfg.showPricingMode ? it.pricing_mode : null,
+              Number(it.discount_total || 0) > 0
+                ? `KM:${fmtVnd(it.discount_total)}đ`
+                : null,
+              cfg.showBarcode && it.barcode ? it.barcode : null,
+              cfg.showSku && it.sku ? it.sku : null,
+            ]
+              .filter(Boolean)
+              .map(escapeHtml)
+              .join(" · ")}</div>
           </td>
           <td class="right">${it.qty}${it.uom ? " " + it.uom : ""}</td>
           <td class="right">${fmtVnd(it.unit_price)}đ</td>
           <td class="right">${fmtVnd(it.line_total)}đ</td>
         </tr>
-      `
+      `,
         )
         .join("")}
     </tbody>
@@ -256,7 +282,9 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
                 w.focus()
               } catch {
                 // Fallback: open printable HTML via blob URL
-                const blob = new Blob([html], { type: "text/html;charset=utf-8" })
+                const blob = new Blob([html], {
+                  type: "text/html;charset=utf-8",
+                })
                 const url = URL.createObjectURL(blob)
                 window.open(url, "_blank")
               }
@@ -271,7 +299,9 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
         <div className="receiptHead" style={{ marginBottom: 6 }}>
           <div className="receiptTitle">{cfg.storeName || "Cua Hang"}</div>
           <div className="receiptMeta">
-            {cfg.storePhone ? <span className="pill">SDT: {cfg.storePhone}</span> : null}
+            {cfg.storePhone ? (
+              <span className="pill">SDT: {cfg.storePhone}</span>
+            ) : null}
             {receipt.customer_name ? (
               <span className="pill">
                 Khách: {receipt.customer_name}
@@ -280,13 +310,25 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
             ) : null}
           </div>
         </div>
-        {cfg.storeAddress ? <div className="hint" style={{ marginBottom: 4 }}>{cfg.storeAddress}</div> : null}
-        {cfg.headerNote ? <div className="hint" style={{ marginBottom: 8 }}>{cfg.headerNote}</div> : null}
+        {cfg.storeAddress ? (
+          <div className="hint" style={{ marginBottom: 4 }}>
+            {cfg.storeAddress}
+          </div>
+        ) : null}
+        {cfg.headerNote ? (
+          <div className="hint" style={{ marginBottom: 8 }}>
+            {cfg.headerNote}
+          </div>
+        ) : null}
         <div className="receiptHead">
-          <div className="receiptTitle">Tổng: {fmtVnd(receipt.grand_total)} đ</div>
+          <div className="receiptTitle">
+            Tổng: {fmtVnd(receipt.grand_total)} đ
+          </div>
           <div className="receiptMeta">
             <span className="pill">Status: {receipt.status}</span>
-            <span className="pill">{new Date(receipt.created_at).toLocaleString("vi-VN")}</span>
+            <span className="pill">
+              {new Date(receipt.created_at).toLocaleString("vi-VN")}
+            </span>
           </div>
         </div>
 
@@ -306,12 +348,20 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
                   <td>
                     <div className="tName">{it.name}</div>
                     <div className="tMeta">
-                      {cfg.showPricingMode ? <span className="pill">{it.pricing_mode}</span> : null}
-                      {asNum(it.discount_total) > 0 ? (
-                        <span className="pill">KM: {fmtVnd(asNum(it.discount_total))} đ</span>
+                      {cfg.showPricingMode ? (
+                        <span className="pill">{it.pricing_mode}</span>
                       ) : null}
-                      {cfg.showBarcode && it.barcode ? <span className="pill">BC: {it.barcode}</span> : null}
-                      {cfg.showSku && it.sku ? <span className="pill">SKU: {it.sku}</span> : null}
+                      {asNum(it.discount_total) > 0 ? (
+                        <span className="pill">
+                          KM: {fmtVnd(asNum(it.discount_total))} đ
+                        </span>
+                      ) : null}
+                      {cfg.showBarcode && it.barcode ? (
+                        <span className="pill">BC: {it.barcode}</span>
+                      ) : null}
+                      {cfg.showSku && it.sku ? (
+                        <span className="pill">SKU: {it.sku}</span>
+                      ) : null}
                     </div>
                   </td>
                   <td className="right">
@@ -324,8 +374,16 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
             </tbody>
           </table>
         </div>
-        {cfg.footerText ? <div className="hint" style={{ marginTop: 8 }}>{cfg.footerText}</div> : null}
-        {cfg.showThankYou ? <div className="hint" style={{ marginTop: 4 }}>Cam on quy khach!</div> : null}
+        {cfg.footerText ? (
+          <div className="hint" style={{ marginTop: 8 }}>
+            {cfg.footerText}
+          </div>
+        ) : null}
+        {cfg.showThankYou ? (
+          <div className="hint" style={{ marginTop: 4 }}>
+            Cam on quy khach!
+          </div>
+        ) : null}
       </div>
     </Modal>
   )
@@ -336,7 +394,8 @@ function LineEditModal({ item, onClose, onSave }) {
   const [qty, setQty] = useState(String(item.qty))
   const [err, setErr] = useState("")
 
-  const isRollLine = item.pricing_mode === "meter" || item.pricing_mode === "roll"
+  const isRollLine =
+    item.pricing_mode === "meter" || item.pricing_mode === "roll"
 
   function submit() {
     setErr("")
@@ -361,10 +420,7 @@ function LineEditModal({ item, onClose, onSave }) {
           <button className="btn" onClick={onClose}>
             Huỷ
           </button>
-          <button
-            className="btn btnPrimary"
-            onClick={submit}
-          >
+          <button className="btn btnPrimary" onClick={submit}>
             Lưu
           </button>
         </div>
@@ -384,7 +440,9 @@ function LineEditModal({ item, onClose, onSave }) {
                 { value: "roll", label: "Nguyên cuộn" },
               ]}
             />
-            <div className="hint">Nếu chọn “nguyên cuộn”, hệ thống sẽ kiểm tra cuộn phải full.</div>
+            <div className="hint">
+              Nếu chọn “nguyên cuộn”, hệ thống sẽ kiểm tra cuộn phải full.
+            </div>
           </div>
           <div>
             <div className="hint" style={{ marginTop: 0 }}>
@@ -453,11 +511,19 @@ function RollPickerModal({ su, onClose, onAddMeter, onAddRoll }) {
       title={`Cuộn: ${su.variant_name}`}
       onClose={onClose}
       footer={
-        <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
           <div className="hint" style={{ margin: 0 }}>
             Barcode: <b>{su.barcode}</b> · Còn:{" "}
             <b>
-              {fmtQty(su.remaining_qty)}/{fmtQty(su.initial_qty)} {su.uom || "m"}
+              {fmtQty(su.remaining_qty)}/{fmtQty(su.initial_qty)}{" "}
+              {su.uom || "m"}
             </b>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
@@ -477,7 +543,9 @@ function RollPickerModal({ su, onClose, onAddMeter, onAddRoll }) {
         <div className="card flatCard">
           <div className="cardHeader">
             <div className="cardTitle">Bán theo mét</div>
-            <div className="pill">Giá/m: {su.price == null ? "—" : `${fmtVnd(su.price)} đ`}</div>
+            <div className="pill">
+              Giá/m: {su.price == null ? "—" : `${fmtVnd(su.price)} đ`}
+            </div>
           </div>
           <div className="cardBody">
             <input
@@ -493,10 +561,7 @@ function RollPickerModal({ su, onClose, onAddMeter, onAddRoll }) {
               placeholder="Số mét"
             />
             <div className="hint">Nhấn Enter để thêm nhanh theo mét.</div>
-            <button
-              className="btn btnPrimary"
-              onClick={submitMeter}
-            >
+            <button className="btn btnPrimary" onClick={submitMeter}>
               Thêm mét
             </button>
           </div>
@@ -553,7 +618,14 @@ function BillHistoryModal({
       title="Bill cũ (đã thanh toán)"
       onClose={onClose}
       footer={
-        <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
           <div className="hint" style={{ margin: 0 }}>
             Chọn bill để xem chi tiết hoặc hoàn hàng một phần.
           </div>
@@ -572,8 +644,18 @@ function BillHistoryModal({
           onChange={(e) => setQ(e.target.value)}
           placeholder="Tìm theo mã bill / ghi chú / tên khách / SĐT..."
         />
-        <input className="input" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-        <input className="input" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+        <input
+          className="input"
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+        />
+        <input
+          className="input"
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+        />
         <UiSelect
           value={sort}
           onChange={(v) => setSort(String(v))}
@@ -607,7 +689,11 @@ function BillHistoryModal({
                 <td>
                   <b>#{r.id}</b>
                 </td>
-                <td>{r.checked_out_at ? new Date(r.checked_out_at).toLocaleString("vi-VN") : new Date(r.created_at).toLocaleString("vi-VN")}</td>
+                <td>
+                  {r.checked_out_at
+                    ? new Date(r.checked_out_at).toLocaleString("vi-VN")
+                    : new Date(r.created_at).toLocaleString("vi-VN")}
+                </td>
                 <td>
                   {r.customer_name ? (
                     <>
@@ -623,11 +709,26 @@ function BillHistoryModal({
                   {fmtVnd(r.grand_total)} đ
                 </td>
                 <td className="right">
-                  <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
-                    <button className="btn" disabled={busy} onClick={() => onOpenReceipt(r.id)}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      justifyContent: "flex-end",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <button
+                      className="btn"
+                      disabled={busy}
+                      onClick={() => onOpenReceipt(r.id)}
+                    >
                       Mở bill
                     </button>
-                    <button className="btn btnPrimary" disabled={busy} onClick={() => onOpenRefund(r.id)}>
+                    <button
+                      className="btn btnPrimary"
+                      disabled={busy}
+                      onClick={() => onOpenRefund(r.id)}
+                    >
                       Refund
                     </button>
                   </div>
@@ -667,7 +768,8 @@ function RefundModal({ receipt, busy, onClose, onSubmit }) {
     const lines = []
     for (const it of refundableItems) {
       const raw = qtyMap[it.item_id]
-      if (raw === undefined || raw === null || String(raw).trim() === "") continue
+      if (raw === undefined || raw === null || String(raw).trim() === "")
+        continue
       const qty = Number(raw)
       if (!Number.isFinite(qty) || qty <= 0) {
         setErr(`Số lượng refund không hợp lệ ở dòng #${it.item_id}`)
@@ -696,7 +798,14 @@ function RefundModal({ receipt, busy, onClose, onSubmit }) {
       title={`Refund bill #${receipt?.order_id || ""}`}
       onClose={onClose}
       footer={
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            justifyContent: "flex-end",
+            flexWrap: "wrap",
+          }}
+        >
           <button className="btn" disabled={busy} onClick={onClose}>
             Huỷ
           </button>
@@ -709,7 +818,8 @@ function RefundModal({ receipt, busy, onClose, onSubmit }) {
       {err ? <div className="payStatus payStatusErr">{err}</div> : null}
 
       <div className="hint">
-        Chỉ hoàn những dòng có <b>còn được refund</b>. Hàng hoàn sẽ được cộng lại tồn kho.
+        Chỉ hoàn những dòng có <b>còn được refund</b>. Hàng hoàn sẽ được cộng
+        lại tồn kho.
       </div>
 
       <div className="tableWrap">
@@ -731,7 +841,9 @@ function RefundModal({ receipt, busy, onClose, onSubmit }) {
                   <div className="tMeta">
                     <span className="pill">#{it.item_id}</span>
                     <span className="pill">{it.pricing_mode}</span>
-                    {it.sku ? <span className="pill">SKU: {it.sku}</span> : null}
+                    {it.sku ? (
+                      <span className="pill">SKU: {it.sku}</span>
+                    ) : null}
                   </div>
                 </td>
                 <td className="right">
@@ -749,7 +861,9 @@ function RefundModal({ receipt, busy, onClose, onSubmit }) {
                   <input
                     className="input refundQtyInput"
                     value={qtyMap[it.item_id] ?? ""}
-                    onChange={(e) => setQty(it.item_id, clampMoneyInput(e.target.value))}
+                    onChange={(e) =>
+                      setQty(it.item_id, clampMoneyInput(e.target.value))
+                    }
                     onFocus={selectAllOnFocus}
                     placeholder={it.pricing_mode === "roll" ? "1" : "0"}
                   />
@@ -759,7 +873,10 @@ function RefundModal({ receipt, busy, onClose, onSubmit }) {
             {!refundableItems.length ? (
               <tr>
                 <td colSpan={5}>
-                  <div className="hint">Bill này đã refund hết hoặc không còn dòng nào có thể refund.</div>
+                  <div className="hint">
+                    Bill này đã refund hết hoặc không còn dòng nào có thể
+                    refund.
+                  </div>
                 </td>
               </tr>
             ) : null}
@@ -771,7 +888,12 @@ function RefundModal({ receipt, busy, onClose, onSubmit }) {
         <div className="hint" style={{ marginTop: 0 }}>
           Ghi chú refund
         </div>
-        <input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Lý do hoàn hàng..." />
+        <input
+          className="input"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Lý do hoàn hàng..."
+        />
       </div>
     </Modal>
   )
@@ -802,6 +924,8 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
   const [payModalOpen, setPayModalOpen] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState("cash")
   const [paidAmount, setPaidAmount] = useState("")
+  const [mixCashAmount, setMixCashAmount] = useState("")
+  const [mixBankAmount, setMixBankAmount] = useState("")
   const [note, setNote] = useState("")
 
   const [invoiceDiscOpen, setInvoiceDiscOpen] = useState(false)
@@ -859,7 +983,9 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
 
   const filteredVariants = useMemo(() => {
     if (selectedCategoryId === "all") return allVariants
-    return allVariants.filter((v) => String(v.parent_category_id) === String(selectedCategoryId))
+    return allVariants.filter(
+      (v) => String(v.parent_category_id) === String(selectedCategoryId),
+    )
   }, [allVariants, selectedCategoryId])
 
   const categoryCounts = useMemo(() => {
@@ -867,7 +993,8 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     let total = 0
     for (const v of allVariants) {
       total += 1
-      const id = v.parent_category_id == null ? null : String(v.parent_category_id)
+      const id =
+        v.parent_category_id == null ? null : String(v.parent_category_id)
       byId.set(id, (byId.get(id) || 0) + 1)
     }
     return { total, byId }
@@ -878,15 +1005,35 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
   const grandTotal = useMemo(() => asNum(receipt?.grand_total), [receipt])
   const customerName = receipt?.customer_name || null
   const customerPhone = receipt?.customer_phone || null
-  const customerId = receipt?.customer_id != null ? receipt.customer_id : order?.customer_id
+  const customerId =
+    receipt?.customer_id != null ? receipt.customer_id : order?.customer_id
 
   const paidValue = useMemo(() => {
+    if (paymentMethod === "mixed") {
+      const cash = mixCashAmount === "" ? 0 : Number(mixCashAmount)
+      const bank = mixBankAmount === "" ? 0 : Number(mixBankAmount)
+      if (!Number.isFinite(cash) || !Number.isFinite(bank)) return NaN
+      return cash + bank
+    }
     const paid = paidAmount === "" ? grandTotal : Number(paidAmount)
     return Number.isFinite(paid) ? paid : NaN
-  }, [paidAmount, grandTotal])
+  }, [paymentMethod, paidAmount, mixCashAmount, mixBankAmount, grandTotal])
 
   const paymentError = useMemo(() => {
-    if (!Number.isFinite(paidValue) || paidValue < 0) return "Tiền khách đưa không hợp lệ"
+    if (!Number.isFinite(paidValue) || paidValue < 0)
+      return "Tiền khách đưa không hợp lệ"
+    if (paymentMethod === "mixed") {
+      const cash = mixCashAmount === "" ? 0 : Number(mixCashAmount)
+      const bank = mixBankAmount === "" ? 0 : Number(mixBankAmount)
+      if (!Number.isFinite(cash) || !Number.isFinite(bank) || cash < 0 || bank < 0) {
+        return "Tiền mặt/chuyển khoản không hợp lệ"
+      }
+      if (cash <= 0 && bank <= 0) {
+        return "Nhập ít nhất một khoản thanh toán > 0"
+      }
+      if (paidValue < grandTotal) return "Tổng thanh toán chưa đủ"
+      return null
+    }
     if (paymentMethod === "cash") {
       if (paidValue < grandTotal) return "Tiền khách đưa chưa đủ"
       return null
@@ -895,7 +1042,7 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
       return "Chuyển khoản/Momo phải bằng đúng tổng tiền"
     }
     return null
-  }, [paidValue, paymentMethod, grandTotal])
+  }, [paidValue, paymentMethod, grandTotal, mixCashAmount, mixBankAmount])
 
   const changePreview = useMemo(() => {
     if (!Number.isFinite(paidValue)) return 0
@@ -1003,8 +1150,13 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     if (!refundReceipt?.order_id) return
     setRefundBusy(true)
     try {
-      const out = await post(`/api/v1/pos/orders/${refundReceipt.order_id}/refund`, payload)
-      const latestReceipt = await get(`/api/v1/pos/orders/${refundReceipt.order_id}/receipt`)
+      const out = await post(
+        `/api/v1/pos/orders/${refundReceipt.order_id}/refund`,
+        payload,
+      )
+      const latestReceipt = await get(
+        `/api/v1/pos/orders/${refundReceipt.order_id}/receipt`,
+      )
       setRefundReceipt(latestReceipt)
       if (receiptModal?.order_id === refundReceipt.order_id) {
         setReceiptModal(latestReceipt)
@@ -1020,7 +1172,9 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     const qq = (nextQ || "").trim()
     setCustomerBusy(true)
     try {
-      const list = await get(`/api/v1/customers/?q=${encodeURIComponent(qq)}&limit=50&is_active=true`)
+      const list = await get(
+        `/api/v1/customers/?q=${encodeURIComponent(qq)}&limit=50&is_active=true`,
+      )
       setCustomerRows(Array.isArray(list) ? list : [])
     } finally {
       setCustomerBusy(false)
@@ -1059,6 +1213,8 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
       localStorage.setItem(LS_ORDER_ID, String(o.id))
       setPaidAmount("")
       setPaymentMethod("cash")
+      setMixCashAmount("")
+      setMixBankAmount("")
       await loadOrder(o.id)
       // Không reset vùng tìm kiếm khi tạo đơn mới.
       await doSearch(q)
@@ -1108,7 +1264,10 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     if (!order) return
     setBusy(true)
     try {
-      await post(`/api/v1/pos/orders/${order.id}/items/normal`, { variant_id: variantId, qty: String(qty) })
+      await post(`/api/v1/pos/orders/${order.id}/items/normal`, {
+        variant_id: variantId,
+        qty: String(qty),
+      })
       await refreshReceipt(order.id)
       await refreshDrafts()
     } finally {
@@ -1120,7 +1279,11 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     if (!order) return
     setBusy(true)
     try {
-      await post(`/api/v1/pos/orders/${order.id}/items/roll`, { barcode, mode, qty })
+      await post(`/api/v1/pos/orders/${order.id}/items/roll`, {
+        barcode,
+        mode,
+        qty,
+      })
       await refreshReceipt(order.id)
       await refreshDrafts()
     } finally {
@@ -1133,9 +1296,15 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     setBusy(true)
     try {
       if (item.pricing_mode === "normal") {
-        await patch(`/api/v1/pos/orders/${order.id}/items/${item.item_id}/normal`, { qty: item.qty })
+        await patch(
+          `/api/v1/pos/orders/${order.id}/items/${item.item_id}/normal`,
+          { qty: item.qty },
+        )
       } else {
-        await patch(`/api/v1/pos/orders/${order.id}/items/${item.item_id}/roll`, { mode: item.mode, qty: item.qty })
+        await patch(
+          `/api/v1/pos/orders/${order.id}/items/${item.item_id}/roll`,
+          { mode: item.mode, qty: item.qty },
+        )
       }
       await refreshReceipt(order.id)
     } finally {
@@ -1188,19 +1357,40 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     setBusy(true)
     try {
       const updatedReceipt = await persistDraftMetaBeforeCheckout()
-      const payable = updatedReceipt ? asNum(updatedReceipt.grand_total) : grandTotal
-      const paid = paidAmount === "" ? payable : Number(paidAmount)
-      if (!Number.isFinite(paid) || paid < 0) throw new Error("Tiền khách đưa không hợp lệ")
-      if (paymentMethod === "cash" && paid < payable) throw new Error("Tiền khách đưa chưa đủ")
-      if (paymentMethod !== "cash" && !nearlyEqual(paid, payable)) {
-        throw new Error("Chuyển khoản/Momo phải bằng đúng tổng tiền")
+      const payable = updatedReceipt
+        ? asNum(updatedReceipt.grand_total)
+        : grandTotal
+      let paid = 0
+      const checkoutPayload = {
+        payment_method: paymentMethod,
+        note: note || null,
       }
 
-      await post(`/api/v1/pos/orders/${order.id}/checkout`, {
-        payment_method: paymentMethod,
-        paid_amount: String(paid),
-        note: note || null,
-      })
+      if (paymentMethod === "mixed") {
+        const cash = mixCashAmount === "" ? 0 : Number(mixCashAmount)
+        const bank = mixBankAmount === "" ? 0 : Number(mixBankAmount)
+        if (!Number.isFinite(cash) || !Number.isFinite(bank) || cash < 0 || bank < 0) {
+          throw new Error("Tiền mặt/chuyển khoản không hợp lệ")
+        }
+        paid = cash + bank
+        if (paid <= 0) throw new Error("Nhập ít nhất một khoản thanh toán > 0")
+        if (paid < payable) throw new Error("Tổng thanh toán chưa đủ")
+        checkoutPayload.cash_amount = String(cash)
+        checkoutPayload.bank_amount = String(bank)
+        checkoutPayload.paid_amount = String(paid)
+      } else {
+        paid = paidAmount === "" ? payable : Number(paidAmount)
+        if (!Number.isFinite(paid) || paid < 0)
+          throw new Error("Tiền khách đưa không hợp lệ")
+        if (paymentMethod === "cash" && paid < payable)
+          throw new Error("Tiền khách đưa chưa đủ")
+        if (paymentMethod !== "cash" && !nearlyEqual(paid, payable)) {
+          throw new Error("Chuyển khoản/Momo phải bằng đúng tổng tiền")
+        }
+        checkoutPayload.paid_amount = String(paid)
+      }
+
+      await post(`/api/v1/pos/orders/${order.id}/checkout`, checkoutPayload)
 
       const r = await refreshReceipt(order.id)
       setReceiptModal(r)
@@ -1261,7 +1451,9 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     const value =
       mode === "percent"
         ? String(order.discount_value != null ? order.discount_value : 0)
-        : String(order.discount_value != null ? order.discount_value : discountTotal)
+        : String(
+            order.discount_value != null ? order.discount_value : discountTotal,
+          )
     setInvoiceDiscMode(mode)
     setInvoiceDiscValue(value)
     setInvoiceDiscOpen(true)
@@ -1271,18 +1463,29 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     const mode = it.discount_mode || "none"
     setLineDiscItem(it)
     setLineDiscMode(mode)
-    setLineDiscValue(it.discount_value != null ? String(it.discount_value) : "0")
+    setLineDiscValue(
+      it.discount_value != null ? String(it.discount_value) : "0",
+    )
   }
 
   async function applyInvoiceDiscount() {
     if (busy || !order || order.status !== "draft") return
     const val = invoiceDiscValue === "" ? 0 : Number(invoiceDiscValue)
-    if (!Number.isFinite(val) || val < 0) throw new Error("Giá trị khuyến mãi không hợp lệ")
-    if (invoiceDiscMode === "percent" && val > 100) throw new Error("Phần trăm phải <= 100")
-    const computed = computeDiscountAmount({ mode: invoiceDiscMode, valueStr: invoiceDiscValue, base: subtotal })
+    if (!Number.isFinite(val) || val < 0)
+      throw new Error("Giá trị khuyến mãi không hợp lệ")
+    if (invoiceDiscMode === "percent" && val > 100)
+      throw new Error("Phần trăm phải <= 100")
+    const computed = computeDiscountAmount({
+      mode: invoiceDiscMode,
+      valueStr: invoiceDiscValue,
+      base: subtotal,
+    })
     if (!Number.isFinite(computed)) throw new Error("Khuyến mãi không hợp lệ")
 
-    await saveOrderMeta({ discount_mode: invoiceDiscMode, discount_value: String(val) })
+    await saveOrderMeta({
+      discount_mode: invoiceDiscMode,
+      discount_value: String(val),
+    })
     setInvoiceDiscOpen(false)
   }
 
@@ -1290,8 +1493,10 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     if (busy || !order || order.status !== "draft" || !lineDiscItem) return
     if (lineDiscMode !== "none") {
       const val = lineDiscValue === "" ? 0 : Number(lineDiscValue)
-      if (!Number.isFinite(val) || val < 0) throw new Error("Giá trị khuyến mãi không hợp lệ")
-      if (lineDiscMode === "percent" && val > 100) throw new Error("Phần trăm phải <= 100")
+      if (!Number.isFinite(val) || val < 0)
+        throw new Error("Giá trị khuyến mãi không hợp lệ")
+      if (lineDiscMode === "percent" && val > 100)
+        throw new Error("Phần trăm phải <= 100")
     }
 
     const payload =
@@ -1299,7 +1504,10 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
         ? { mode: "none", value: null }
         : { mode: lineDiscMode, value: String(Number(lineDiscValue || 0)) }
 
-    await patch(`/api/v1/pos/orders/${order.id}/items/${lineDiscItem.item_id}/discount`, payload)
+    await patch(
+      `/api/v1/pos/orders/${order.id}/items/${lineDiscItem.item_id}/discount`,
+      payload,
+    )
     await refreshReceipt(order.id)
     setLineDiscItem(null)
   }
@@ -1319,13 +1527,76 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
   return (
     <div className="posKiotShell">
       <div className="posHeader">
-        <div className="posBrand">
-          <div className="posBrandTitle">POS</div>
-          <div className="posBrandMeta">
-            <span className="pill">F2: Đơn mới</span>
-            <span className="pill">F4: Thanh toán</span>
-            <span className="pill">Ctrl+K: Focus scan</span>
+        <div className="posCustomerHead">
+          <div className="posCustomerMini">
+            <div className="posCustomerMiniLabel">Khách hàng</div>
+            <div className="posCustomerMiniValue">
+              {customerName ? (
+                <>
+                  {customerName}
+                  {customerPhone ? ` · ${customerPhone}` : ""}
+                </>
+              ) : (
+                "Khách lẻ"
+              )}
+            </div>
           </div>
+          <div className="posCustomerBtns">
+            <button
+              className="btn btnPrimary"
+              disabled={busy || !order || order.status !== "draft"}
+              onClick={async () => {
+                try {
+                  setCustomerModalOpen(true)
+                  setCustomerQ("")
+                  setCustomerRows([])
+                  await loadCustomers("")
+                } catch (e) {
+                  showErr(e)
+                }
+              }}
+            >
+              Chọn KH
+            </button>
+            <button
+              className="btn"
+              disabled={
+                busy || !order || order.status !== "draft" || !customerId
+              }
+              onClick={async () => {
+                try {
+                  await clearCustomer()
+                } catch (e) {
+                  showErr(e)
+                }
+              }}
+            >
+              Huỷ KH
+            </button>
+          </div>
+        </div>
+
+        <div className="posHeaderActions">
+          <button
+            className="btn"
+            disabled={busy || historyBusy || refundBusy}
+            onClick={async () => {
+              try {
+                await openOrderHistory()
+              } catch (e) {
+                showErr(e)
+              }
+            }}
+          >
+            Bill cũ / Refund
+          </button>
+          <button
+            className="btn"
+            disabled={busy || !order || order.status !== "draft"}
+            onClick={cancelDraft}
+          >
+            Huỷ đơn
+          </button>
         </div>
 
         <div className="posScan">
@@ -1347,7 +1618,7 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
             autoComplete="off"
           />
           <button
-            className="btn btnPrimary"
+            className="btn btnPrimary btnIconAction"
             disabled={busy}
             onClick={async () => {
               try {
@@ -1356,41 +1627,21 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                 showErr(e)
               }
             }}
+            aria-label="Tìm và thêm sản phẩm"
+            title="Tìm và thêm sản phẩm"
           >
-            Thêm
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 640 640"
+              className="iconSvg"
+              aria-hidden="true"
+            >
+              <path
+                d="M480 272C480 317.9 465.1 360.3 440 394.7L566.6 521.4C579.1 533.9 579.1 554.2 566.6 566.7C554.1 579.2 533.8 579.2 521.3 566.7L394.7 440C360.3 465.1 317.9 480 272 480C157.1 480 64 386.9 64 272C64 157.1 157.1 64 272 64C386.9 64 480 157.1 480 272zM272 416C351.5 416 416 351.5 416 272C416 192.5 351.5 128 272 128C192.5 128 128 192.5 128 272C128 351.5 192.5 416 272 416z"
+                fill="currentColor"
+              />
+            </svg>
           </button>
-        </div>
-
-        <div className="posHeaderRight">
-          <div className="posTotal">
-            <div className="posTotalLabel">Tổng</div>
-            <div className="posTotalValue">{fmtVnd(grandTotal)} đ</div>
-          </div>
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
-            <button
-              className="btn"
-              disabled={busy || historyBusy || refundBusy}
-              onClick={async () => {
-                try {
-                  await openOrderHistory()
-                } catch (e) {
-                  showErr(e)
-                }
-              }}
-            >
-              Bill cũ / Refund
-            </button>
-            <button className="btn" disabled={busy || !order || order.status !== "draft"} onClick={cancelDraft}>
-              Huỷ đơn
-            </button>
-            <button
-              className="btn btnPrimary"
-              disabled={busy || !order || order.status !== "draft" || cartItems.length === 0}
-              onClick={() => setPayModalOpen(true)}
-            >
-              Thanh toán
-            </button>
-          </div>
         </div>
       </div>
 
@@ -1407,7 +1658,11 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
               Hóa đơn {d.id}
             </button>
           ))}
-          <button className="tab tabNew" onClick={createDraftOrder} disabled={busy}>
+          <button
+            className="tab tabNew"
+            onClick={createDraftOrder}
+            disabled={busy}
+          >
             + Đơn
           </button>
         </div>
@@ -1452,21 +1707,31 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                             <div className="tMeta">
                               <span className="pill">{it.pricing_mode}</span>
                               {asNum(it.discount_total) > 0 ? (
-                                <span className="pill">KM: {fmtVnd(asNum(it.discount_total))} đ</span>
+                                <span className="pill">
+                                  KM: {fmtVnd(asNum(it.discount_total))} đ
+                                </span>
                               ) : null}
-                              {it.barcode ? <span className="pill">BC: {it.barcode}</span> : null}
-                              {it.sku ? <span className="pill">SKU: {it.sku}</span> : null}
+                              {it.barcode ? (
+                                <span className="pill">BC: {it.barcode}</span>
+                              ) : null}
+                              {it.sku ? (
+                                <span className="pill">SKU: {it.sku}</span>
+                              ) : null}
                             </div>
                           </td>
                           <td className="right">
                             <div className="qtyBox">
-                              {(it.pricing_mode === "normal" || it.pricing_mode === "meter") && (
+                              {(it.pricing_mode === "normal" ||
+                                it.pricing_mode === "meter") && (
                                 <button
                                   className="qtyBtn"
                                   disabled={busy}
                                   onClick={async () => {
                                     try {
-                                      const next = Math.max(0, asNum(it.qty) - 1)
+                                      const next = Math.max(
+                                        0,
+                                        asNum(it.qty) - 1,
+                                      )
                                       if (next <= 0) {
                                         await deleteItem(it.item_id)
                                         return
@@ -1488,7 +1753,8 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                               <div className="qtyText">
                                 {fmtQty(it.qty)} {it.uom || ""}
                               </div>
-                              {(it.pricing_mode === "normal" || it.pricing_mode === "meter") && (
+                              {(it.pricing_mode === "normal" ||
+                                it.pricing_mode === "meter") && (
                                 <button
                                   className="qtyBtn"
                                   disabled={busy}
@@ -1516,14 +1782,33 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                             {fmtVnd(it.line_total)} đ
                           </td>
                           <td className="right">
-                            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
-                              <button className="btn" disabled={busy} onClick={() => openLineDiscount(it)}>
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: 8,
+                                justifyContent: "flex-end",
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              <button
+                                className="btn"
+                                disabled={busy}
+                                onClick={() => openLineDiscount(it)}
+                              >
                                 KM
                               </button>
-                              <button className="btn" disabled={busy} onClick={() => setEditLine(it)}>
+                              <button
+                                className="btn"
+                                disabled={busy}
+                                onClick={() => setEditLine(it)}
+                              >
                                 Sửa
                               </button>
-                              <button className="btn btnDanger" disabled={busy} onClick={() => deleteItem(it.item_id)}>
+                              <button
+                                className="btn btnDanger"
+                                disabled={busy}
+                                onClick={() => deleteItem(it.item_id)}
+                              >
                                 Xoá
                               </button>
                             </div>
@@ -1539,80 +1824,51 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
 
           <div className="checkoutBar">
             <div className="checkoutLeft">
-              <div style={{ display: "grid", gap: 10 }}>
-                <div>
-                  <div className="checkoutLabel">Khách hàng</div>
-                  <div className="discSummary">
-                    <div className="pill">
-                      {customerName ? (
-                        <>
-                          {customerName}
-                          {customerPhone ? ` · ${customerPhone}` : ""}
-                        </>
-                      ) : (
-                        "Chưa chọn"
-                      )}
-                    </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <button
-                        className="btn btnPrimary"
-                        disabled={busy || !order || order.status !== "draft"}
-                        onClick={async () => {
-                          try {
-                            setCustomerModalOpen(true)
-                            setCustomerQ("")
-                            setCustomerRows([])
-                            await loadCustomers("")
-                          } catch (e) {
-                            showErr(e)
-                          }
-                        }}
-                      >
-                        Chọn
-                      </button>
-                      <button
-                        className="btn"
-                        disabled={busy || !order || order.status !== "draft" || !customerId}
-                        onClick={async () => {
-                          try {
-                            await clearCustomer()
-                          } catch (e) {
-                            showErr(e)
-                          }
-                        }}
-                      >
-                        Bỏ
-                      </button>
-                    </div>
+              <div>
+                <div className="checkoutLabel">Khuyến mãi hoá đơn</div>
+                <div className="discSummary">
+                  <div className="pill">
+                    {order?.discount_mode === "percent"
+                      ? `Theo %: ${asNum(order?.discount_value)}% (=${fmtVnd(discountTotal)} đ)`
+                      : `Theo tiền: ${fmtVnd(discountTotal)} đ`}
                   </div>
-                </div>
-
-                <div>
-                  <div className="checkoutLabel">Khuyến mãi hoá đơn</div>
-                  <div className="discSummary">
-                    <div className="pill">
-                      {order?.discount_mode === "percent"
-                        ? `Theo %: ${asNum(order?.discount_value)}% (=${fmtVnd(discountTotal)} đ)`
-                        : `Theo tiền: ${fmtVnd(discountTotal)} đ`}
-                    </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <button className="btn btnPrimary" disabled={busy || !order || order.status !== "draft"} onClick={openInvoiceDiscount}>
-                        Chỉnh
-                      </button>
-                      <button
-                        className="btn"
-                        disabled={busy || !order || order.status !== "draft" || discountTotal <= 0}
-                        onClick={() => saveOrderMeta({ discount_mode: "amount", discount_value: "0" })}
-                      >
-                        Xoá KM
-                      </button>
-                    </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      className="btn btnPrimary"
+                      disabled={busy || !order || order.status !== "draft"}
+                      onClick={openInvoiceDiscount}
+                    >
+                      Sửa KM
+                    </button>
+                    <button
+                      className="btn"
+                      disabled={
+                        busy ||
+                        !order ||
+                        order.status !== "draft" ||
+                        discountTotal <= 0
+                      }
+                      onClick={() =>
+                        saveOrderMeta({
+                          discount_mode: "amount",
+                          discount_value: "0",
+                        })
+                      }
+                    >
+                      Xoá KM
+                    </button>
                   </div>
                 </div>
               </div>
               <div>
                 <div className="checkoutLabel">Ghi chú đơn hàng</div>
-                <input className="input" value={note} onChange={(e) => setNote(e.target.value)} onBlur={() => saveOrderMeta({ note })} placeholder="..." />
+                <input
+                  className="input"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  onBlur={() => saveOrderMeta({ note })}
+                  placeholder="..."
+                />
               </div>
             </div>
 
@@ -1622,7 +1878,7 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                   <span>Tổng tiền hàng</span>
                   <b>{fmtVnd(subtotal)} đ</b>
                 </div>
-              <div className="checkoutRow">
+                <div className="checkoutRow">
                   <span>Khuyến mãi</span>
                   <b>{fmtVnd(discountTotal)} đ</b>
                 </div>
@@ -1631,7 +1887,16 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                   <b>{fmtVnd(grandTotal)} đ</b>
                 </div>
               </div>
-              <button className="btn btnPrimary btnCheckout" disabled={busy || !order || order.status !== "draft" || cartItems.length === 0} onClick={() => setPayModalOpen(true)}>
+              <button
+                className="btn btnPrimary btnCheckout"
+                disabled={
+                  busy ||
+                  !order ||
+                  order.status !== "draft" ||
+                  cartItems.length === 0
+                }
+                onClick={() => setPayModalOpen(true)}
+              >
                 THANH TOÁN
               </button>
             </div>
@@ -1646,27 +1911,44 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
           <div className="panelBody panelBodyTight">
             <div className="catalogSplit">
               <div className="catalogContent scroll">
-                {!searchOut ? <div className="hint">Gõ từ khoá để hiện danh sách hàng.</div> : null}
+                {!searchOut ? (
+                  <div className="hint">Gõ từ khoá để hiện danh sách hàng.</div>
+                ) : null}
 
                 {searchOut?.stock_unit ? (
                   <div className="miniCard">
-                    <div className="miniTitle">Cuộn: {searchOut.stock_unit.variant_name}</div>
+                    <div className="miniTitle">
+                      Cuộn: {searchOut.stock_unit.variant_name}
+                    </div>
                     <div className="miniMeta">
-                      <span className="pill">BC: {searchOut.stock_unit.barcode}</span>
+                      <span className="pill">
+                        BC: {searchOut.stock_unit.barcode}
+                      </span>
                       <span className="pill">
                         Giá/m:{" "}
-                        {searchOut.stock_unit.price == null ? "—" : `${fmtVnd(searchOut.stock_unit.price)} đ`}
+                        {searchOut.stock_unit.price == null
+                          ? "—"
+                          : `${fmtVnd(searchOut.stock_unit.price)} đ`}
                       </span>
                       <span className="pill">
                         Giá cuộn:{" "}
-                        {searchOut.stock_unit.roll_price == null ? "—" : `${fmtVnd(searchOut.stock_unit.roll_price)} đ`}
+                        {searchOut.stock_unit.roll_price == null
+                          ? "—"
+                          : `${fmtVnd(searchOut.stock_unit.roll_price)} đ`}
                       </span>
                       <span className="pill">
-                        Còn: {fmtQty(searchOut.stock_unit.remaining_qty)}/{fmtQty(searchOut.stock_unit.initial_qty)}{" "}
+                        Còn: {fmtQty(searchOut.stock_unit.remaining_qty)}/
+                        {fmtQty(searchOut.stock_unit.initial_qty)}{" "}
                         {searchOut.stock_unit.uom || "m"}
                       </span>
-                      {searchOut.stock_unit.is_full_roll ? <span className="pill">Full</span> : <span className="pill">Cắt dở</span>}
-                      {searchOut.stock_unit.is_reserved ? <span className="pill">Reserved</span> : null}
+                      {searchOut.stock_unit.is_full_roll ? (
+                        <span className="pill">Full</span>
+                      ) : (
+                        <span className="pill">Cắt dở</span>
+                      )}
+                      {searchOut.stock_unit.is_reserved ? (
+                        <span className="pill">Reserved</span>
+                      ) : null}
                     </div>
                     <div className="miniActions">
                       <button
@@ -1690,7 +1972,9 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                         onClick={async () => {
                           try {
                             if (v.track_stock_unit) {
-                              showInfo("Hàng theo cuộn: hãy scan barcode của cuộn để thêm.")
+                              showInfo(
+                                "Hàng theo cuộn: hãy scan barcode của cuộn để thêm.",
+                              )
                               return
                             }
                             await addNormal(v.variant_id, 1)
@@ -1700,7 +1984,9 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                         }}
                       >
                         <div className="pThumb">
-                          <div className="pThumbFallback">{(v.name || "?").slice(0, 1).toUpperCase()}</div>
+                          <div className="pThumbFallback">
+                            {(v.name || "?").slice(0, 1).toUpperCase()}
+                          </div>
                           {v.image_url ? (
                             // eslint-disable-next-line jsx-a11y/alt-text
                             <img
@@ -1713,13 +1999,17 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                         </div>
                         <div className="pName">{v.name}</div>
                         <div className="pPrice">
-                          {v.track_stock_unit ? `Giá/m: ${fmtVnd(v.price ?? 0)} đ` : `${fmtVnd(v.price ?? 0)} đ`}
+                          {v.track_stock_unit
+                            ? `Giá/m: ${fmtVnd(v.price ?? 0)} đ`
+                            : `${fmtVnd(v.price ?? 0)} đ`}
                         </div>
                         <div className="pMeta">
                           <span>
                             Tồn: {fmtQty(v.stock)} {v.uom || ""}
                           </span>
-                          {v.parent_category_name ? <span>DM: {v.parent_category_name}</span> : null}
+                          {v.parent_category_name ? (
+                            <span>DM: {v.parent_category_name}</span>
+                          ) : null}
                           {v.barcode ? <span>BC: {v.barcode}</span> : null}
                           {v.track_stock_unit && v.roll_price != null ? (
                             <span>Giá cuộn: {fmtVnd(v.roll_price)} đ</span>
@@ -1729,10 +2019,18 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                     ))}
                   </div>
                 ) : null}
-                {searchOut && !filteredVariants.length ? <div className="hint">Không có sản phẩm trong danh mục đang chọn.</div> : null}
+                {searchOut && !filteredVariants.length ? (
+                  <div className="hint">
+                    Không có sản phẩm trong danh mục đang chọn.
+                  </div>
+                ) : null}
               </div>
 
-              <div className="catalogCats scroll" role="tablist" aria-label="Danh mục">
+              <div
+                className="catalogCats scroll"
+                role="tablist"
+                aria-label="Danh mục"
+              >
                 <button
                   type="button"
                   className={`catVTab ${selectedCategoryId === "all" ? "catVTabActive" : ""}`}
@@ -1795,7 +2093,11 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
           onSave={async (next) => {
             try {
               if (editLine.pricing_mode === "normal") {
-                await updateItem({ item_id: editLine.item_id, pricing_mode: "normal", qty: next.qty })
+                await updateItem({
+                  item_id: editLine.item_id,
+                  pricing_mode: "normal",
+                  qty: next.qty,
+                })
               } else {
                 await updateItem({
                   item_id: editLine.item_id,
@@ -1818,13 +2120,23 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
           title="Khuyến mãi hoá đơn"
           onClose={() => setInvoiceDiscOpen(false)}
           footer={
-            <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+              }}
+            >
               <button
                 className="btn btnDanger"
                 disabled={busy || !order || order.status !== "draft"}
                 onClick={async () => {
                   try {
-                    await saveOrderMeta({ discount_mode: "amount", discount_value: "0" })
+                    await saveOrderMeta({
+                      discount_mode: "amount",
+                      discount_value: "0",
+                    })
                     setInvoiceDiscOpen(false)
                   } catch (e) {
                     showErr(e)
@@ -1834,7 +2146,11 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                 Xoá khuyến mãi
               </button>
               <div style={{ display: "flex", gap: 10 }}>
-                <button className="btn" onClick={() => setInvoiceDiscOpen(false)} disabled={busy}>
+                <button
+                  className="btn"
+                  onClick={() => setInvoiceDiscOpen(false)}
+                  disabled={busy}
+                >
                   Huỷ
                 </button>
                 <button
@@ -1875,7 +2191,9 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
               <input
                 className="input"
                 value={invoiceDiscValue}
-                onChange={(e) => setInvoiceDiscValue(clampMoneyInput(e.target.value))}
+                onChange={(e) =>
+                  setInvoiceDiscValue(clampMoneyInput(e.target.value))
+                }
                 onFocus={selectAllOnFocus}
                 onKeyDown={async (e) => {
                   if (!isEnterKey(e)) return
@@ -1895,7 +2213,11 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
             {(() => {
               const disc = Math.min(
                 subtotal,
-                computeDiscountAmount({ mode: invoiceDiscMode, valueStr: invoiceDiscValue, base: subtotal }) || 0
+                computeDiscountAmount({
+                  mode: invoiceDiscMode,
+                  valueStr: invoiceDiscValue,
+                  base: subtotal,
+                }) || 0,
               )
               const net = Math.max(0, subtotal - disc)
               return (
@@ -1919,8 +2241,19 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
           title={`Khuyến mãi sản phẩm: ${lineDiscItem.name}`}
           onClose={() => setLineDiscItem(null)}
           footer={
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
-              <button className="btn" onClick={() => setLineDiscItem(null)} disabled={busy}>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                justifyContent: "flex-end",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                className="btn"
+                onClick={() => setLineDiscItem(null)}
+                disabled={busy}
+              >
                 Huỷ
               </button>
               <button
@@ -1962,7 +2295,9 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                 className="input"
                 disabled={lineDiscMode === "none"}
                 value={lineDiscMode === "none" ? "" : lineDiscValue}
-                onChange={(e) => setLineDiscValue(clampMoneyInput(e.target.value))}
+                onChange={(e) =>
+                  setLineDiscValue(clampMoneyInput(e.target.value))
+                }
                 onFocus={selectAllOnFocus}
                 onKeyDown={async (e) => {
                   if (!isEnterKey(e)) return
@@ -1981,11 +2316,19 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
           <div className="miniCard">
             <div className="miniTitle">Xem trước</div>
             {(() => {
-              const base = asNum(lineDiscItem.qty) * asNum(lineDiscItem.unit_price)
+              const base =
+                asNum(lineDiscItem.qty) * asNum(lineDiscItem.unit_price)
               const disc =
                 lineDiscMode === "none"
                   ? 0
-                  : Math.min(base, computeDiscountAmount({ mode: lineDiscMode, valueStr: lineDiscValue, base }) || 0)
+                  : Math.min(
+                      base,
+                      computeDiscountAmount({
+                        mode: lineDiscMode,
+                        valueStr: lineDiscValue,
+                        base,
+                      }) || 0,
+                    )
               const net = Math.max(0, base - disc)
               return (
                 <div className="miniMeta">
@@ -2005,7 +2348,14 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
           title="Chọn khách hàng"
           onClose={() => setCustomerModalOpen(false)}
           footer={
-            <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+              }}
+            >
               <button
                 className="btn"
                 disabled={busy || !order || order.status !== "draft"}
@@ -2021,7 +2371,11 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                 Bỏ khách hàng
               </button>
               <div style={{ display: "flex", gap: 10 }}>
-                <button className="btn" onClick={() => setCustomerModalOpen(false)} disabled={busy}>
+                <button
+                  className="btn"
+                  onClick={() => setCustomerModalOpen(false)}
+                  disabled={busy}
+                >
                   Đóng
                 </button>
               </div>
@@ -2032,7 +2386,11 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
             <div className="card flatCard">
               <div className="cardHeader">
                 <div className="cardTitle">Tìm khách hàng</div>
-                <div className="pill">{customerBusy ? "Đang tải..." : `${customerRows.length} kết quả`}</div>
+                <div className="pill">
+                  {customerBusy
+                    ? "Đang tải..."
+                    : `${customerRows.length} kết quả`}
+                </div>
               </div>
               <div className="cardBody">
                 <input
@@ -2057,13 +2415,23 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                         }
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                        <div style={{ fontWeight: 900, textAlign: "left" }}>{c.name}</div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 10,
+                        }}
+                      >
+                        <div style={{ fontWeight: 900, textAlign: "left" }}>
+                          {c.name}
+                        </div>
                         <div className="pill">{c.phone || "—"}</div>
                       </div>
                     </button>
                   ))}
-                  {!customerBusy && customerRows.length === 0 ? <div className="hint">Không có kết quả.</div> : null}
+                  {!customerBusy && customerRows.length === 0 ? (
+                    <div className="hint">Không có kết quả.</div>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -2078,12 +2446,24 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                   Tạo khách hàng mới ngay trong POS để gắn vào hoá đơn.
                 </div>
                 <div className="hint">Tên khách hàng *</div>
-                <input className="input" value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="Nguyễn Văn A" />
+                <input
+                  className="input"
+                  value={newCustomerName}
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                  placeholder="Nguyễn Văn A"
+                />
                 <div className="hint">Số điện thoại (tuỳ chọn)</div>
-                <input className="input" value={newCustomerPhone} onChange={(e) => setNewCustomerPhone(e.target.value)} placeholder="090..." />
+                <input
+                  className="input"
+                  value={newCustomerPhone}
+                  onChange={(e) => setNewCustomerPhone(e.target.value)}
+                  placeholder="090..."
+                />
                 <button
                   className="btn btnPrimary"
-                  disabled={busy || customerBusy || !order || order.status !== "draft"}
+                  disabled={
+                    busy || customerBusy || !order || order.status !== "draft"
+                  }
                   onClick={async () => {
                     try {
                       const name = (newCustomerName || "").trim()
@@ -2113,11 +2493,21 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
           title="Thanh toán"
           onClose={() => setPayModalOpen(false)}
           footer={
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button className="btn" onClick={() => setPayModalOpen(false)} disabled={busy}>
+            <div
+              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
+            >
+              <button
+                className="btn"
+                onClick={() => setPayModalOpen(false)}
+                disabled={busy}
+              >
                 Huỷ
               </button>
-              <button className="btn btnPrimary" onClick={checkout} disabled={busy || !!paymentError || cartItems.length === 0}>
+              <button
+                className="btn btnPrimary"
+                onClick={checkout}
+                disabled={busy || !!paymentError || cartItems.length === 0}
+              >
                 Xác nhận
               </button>
             </div>
@@ -2134,46 +2524,68 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
               </div>
               <UiSelect
                 value={paymentMethod}
-                onChange={(v) => setPaymentMethod(String(v))}
+                onChange={(v) => {
+                  const next = String(v)
+                  setPaymentMethod(next)
+                }}
                 options={[
                   { value: "cash", label: "Tiền mặt" },
                   { value: "bank", label: "Chuyển khoản" },
                   { value: "momo", label: "Momo" },
+                  { value: "mixed", label: "Tiền mặt + Chuyển khoản" },
                 ]}
               />
             </div>
             <div>
-              <div className="hint" style={{ marginTop: 0 }}>
-                Khách đưa
-              </div>
-              <input
-                className="input"
-                value={paidAmount}
-                onChange={(e) => setPaidAmount(clampMoneyInput(e.target.value))}
-                onFocus={selectAllOnFocus}
-                onKeyDown={async (e) => {
-                  if (!isEnterKey(e)) return
-                  e.preventDefault()
-                  if (busy || !!paymentError || cartItems.length === 0) return
-                  try {
-                    await checkout()
-                  } catch (err) {
-                    showErr(err)
-                  }
-                }}
-                placeholder={`Mặc định = ${fmtVnd(grandTotal)}`}
-              />
-              {paymentMethod === "cash" ? (
-                <div className="payQuick">
-                  {quickCashAmounts.map((v) => (
-                    <button key={v} className="payQuickBtn" onClick={() => setPaidAmount(String(v))} type="button">
-                      {fmtVnd(v)} đ
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-              {paymentMethod === "cash" ? (
+              {paymentMethod === "mixed" ? (
                 <>
+                  <div className="hint" style={{ marginTop: 0 }}>
+                    Tiền mặt
+                  </div>
+                  <input
+                    className="input"
+                    value={mixCashAmount}
+                    onChange={(e) =>
+                      setMixCashAmount(clampMoneyInput(e.target.value))
+                    }
+                    onFocus={selectAllOnFocus}
+                    onKeyDown={async (e) => {
+                      if (!isEnterKey(e)) return
+                      e.preventDefault()
+                      if (busy || !!paymentError || cartItems.length === 0) return
+                      try {
+                        await checkout()
+                      } catch (err) {
+                        showErr(err)
+                      }
+                    }}
+                    placeholder="0"
+                  />
+                  <div className="hint" style={{ marginTop: 8 }}>
+                    Chuyển khoản
+                  </div>
+                  <input
+                    className="input"
+                    value={mixBankAmount}
+                    onChange={(e) =>
+                      setMixBankAmount(clampMoneyInput(e.target.value))
+                    }
+                    onFocus={selectAllOnFocus}
+                    onKeyDown={async (e) => {
+                      if (!isEnterKey(e)) return
+                      e.preventDefault()
+                      if (busy || !!paymentError || cartItems.length === 0) return
+                      try {
+                        await checkout()
+                      } catch (err) {
+                        showErr(err)
+                      }
+                    }}
+                    placeholder="0"
+                  />
+                  <div className="payStatus">
+                    Tổng đã nhập: <b>{fmtVnd(paidValue)} đ</b>
+                  </div>
                   {shortagePreview > 0 ? (
                     <div className="payStatus payStatusErr">
                       Thiếu: <b>{fmtVnd(shortagePreview)} đ</b>
@@ -2185,9 +2597,65 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                   )}
                 </>
               ) : (
-                <div className={`payStatus ${paymentError ? "payStatusErr" : ""}`}>
-                  {paymentError ? paymentError : "Đúng tổng: có thể thanh toán"}
-                </div>
+                <>
+                  <div className="hint" style={{ marginTop: 0 }}>
+                    Khách đưa
+                  </div>
+                  <input
+                    className="input"
+                    value={paidAmount}
+                    onChange={(e) =>
+                      setPaidAmount(clampMoneyInput(e.target.value))
+                    }
+                    onFocus={selectAllOnFocus}
+                    onKeyDown={async (e) => {
+                      if (!isEnterKey(e)) return
+                      e.preventDefault()
+                      if (busy || !!paymentError || cartItems.length === 0) return
+                      try {
+                        await checkout()
+                      } catch (err) {
+                        showErr(err)
+                      }
+                    }}
+                    placeholder={`Mặc định = ${fmtVnd(grandTotal)}`}
+                  />
+                  {paymentMethod === "cash" ? (
+                    <div className="payQuick">
+                      {quickCashAmounts.map((v) => (
+                        <button
+                          key={v}
+                          className="payQuickBtn"
+                          onClick={() => setPaidAmount(String(v))}
+                          type="button"
+                        >
+                          {fmtVnd(v)} đ
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                  {paymentMethod === "cash" ? (
+                    <>
+                      {shortagePreview > 0 ? (
+                        <div className="payStatus payStatusErr">
+                          Thiếu: <b>{fmtVnd(shortagePreview)} đ</b>
+                        </div>
+                      ) : (
+                        <div className="payStatus">
+                          Tiền thối (preview): <b>{fmtVnd(changePreview)} đ</b>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div
+                      className={`payStatus ${paymentError ? "payStatusErr" : ""}`}
+                    >
+                      {paymentError
+                        ? paymentError
+                        : "Đúng tổng: có thể thanh toán"}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -2196,9 +2664,16 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
             <div className="hint" style={{ marginTop: 0 }}>
               Ghi chú (tuỳ chọn)
             </div>
-            <input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="..." />
+            <input
+              className="input"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="..."
+            />
           </div>
-          {paymentError ? <div className="payStatus payStatusErr">{paymentError}</div> : null}
+          {paymentError ? (
+            <div className="payStatus payStatusErr">{paymentError}</div>
+          ) : null}
         </Modal>
       ) : null}
 
@@ -2267,7 +2742,11 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
         }}
         template={receiptTemplate}
       />
-      <Toast kind={toast.kind} message={toast.message} onClose={() => setToast((t) => ({ ...t, message: "" }))} />
+      <Toast
+        kind={toast.kind}
+        message={toast.message}
+        onClose={() => setToast((t) => ({ ...t, message: "" }))}
+      />
     </div>
   )
 }

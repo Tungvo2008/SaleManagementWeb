@@ -4,9 +4,10 @@ from decimal import Decimal
 from datetime import datetime, date as date_type, time, timedelta
 from zoneinfo import ZoneInfo
 from collections import defaultdict
+from types import SimpleNamespace
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, or_, cast, String
+from sqlalchemy import select, or_, cast, String, text as sa_text
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
@@ -169,6 +170,20 @@ def _assert_stock_unit_not_reserved(order_id: int, stock_unit_id: int, db: Sessi
         raise HTTPException(409, "This stock unit is being used in another draft order")
 
 
+def _has_order_item_refunded_qty(db: Session) -> bool:
+    rows = db.execute(sa_text("PRAGMA table_info(order_items)")).mappings().all()
+    return any(str(r.get("name")) == "refunded_qty" for r in rows)
+
+
+def _as_decimal(v, default: Decimal = Decimal("0")) -> Decimal:
+    if v is None:
+        return default
+    try:
+        return Decimal(str(v))
+    except Exception:
+        return default
+
+
 @router.post("/", response_model=OrderOut)
 def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
     # Reuse latest empty draft to avoid creating unlimited empty orders.
@@ -287,16 +302,16 @@ def list_orders(
                 status=order.status,
                 customer_id=order.customer_id,
                 note=order.note,
-                subtotal=order.subtotal,
-                discount_mode=order.discount_mode,
-                discount_value=order.discount_value,
-                discount_total=order.discount_total,
-                grand_total=order.grand_total,
+                subtotal=_as_decimal(order.subtotal),
+                discount_mode=order.discount_mode or "amount",
+                discount_value=_as_decimal(order.discount_value),
+                discount_total=_as_decimal(order.discount_total),
+                grand_total=_as_decimal(order.grand_total),
                 created_at=order.created_at,
                 updated_at=order.updated_at,
                 payment_method=order.payment_method,
-                paid_amount=order.paid_amount,
-                change_amount=order.change_amount,
+                paid_amount=None if order.paid_amount is None else _as_decimal(order.paid_amount),
+                change_amount=None if order.change_amount is None else _as_decimal(order.change_amount),
                 checked_out_at=order.checked_out_at,
                 customer_name=customer_name,
                 customer_phone=customer_phone,
@@ -555,14 +570,32 @@ def checkout(order_id: int, payload: OrderCheckoutIn, db: Session = Depends(get_
 
     # Validate payment
     if payload.payment_method == "cash":
+        if payload.paid_amount is None:
+            raise HTTPException(422, "paid_amount is required for cash payment")
         if payload.paid_amount < grand_total:
             raise HTTPException(409, "Insufficient payment")
-        change_amount = payload.paid_amount - grand_total
-    else:
+        paid_amount = payload.paid_amount
+        change_amount = paid_amount - grand_total
+    elif payload.payment_method in {"bank", "momo"}:
+        if payload.paid_amount is None:
+            raise HTTPException(422, "paid_amount is required for non-cash payment")
         # MVP: non-cash must match exactly
         if payload.paid_amount != grand_total:
             raise HTTPException(409, "Paid amount must equal grand total for non-cash payments")
+        paid_amount = payload.paid_amount
         change_amount = Decimal("0")
+    else:
+        # Mixed payment: cash + bank transfer.
+        if payload.cash_amount is None or payload.bank_amount is None:
+            raise HTTPException(422, "cash_amount and bank_amount are required for mixed payment")
+        if payload.cash_amount < 0 or payload.bank_amount < 0:
+            raise HTTPException(422, "cash_amount and bank_amount must be >= 0 for mixed payment")
+        paid_amount = payload.cash_amount + payload.bank_amount
+        if paid_amount <= 0:
+            raise HTTPException(422, "Total mixed payment must be > 0")
+        if paid_amount < grand_total:
+            raise HTTPException(409, "Insufficient payment")
+        change_amount = paid_amount - grand_total
 
     # Apply optional note at checkout time
     if payload.note is not None:
@@ -653,7 +686,7 @@ def checkout(order_id: int, payload: OrderCheckoutIn, db: Session = Depends(get_
 
         order.status = "checked_out"
         order.payment_method = payload.payment_method
-        order.paid_amount = payload.paid_amount
+        order.paid_amount = paid_amount
         order.change_amount = change_amount
         order.checked_out_at = datetime.now()
 
@@ -876,13 +909,50 @@ def get_receipt(order_id: int, db: Session = Depends(get_db)):
     """
     order = _get_order_or_404(order_id, db)
 
-    order_items = list(
-        db.scalars(
-            select(OrderItem)
-            .where(OrderItem.order_id == order.id)
-            .order_by(OrderItem.id.asc())
-        ).all()
-    )
+    has_refunded_qty_col = _has_order_item_refunded_qty(db)
+    if has_refunded_qty_col:
+        order_items = list(
+            db.scalars(
+                select(OrderItem)
+                .where(OrderItem.order_id == order.id)
+                .order_by(OrderItem.id.asc())
+            ).all()
+        )
+    else:
+        # Backward compatibility: if migration for refunded_qty is not applied yet,
+        # we still allow opening old receipts (refunded_qty defaults to 0).
+        raw_rows = db.execute(
+            sa_text(
+                """
+                SELECT
+                    id, stock_unit_id, pricing_mode, qty, unit_price,
+                    discount_mode, discount_value, discount_total, line_total,
+                    name_snapshot, sku_snapshot, uom_snapshot
+                FROM order_items
+                WHERE order_id = :order_id
+                ORDER BY id ASC
+                """
+            ),
+            {"order_id": order.id},
+        ).mappings().all()
+        order_items = [
+            SimpleNamespace(
+                id=row["id"],
+                stock_unit_id=row["stock_unit_id"],
+                pricing_mode=row["pricing_mode"],
+                qty=_as_decimal(row["qty"]),
+                unit_price=_as_decimal(row["unit_price"]),
+                discount_mode=row["discount_mode"],
+                discount_value=None if row["discount_value"] is None else _as_decimal(row["discount_value"]),
+                discount_total=_as_decimal(row["discount_total"]),
+                line_total=_as_decimal(row["line_total"]),
+                name_snapshot=row["name_snapshot"] or "",
+                sku_snapshot=row["sku_snapshot"],
+                uom_snapshot=row["uom_snapshot"],
+                refunded_qty=Decimal("0"),
+            )
+            for row in raw_rows
+        ]
 
     # Avoid N+1: fetch all barcodes for referenced stock_unit_ids in one query.
     stock_unit_ids = [it.stock_unit_id for it in order_items if it.stock_unit_id is not None]
@@ -959,6 +1029,8 @@ def refund_order_items(order_id: int, payload: OrderRefundIn, db: Session = Depe
     - track cumulative refunded_qty on each order_item to prevent over-refund
     """
     order = _get_checked_out_order_or_409(order_id, db)
+    if not _has_order_item_refunded_qty(db):
+        raise HTTPException(503, "Database chưa cập nhật cho refund. Chạy alembic upgrade head.")
     order_items = list(db.scalars(select(OrderItem).where(OrderItem.order_id == order.id)).all())
     if not order_items:
         raise HTTPException(422, "Order is empty")

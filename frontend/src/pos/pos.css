@@ -19,10 +19,10 @@
 
 .posHeader {
   display: grid;
-  grid-template-columns: 280px 1fr 360px;
-  gap: 12px;
+  grid-template-columns: minmax(320px, 430px) auto minmax(280px, 420px);
+  gap: 10px;
   align-items: center;
-  padding: 12px 12px;
+  padding: 8px 10px;
   border: 1px solid rgba(var(--accent-rgb), 0.35);
   border-radius: var(--radius);
   background:
@@ -36,24 +36,19 @@
   .posHeader {
     grid-template-columns: 1fr;
   }
-}
-
-.posBrandTitle {
-  font-weight: 850;
-  letter-spacing: -0.02em;
-  font-size: 18px;
-  line-height: 1.1;
-  color: #fff;
-}
-
-.posBrandMeta {
-  margin-top: 8px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  .posHeaderActions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .posScan {
+    justify-self: stretch;
+    max-width: 100%;
+  }
 }
 
 .posHeader .pill {
+  font-size: 11px;
+  padding: 4px 8px;
   border-color: rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.16);
   color: rgba(255, 255, 255, 0.92);
@@ -61,9 +56,12 @@
 
 .posScan {
   display: grid;
-  grid-template-columns: 1fr 110px;
-  gap: 10px;
+  grid-template-columns: 1fr 44px;
+  gap: 8px;
   align-items: center;
+  justify-self: end;
+  width: 100%;
+  max-width: 420px;
 }
 
 .input {
@@ -82,9 +80,9 @@
 }
 
 .inputScan {
-  font-size: 16px;
-  padding: 14px 14px;
-  border-radius: 14px;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
   border-color: rgba(255, 255, 255, 0.55);
   background: #fff;
 }
@@ -93,6 +91,8 @@
   border-color: rgba(255, 255, 255, 0.28);
   background: rgba(255, 255, 255, 0.14);
   color: #fff;
+  height: 38px;
+  padding: 8px 12px;
 }
 
 .posHeader .btnPrimary {
@@ -149,31 +149,83 @@
   color: var(--muted);
 }
 
-.posHeaderRight {
+.posCustomerHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.posCustomerMini {
+  min-width: 160px;
+  max-width: 220px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.95);
+  overflow: hidden;
+}
+
+.posCustomerMiniLabel {
+  font-size: 11px;
+  line-height: 1.1;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.posCustomerMiniValue {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.posCustomerBtns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.posCustomerBtns .btn {
+  min-width: 78px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.posHeaderActions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
 }
 
-.posTotal {
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.30);
-  background: rgba(255, 255, 255, 0.16);
+.posHeaderActions .btn:first-child {
+  min-width: 132px;
 }
 
-.posTotalLabel {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.82);
+.posHeaderActions .btn:last-child {
+  min-width: 86px;
 }
 
-.posTotalValue {
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  font-size: 18px;
-  color: #fff;
+.btnIconAction {
+  width: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconSvg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.posHeader .btn:hover {
+  box-shadow: 0 8px 24px rgba(16, 38, 92, 0.32);
 }
 
 .posDraftTabs {
@@ -275,15 +327,9 @@
 
 .checkoutLeft {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  grid-template-columns: 1fr;
   gap: 10px;
   align-items: end;
-}
-
-@media (max-width: 720px) {
-  .checkoutLeft {
-    grid-template-columns: 1fr;
-  }
 }
 
 .discRow{

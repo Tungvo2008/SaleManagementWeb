@@ -13,7 +13,7 @@ class OrderOut(BaseModel):
     customer_id: int | None = None
     note: str | None
     subtotal: Decimal
-    discount_mode: Literal["amount","percent"]
+    discount_mode: str | None = "amount"
     discount_value: Decimal
     discount_total: Decimal
     grand_total: Decimal
@@ -30,8 +30,10 @@ class OrderOut(BaseModel):
         from_attributes = True
 
 class OrderCheckoutIn(BaseModel):
-    payment_method: Literal["cash","bank","momo"]
-    paid_amount: Decimal
+    payment_method: Literal["cash","bank","momo","mixed"]
+    paid_amount: Decimal | None = Field(None, ge=0)
+    cash_amount: Decimal | None = Field(None, ge=0)
+    bank_amount: Decimal | None = Field(None, ge=0)
     note: str | None = None
 
 class OrderUpdate(BaseModel):

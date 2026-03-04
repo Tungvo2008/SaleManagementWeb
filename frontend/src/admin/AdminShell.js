@@ -16,78 +16,80 @@ export default function AdminShell({ active, title, onGoto, user, onLogout, chil
   return (
     <div className="admShell">
       <aside className="admNav">
-        <div className="admBrand">
-          <div className="admBrandTop">Quản lý cửa hàng</div>
-          <div className="admBrandSub">MVP</div>
-        </div>
-
-        <div className="admNavSection">
-          <div className="admNavLabel">Tổng quan</div>
-          <NavButton active={active === "dashboard"} onClick={() => onGoto("dashboard")}>
-            Dashboard
-          </NavButton>
-        </div>
-
-        {canManage ? (
-          <div className="admNavSection">
-            <div className="admNavLabel">Dữ liệu</div>
-            <NavButton active={active === "categories"} onClick={() => onGoto("categories")}>
-              Danh mục
-            </NavButton>
-            <NavButton active={active === "products"} onClick={() => onGoto("products")}>
-              Sản phẩm
-            </NavButton>
-            <NavButton active={active === "images"} onClick={() => onGoto("images")}>
-              Quản lý ảnh
-            </NavButton>
-            <NavButton active={active === "pricing"} onClick={() => onGoto("pricing")}>
-              Quản lý giá
-            </NavButton>
-            <NavButton active={active === "stock"} onClick={() => onGoto("stock")}>
-              Tồn kho
-            </NavButton>
-            <NavButton active={active === "receive-history"} onClick={() => onGoto("receive-history")}>
-              Lịch sử nhập
-            </NavButton>
-            <NavButton active={active === "rolls"} onClick={() => onGoto("rolls")}>
-              Quản lý cuộn
-            </NavButton>
-            <NavButton active={active === "orders"} onClick={() => onGoto("orders")}>
-              Hoá đơn
-            </NavButton>
-            <NavButton active={active === "customers"} onClick={() => onGoto("customers")}>
-              Khách hàng
-            </NavButton>
-            <NavButton active={active === "suppliers"} onClick={() => onGoto("suppliers")}>
-              Nhà cung cấp
-            </NavButton>
-            <NavButton active={active === "excel"} onClick={() => onGoto("excel")}>
-              Nhập/Xuất Excel
-            </NavButton>
-            {isAdmin ? (
-              <NavButton active={active === "audit"} onClick={() => onGoto("audit")}>
-                Nhật ký hệ thống
-              </NavButton>
-            ) : null}
-            {isAdmin ? (
-              <NavButton active={active === "employees"} onClick={() => onGoto("employees")}>
-                Nhân viên
-              </NavButton>
-            ) : null}
+        <div className="admNavScroll">
+          <div className="admBrand">
+            <div className="admBrandTop">Quản lý cửa hàng</div>
+            <div className="admBrandSub">MVP</div>
           </div>
-        ) : null}
 
-        {canManage ? (
           <div className="admNavSection">
-            <div className="admNavLabel">Cấu hình</div>
-            <NavButton active={active === "barcode-template"} onClick={() => onGoto("barcode-template")}>
-              Mẫu tem mã vạch
-            </NavButton>
-            <NavButton active={active === "template"} onClick={() => onGoto("template")}>
-              Mẫu hóa đơn
+            <div className="admNavLabel">Tổng quan</div>
+            <NavButton active={active === "dashboard"} onClick={() => onGoto("dashboard")}>
+              Dashboard
             </NavButton>
           </div>
-        ) : null}
+
+          {canManage ? (
+            <div className="admNavSection">
+              <div className="admNavLabel">Dữ liệu</div>
+              <NavButton active={active === "categories"} onClick={() => onGoto("categories")}>
+                Danh mục
+              </NavButton>
+              <NavButton active={active === "products"} onClick={() => onGoto("products")}>
+                Sản phẩm
+              </NavButton>
+              <NavButton active={active === "images"} onClick={() => onGoto("images")}>
+                Quản lý ảnh
+              </NavButton>
+              <NavButton active={active === "pricing"} onClick={() => onGoto("pricing")}>
+                Quản lý giá
+              </NavButton>
+              <NavButton active={active === "stock"} onClick={() => onGoto("stock")}>
+                Tồn kho
+              </NavButton>
+              <NavButton active={active === "receive-history"} onClick={() => onGoto("receive-history")}>
+                Lịch sử nhập
+              </NavButton>
+              <NavButton active={active === "rolls"} onClick={() => onGoto("rolls")}>
+                Quản lý cuộn
+              </NavButton>
+              <NavButton active={active === "orders"} onClick={() => onGoto("orders")}>
+                Hoá đơn
+              </NavButton>
+              <NavButton active={active === "customers"} onClick={() => onGoto("customers")}>
+                Khách hàng
+              </NavButton>
+              <NavButton active={active === "suppliers"} onClick={() => onGoto("suppliers")}>
+                Nhà cung cấp
+              </NavButton>
+              <NavButton active={active === "excel"} onClick={() => onGoto("excel")}>
+                Nhập/Xuất Excel
+              </NavButton>
+              {isAdmin ? (
+                <NavButton active={active === "audit"} onClick={() => onGoto("audit")}>
+                  Nhật ký hệ thống
+                </NavButton>
+              ) : null}
+              {isAdmin ? (
+                <NavButton active={active === "employees"} onClick={() => onGoto("employees")}>
+                  Nhân viên
+                </NavButton>
+              ) : null}
+            </div>
+          ) : null}
+
+          {canManage ? (
+            <div className="admNavSection">
+              <div className="admNavLabel">Cấu hình</div>
+              <NavButton active={active === "barcode-template"} onClick={() => onGoto("barcode-template")}>
+                Mẫu tem mã vạch
+              </NavButton>
+              <NavButton active={active === "template"} onClick={() => onGoto("template")}>
+                Mẫu hóa đơn
+              </NavButton>
+            </div>
+          ) : null}
+        </div>
 
         <div className="admNavFooter">
           {canManage ? (
