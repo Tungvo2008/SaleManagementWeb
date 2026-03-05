@@ -9,6 +9,7 @@
   align-items:center;
   justify-content:space-between;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .dgBtn{
@@ -170,4 +171,45 @@
   border-radius: 12px;
   border: 1px solid rgba(15,23,42,.10);
   background: rgba(15,23,42,.03);
+}
+
+@media (max-width: 900px){
+  .dgWrap{
+    gap: 8px;
+  }
+
+  .dgBtn{
+    min-height: 40px;
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  .dgGrid{
+    border-radius: 12px;
+    --dgHeadH: 44px;
+    --dgFilterH: 42px;
+  }
+
+  .dgHeadCell{
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .dgFilterCell{
+    padding: 6px 8px;
+  }
+
+  .dgFilterInput{
+    font-size: 16px;
+    padding: 8px 9px;
+  }
+
+  .dgCell{
+    padding: 9px 10px;
+    font-size: 13px;
+  }
+
+  .dgResize{
+    display: none;
+  }
 }

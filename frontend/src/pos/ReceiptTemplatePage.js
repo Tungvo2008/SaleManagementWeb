@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { defaultReceiptTemplate } from "./receiptTemplate"
+import { fmtDateTimeVN } from "../utils/datetime"
 import "./template-page.css"
 import UiSelect from "../ui/Select"
 
@@ -173,7 +174,7 @@ export default function ReceiptTemplatePage({ template, onSave, onBack }) {
               {form.headerNote ? <div className="pvCenter pvMuted">{form.headerNote}</div> : null}
               <div className="pvDivider" />
               <div className="pvMuted">Hoa don #{sampleReceipt.order_id}</div>
-              <div className="pvMuted">{new Date(sampleReceipt.created_at).toLocaleString("vi-VN")}</div>
+              <div className="pvMuted">{fmtDateTimeVN(sampleReceipt.created_at)}</div>
 
               <table className="pvTable">
                 <thead>

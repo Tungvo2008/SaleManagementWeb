@@ -523,3 +523,110 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 980px){
+  .rcvShell{
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+    padding-bottom: 6px;
+  }
+
+  .rcvHeader{
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    border-radius: 12px;
+    padding: 10px;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(8px);
+  }
+
+  .rcvHeaderRight{
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .rcvTabs,
+  .rcvQuick{
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .rcvTabs .btn,
+  .rcvQuick .btn{
+    white-space: nowrap;
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .rcvGrid{
+    overflow: visible;
+    gap: 10px;
+  }
+
+  .rcvCard{
+    grid-template-rows: auto auto;
+  }
+
+  .rcvCard .cardBody{
+    overflow: visible;
+  }
+
+  .rcvResults{
+    max-height: min(48vh, 420px);
+    overflow: auto;
+    padding-right: 2px;
+  }
+
+  .rcvSupplierMeta{
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .rcvActions{
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    padding: 10px;
+    margin: 10px -2px 0;
+    border-top: 1px solid var(--stroke);
+    background: rgba(255,255,255,.95);
+    backdrop-filter: blur(8px);
+  }
+
+  .rcvActions .btn{
+    flex: 1 1 calc(50% - 10px);
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 640px){
+  .rcvTitle{
+    font-size: 15px;
+  }
+
+  .rcvPicked{
+    border-radius: 12px;
+  }
+
+  .rcvActions{
+    gap: 8px;
+  }
+
+  .rcvActions .btn{
+    flex: 1 1 100%;
+  }
+
+  .rcvModalHead,
+  .rcvModalBody,
+  .rcvModalFooter{
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { get } from "../api"
 import DataGrid from "./DataGrid"
+import { fmtDateTimeVN } from "../utils/datetime"
 import "./receive-history.css"
 
 function todayYMD() {
@@ -16,17 +17,6 @@ function fmtQty(v) {
   const n = typeof v === "number" ? v : Number(v || 0)
   if (!Number.isFinite(n)) return String(v ?? "")
   return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(n)
-}
-
-function fmtDateTimeVN(v) {
-  if (!v) return ""
-  const d = new Date(`${v}Z`)
-  if (Number.isNaN(d.getTime())) return String(v)
-  return new Intl.DateTimeFormat("vi-VN", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    dateStyle: "short",
-    timeStyle: "medium",
-  }).format(d)
 }
 
 export default function ReceiveHistoryPage() {

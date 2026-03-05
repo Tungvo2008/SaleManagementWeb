@@ -10,13 +10,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, or_, cast, String, text as sa_text
 from sqlalchemy.orm import Session
 
+from app.api.v1.routes.auth import current_user
 from app.db.deps import get_db
+from app.models.cash_drawer_entry import CashDrawerEntry
+from app.models.cash_drawer_session import CashDrawerSession
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.product import Product, is_sellable_product
 from app.models.stock_unit import StockUnit
 from app.models.inventory import Inventory
 from app.models.customer import Customer
+from app.models.user import User
 
 
 from app.schemas.order import (
@@ -182,6 +186,14 @@ def _as_decimal(v, default: Decimal = Decimal("0")) -> Decimal:
         return Decimal(str(v))
     except Exception:
         return default
+
+
+def _get_open_cash_drawer_session(db: Session) -> CashDrawerSession | None:
+    return db.scalars(
+        select(CashDrawerSession)
+        .where(CashDrawerSession.status == "open")
+        .order_by(CashDrawerSession.id.desc())
+    ).first()
 
 
 @router.post("/", response_model=OrderOut)
@@ -553,7 +565,12 @@ def add_roll_item(order_id: int, payload: OrderItemCreateRoll ,db: Session = Dep
 
 
 @router.post("/{order_id}/checkout", response_model=OrderOut)
-def checkout(order_id: int, payload: OrderCheckoutIn, db: Session = Depends(get_db)):
+def checkout(
+    order_id: int,
+    payload: OrderCheckoutIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
     order = _get_draft_order_or_409(order_id, db)
     
     
@@ -569,6 +586,7 @@ def checkout(order_id: int, payload: OrderCheckoutIn, db: Session = Depends(get_
     grand_total = order.grand_total
 
     # Validate payment
+    cash_collected = Decimal("0")
     if payload.payment_method == "cash":
         if payload.paid_amount is None:
             raise HTTPException(422, "paid_amount is required for cash payment")
@@ -576,6 +594,7 @@ def checkout(order_id: int, payload: OrderCheckoutIn, db: Session = Depends(get_
             raise HTTPException(409, "Insufficient payment")
         paid_amount = payload.paid_amount
         change_amount = paid_amount - grand_total
+        cash_collected = paid_amount
     elif payload.payment_method in {"bank", "momo"}:
         if payload.paid_amount is None:
             raise HTTPException(422, "paid_amount is required for non-cash payment")
@@ -584,6 +603,7 @@ def checkout(order_id: int, payload: OrderCheckoutIn, db: Session = Depends(get_
             raise HTTPException(409, "Paid amount must equal grand total for non-cash payments")
         paid_amount = payload.paid_amount
         change_amount = Decimal("0")
+        cash_collected = Decimal("0")
     else:
         # Mixed payment: cash + bank transfer.
         if payload.cash_amount is None or payload.bank_amount is None:
@@ -596,6 +616,13 @@ def checkout(order_id: int, payload: OrderCheckoutIn, db: Session = Depends(get_
         if paid_amount < grand_total:
             raise HTTPException(409, "Insufficient payment")
         change_amount = paid_amount - grand_total
+        if change_amount > payload.cash_amount:
+            raise HTTPException(422, "Change amount cannot exceed cash amount in mixed payment")
+        cash_collected = payload.cash_amount
+
+    drawer = _get_open_cash_drawer_session(db)
+    if drawer is None:
+        raise HTTPException(409, "Cash drawer is not open")
 
     # Apply optional note at checkout time
     if payload.note is not None:
@@ -688,7 +715,27 @@ def checkout(order_id: int, payload: OrderCheckoutIn, db: Session = Depends(get_
         order.payment_method = payload.payment_method
         order.paid_amount = paid_amount
         order.change_amount = change_amount
-        order.checked_out_at = datetime.now()
+        # Store as naive UTC to keep filtering/report logic consistent.
+        order.checked_out_at = datetime.now(UTC_TZ).replace(tzinfo=None)
+
+        # Update cash drawer only for the cash part.
+        net_cash_delta = cash_collected - change_amount
+        if net_cash_delta < 0:
+            raise HTTPException(422, "Invalid mixed payment: net cash delta is negative")
+
+        if net_cash_delta > 0:
+            current_expected = _as_decimal(drawer.expected_cash)
+            drawer.expected_cash = current_expected + net_cash_delta
+            db.add(
+                CashDrawerEntry(
+                    session_id=drawer.id,
+                    entry_type="sale_cash_in",
+                    delta_cash=net_cash_delta,
+                    note=f"order {order.id} checkout",
+                    order_id=order.id,
+                    created_by_user_id=user.id,
+                )
+            )
 
         db.commit()
     except Exception:

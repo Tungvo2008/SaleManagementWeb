@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { del, get, patch, post } from "../api"
 import { fmtQty, fmtVnd } from "./money"
+import { fmtDateTimeVN, ymdMonthStartVN, ymdTodayVN } from "../utils/datetime"
 import "./pos.css"
 import {
   defaultReceiptTemplate,
@@ -59,18 +60,15 @@ function nearlyEqual(a, b) {
 }
 
 function todayYmd() {
-  const d = new Date()
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, "0")
-  const dd = String(d.getDate()).padStart(2, "0")
-  return `${yyyy}-${mm}-${dd}`
+  return ymdTodayVN()
 }
 
 function monthStartYmd() {
-  const d = new Date()
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, "0")
-  return `${yyyy}-${mm}-01`
+  return ymdMonthStartVN()
+}
+
+function fmtDateTime(v) {
+  return fmtDateTimeVN(v, "—")
 }
 
 function useHotkeys(map) {
@@ -226,7 +224,7 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
   ${cfg.storePhone ? `<div class="muted">SDT: ${escapeHtml(cfg.storePhone)}</div>` : ""}
   ${receipt.customer_name ? `<div class="muted">Khach: ${escapeHtml(receipt.customer_name)}${receipt.customer_phone ? ` - ${escapeHtml(receipt.customer_phone)}` : ""}</div>` : ""}
   ${cfg.headerNote ? `<div class="muted">${escapeHtml(cfg.headerNote)}</div>` : ""}
-  <div class="muted">${new Date(receipt.created_at).toLocaleString("vi-VN")}</div>
+  <div class="muted">${fmtDateTime(receipt.created_at)}</div>
   <table>
     <thead>
       <tr>
@@ -327,7 +325,7 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
           <div className="receiptMeta">
             <span className="pill">Status: {receipt.status}</span>
             <span className="pill">
-              {new Date(receipt.created_at).toLocaleString("vi-VN")}
+              {fmtDateTime(receipt.created_at)}
             </span>
           </div>
         </div>
@@ -691,8 +689,8 @@ function BillHistoryModal({
                 </td>
                 <td>
                   {r.checked_out_at
-                    ? new Date(r.checked_out_at).toLocaleString("vi-VN")
-                    : new Date(r.created_at).toLocaleString("vi-VN")}
+                    ? fmtDateTime(r.checked_out_at)
+                    : fmtDateTime(r.created_at)}
                 </td>
                 <td>
                   {r.customer_name ? (
@@ -899,7 +897,344 @@ function RefundModal({ receipt, busy, onClose, onSubmit }) {
   )
 }
 
-export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
+function CashDrawerModal({
+  session,
+  busy,
+  userRole,
+  onClose,
+  onRefresh,
+  onOpenSession,
+  onCloseSession,
+  onManagerWithdraw,
+}) {
+  const [openingCash, setOpeningCash] = useState("")
+  const [openNote, setOpenNote] = useState("")
+  const [countedCash, setCountedCash] = useState("")
+  const [closeNote, setCloseNote] = useState("")
+  const [withdrawAmount, setWithdrawAmount] = useState("")
+  const [withdrawNote, setWithdrawNote] = useState("")
+  const [err, setErr] = useState("")
+  const [showDrawerInfo, setShowDrawerInfo] = useState(false)
+
+  const canManagerWithdraw = userRole === "admin" || userRole === "manager"
+
+  async function submitOpen() {
+    setErr("")
+    try {
+      await onOpenSession({
+        opening_cash: openingCash === "" ? "0" : openingCash,
+        note: openNote.trim() || null,
+      })
+      setOpeningCash("")
+      setOpenNote("")
+    } catch (e) {
+      setErr(e?.message || "Không mở được ca")
+    }
+  }
+
+  async function submitClose() {
+    setErr("")
+    try {
+      if (countedCash === "") throw new Error("Nhập số tiền kiểm quỹ thực tế")
+      await onCloseSession({
+        counted_cash: countedCash,
+        note: closeNote.trim() || null,
+      })
+      setCountedCash("")
+      setCloseNote("")
+    } catch (e) {
+      setErr(e?.message || "Không đóng được ca")
+    }
+  }
+
+  async function submitWithdraw() {
+    setErr("")
+    try {
+      if (withdrawAmount === "") throw new Error("Nhập số tiền rút")
+      await onManagerWithdraw({
+        amount: withdrawAmount,
+        note: withdrawNote.trim() || null,
+      })
+      setWithdrawAmount("")
+      setWithdrawNote("")
+    } catch (e) {
+      setErr(e?.message || "Không rút tiền được")
+    }
+  }
+
+  return (
+    <Modal
+      wide
+      title="Quản lý thùng tiền"
+      onClose={onClose}
+      footer={
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
+          <button className="btn" disabled={busy} onClick={onRefresh}>
+            Tải lại
+          </button>
+          <button className="btn" disabled={busy} onClick={onClose}>
+            Đóng
+          </button>
+        </div>
+      }
+    >
+      {err ? <div className="payStatus payStatusErr">{err}</div> : null}
+
+      {!session ? (
+        <div className="card flatCard">
+          <div className="cardHeader">
+            <div className="cardTitle">Chưa có ca mở</div>
+            <div className="pill">Bắt buộc mở ca trước khi thanh toán</div>
+          </div>
+          <div className="cardBody" style={{ display: "grid", gap: 10 }}>
+            <div>
+              <div className="hint" style={{ marginTop: 0 }}>
+                Tiền đầu ca
+              </div>
+              <input
+                className="input"
+                value={openingCash}
+                onChange={(e) =>
+                  setOpeningCash(clampMoneyInput(e.target.value))
+                }
+                onFocus={selectAllOnFocus}
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <div className="hint" style={{ marginTop: 0 }}>
+                Ghi chú (tuỳ chọn)
+              </div>
+              <input
+                className="input"
+                value={openNote}
+                onChange={(e) => setOpenNote(e.target.value)}
+                placeholder="..."
+              />
+            </div>
+            <div>
+              <button
+                className="btn btnPrimary"
+                disabled={busy}
+                onClick={submitOpen}
+              >
+                Mở ca mới
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 12 }}>
+          <div className="miniCard">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 8,
+                alignItems: "center",
+              }}
+            >
+              <div className="miniTitle">Ca hiện tại #{session.id}</div>
+              <button
+                className="btn btnIconAction"
+                style={{ width: 38, height: 38 }}
+                type="button"
+                onClick={() => setShowDrawerInfo((v) => !v)}
+                title={showDrawerInfo ? "Ẩn thông tin ca" : "Hiện thông tin ca"}
+                aria-label={
+                  showDrawerInfo ? "Ẩn thông tin ca" : "Hiện thông tin ca"
+                }
+              >
+                {showDrawerInfo ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 640 640"
+                    className="iconSvg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M320 96C239.2 96 174.5 132.8 127.4 176.6C80.6 220.1 49.3 272 34.4 307.7C31.1 315.6 31.1 324.4 34.4 332.3C49.3 368 80.6 420 127.4 463.4C174.5 507.1 239.2 544 320 544C400.8 544 465.5 507.2 512.6 463.4C559.4 419.9 590.7 368 605.6 332.3C608.9 324.4 608.9 315.6 605.6 307.7C590.7 272 559.4 220 512.6 176.6C465.5 132.9 400.8 96 320 96zM176 320C176 240.5 240.5 176 320 176C399.5 176 464 240.5 464 320C464 399.5 399.5 464 320 464C240.5 464 176 399.5 176 320zM320 256C320 291.3 291.3 320 256 320C244.5 320 233.7 317 224.3 311.6C223.3 322.5 224.2 333.7 227.2 344.8C240.9 396 293.6 426.4 344.8 412.7C396 399 426.4 346.3 412.7 295.1C400.5 249.4 357.2 220.3 311.6 224.3C316.9 233.6 320 244.4 320 256z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 640 640"
+                    className="iconSvg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M73 39.1C63.6 29.7 48.4 29.7 39.1 39.1C29.8 48.5 29.7 63.7 39 73.1L567 601.1C576.4 610.5 591.6 610.5 600.9 601.1C610.2 591.7 610.3 576.5 600.9 567.2L504.5 470.8C507.2 468.4 509.9 466 512.5 463.6C559.3 420.1 590.6 368.2 605.5 332.5C608.8 324.6 608.8 315.8 605.5 307.9C590.6 272.2 559.3 220.2 512.5 176.8C465.4 133.1 400.7 96.2 319.9 96.2C263.1 96.2 214.3 114.4 173.9 140.4L73 39.1zM236.5 202.7C260 185.9 288.9 176 320 176C399.5 176 464 240.5 464 320C464 351.1 454.1 379.9 437.3 403.5L402.6 368.8C415.3 347.4 419.6 321.1 412.7 295.1C399 243.9 346.3 213.5 295.1 227.2C286.5 229.5 278.4 232.9 271.1 237.2L236.4 202.5zM357.3 459.1C345.4 462.3 332.9 464 320 464C240.5 464 176 399.5 176 320C176 307.1 177.7 294.6 180.9 282.7L101.4 203.2C68.8 240 46.4 279 34.5 307.7C31.2 315.6 31.2 324.4 34.5 332.3C49.4 368 80.7 420 127.5 463.4C174.6 507.1 239.3 544 320.1 544C357.4 544 391.3 536.1 421.6 523.4L357.4 459.2z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
+            <div className="miniMeta">
+              <span className="pill">Trạng thái: {session.status}</span>
+              {showDrawerInfo ? (
+                <>
+                  <span className="pill">
+                    Mở lúc: {fmtDateTime(session.opened_at)}
+                  </span>
+                  <span className="pill">
+                    Mở bởi:{" "}
+                    {session.opened_by_username ||
+                      `#${session.opened_by_user_id}`}
+                  </span>
+                  <span className="pill">
+                    Tiền đầu ca: {fmtVnd(session.opening_cash)} đ
+                  </span>
+                  <span className="pill">
+                    Tiền dự kiến hiện tại: {fmtVnd(session.expected_cash)} đ
+                  </span>
+                </>
+              ) : (
+                <span className="pill">Thông tin ca đang ẩn</span>
+              )}
+            </div>
+          </div>
+
+          {canManagerWithdraw ? (
+            <div className="card flatCard">
+              <div className="cardHeader">
+                <div className="cardTitle">Manager rút tiền</div>
+              </div>
+              <div className="cardBody" style={{ display: "grid", gap: 10 }}>
+                <div className="split">
+                  <div>
+                    <div className="hint" style={{ marginTop: 0 }}>
+                      Số tiền rút
+                    </div>
+                    <input
+                      className="input"
+                      value={withdrawAmount}
+                      onChange={(e) =>
+                        setWithdrawAmount(clampMoneyInput(e.target.value))
+                      }
+                      onFocus={selectAllOnFocus}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <div className="hint" style={{ marginTop: 0 }}>
+                      Ghi chú
+                    </div>
+                    <input
+                      className="input"
+                      value={withdrawNote}
+                      onChange={(e) => setWithdrawNote(e.target.value)}
+                      placeholder="Lý do rút..."
+                    />
+                  </div>
+                </div>
+                <div>
+                  <button
+                    className="btn btnDanger"
+                    disabled={busy}
+                    onClick={submitWithdraw}
+                  >
+                    Rút tiền khỏi thùng
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="card flatCard">
+            <div className="cardHeader">
+              <div className="cardTitle">Đóng ca</div>
+            </div>
+            <div className="cardBody" style={{ display: "grid", gap: 10 }}>
+              <div className="split">
+                <div>
+                  <div className="hint" style={{ marginTop: 0 }}>
+                    Kiểm quỹ thực tế
+                  </div>
+                  <input
+                    className="input"
+                    value={countedCash}
+                    onChange={(e) =>
+                      setCountedCash(clampMoneyInput(e.target.value))
+                    }
+                    onFocus={selectAllOnFocus}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <div className="hint" style={{ marginTop: 0 }}>
+                    Ghi chú đóng ca
+                  </div>
+                  <input
+                    className="input"
+                    value={closeNote}
+                    onChange={(e) => setCloseNote(e.target.value)}
+                    placeholder="..."
+                  />
+                </div>
+              </div>
+              <div>
+                <button
+                  className="btn btnPrimary"
+                  disabled={busy}
+                  onClick={submitClose}
+                >
+                  Đóng ca
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="tableWrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Loại</th>
+                  <th className="right">Tiền vào/ra</th>
+                  <th>Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(session.entries || []).map((e) => (
+                  <tr key={e.id}>
+                    <td>{fmtDateTime(e.created_at)}</td>
+                    <td>{e.entry_type}</td>
+                    <td className="right">
+                      {showDrawerInfo ? `${fmtVnd(e.delta_cash)} đ` : "••••••"}
+                    </td>
+                    <td>{e.note || "—"}</td>
+                  </tr>
+                ))}
+                {!session.entries?.length ? (
+                  <tr>
+                    <td colSpan={4}>
+                      <div className="hint">Chưa có log.</div>
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+export default function Pos({
+  receiptTemplate = defaultReceiptTemplate,
+  user = null,
+}) {
   const [drafts, setDrafts] = useState([])
   const [order, setOrder] = useState(null)
   const [receipt, setReceipt] = useState(null)
@@ -944,6 +1279,9 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
   const [historySort, setHistorySort] = useState("newest")
   const [refundReceipt, setRefundReceipt] = useState(null)
   const [refundBusy, setRefundBusy] = useState(false)
+  const [drawerModalOpen, setDrawerModalOpen] = useState(false)
+  const [drawerBusy, setDrawerBusy] = useState(false)
+  const [drawerSession, setDrawerSession] = useState(null)
 
   const scanRef = useRef(null)
   const searchTimerRef = useRef(null)
@@ -967,6 +1305,7 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     setLineDiscItem(null)
     setHistoryOpen(false)
     setRefundReceipt(null)
+    setDrawerModalOpen(false)
   }
 
   useHotkeys({
@@ -974,6 +1313,10 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
     "ctrl+k": () => scanRef.current?.focus(),
     f2: () => createDraftOrder(),
     f4: () => {
+      if (!drawerSession || drawerSession.status !== "open") {
+        showInfo("Chưa mở ca thùng tiền")
+        return
+      }
       if (order?.status === "draft") setPayModalOpen(true)
     },
   })
@@ -1007,6 +1350,7 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
   const customerPhone = receipt?.customer_phone || null
   const customerId =
     receipt?.customer_id != null ? receipt.customer_id : order?.customer_id
+  const drawerIsOpen = !!drawerSession && drawerSession.status === "open"
 
   const paidValue = useMemo(() => {
     if (paymentMethod === "mixed") {
@@ -1020,12 +1364,18 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
   }, [paymentMethod, paidAmount, mixCashAmount, mixBankAmount, grandTotal])
 
   const paymentError = useMemo(() => {
+    if (!drawerIsOpen) return "Chưa mở ca thùng tiền"
     if (!Number.isFinite(paidValue) || paidValue < 0)
       return "Tiền khách đưa không hợp lệ"
     if (paymentMethod === "mixed") {
       const cash = mixCashAmount === "" ? 0 : Number(mixCashAmount)
       const bank = mixBankAmount === "" ? 0 : Number(mixBankAmount)
-      if (!Number.isFinite(cash) || !Number.isFinite(bank) || cash < 0 || bank < 0) {
+      if (
+        !Number.isFinite(cash) ||
+        !Number.isFinite(bank) ||
+        cash < 0 ||
+        bank < 0
+      ) {
         return "Tiền mặt/chuyển khoản không hợp lệ"
       }
       if (cash <= 0 && bank <= 0) {
@@ -1042,7 +1392,14 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
       return "Chuyển khoản/Momo phải bằng đúng tổng tiền"
     }
     return null
-  }, [paidValue, paymentMethod, grandTotal, mixCashAmount, mixBankAmount])
+  }, [
+    drawerIsOpen,
+    paidValue,
+    paymentMethod,
+    grandTotal,
+    mixCashAmount,
+    mixBankAmount,
+  ])
 
   const changePreview = useMemo(() => {
     if (!Number.isFinite(paidValue)) return 0
@@ -1116,6 +1473,73 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
       setHistoryRows(Array.isArray(list) ? list : [])
     } finally {
       setHistoryBusy(false)
+    }
+  }
+
+  async function refreshCashDrawer({ silent404 = true } = {}) {
+    setDrawerBusy(true)
+    try {
+      const r = await get(
+        "/api/v1/pos/cash-drawer/current?include_entries=true&entry_limit=200",
+      )
+      setDrawerSession(r)
+      return r
+    } catch (e) {
+      if (e?.status === 404) {
+        setDrawerSession(null)
+        if (!silent404) showInfo("Chưa mở ca thùng tiền")
+        return null
+      }
+      throw e
+    } finally {
+      setDrawerBusy(false)
+    }
+  }
+
+  async function openCashDrawerModal() {
+    setDrawerModalOpen(true)
+    try {
+      await refreshCashDrawer({ silent404: true })
+    } catch (e) {
+      showErr(e)
+    }
+  }
+
+  async function openCashDrawerSession(payload) {
+    setDrawerBusy(true)
+    try {
+      const r = await post("/api/v1/pos/cash-drawer/open", payload)
+      setDrawerSession(r)
+      showInfo("Đã mở ca thùng tiền")
+    } finally {
+      setDrawerBusy(false)
+    }
+  }
+
+  async function closeCashDrawerSession(payload) {
+    setDrawerBusy(true)
+    try {
+      const r = await post("/api/v1/pos/cash-drawer/current/close", payload)
+      setDrawerSession(null)
+      setDrawerModalOpen(false)
+      setPayModalOpen(false)
+      showInfo(`Đã đóng ca #${r.id}`)
+    } finally {
+      setDrawerBusy(false)
+    }
+  }
+
+  async function managerWithdrawCash(payload) {
+    setDrawerBusy(true)
+    try {
+      const r = await post(
+        "/api/v1/pos/cash-drawer/current/manager-withdraw",
+        payload,
+      )
+      setDrawerSession(r)
+      showInfo("Đã ghi nhận rút tiền khỏi thùng")
+    } finally {
+      setDrawerBusy(false)
     }
   }
 
@@ -1369,7 +1793,12 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
       if (paymentMethod === "mixed") {
         const cash = mixCashAmount === "" ? 0 : Number(mixCashAmount)
         const bank = mixBankAmount === "" ? 0 : Number(mixBankAmount)
-        if (!Number.isFinite(cash) || !Number.isFinite(bank) || cash < 0 || bank < 0) {
+        if (
+          !Number.isFinite(cash) ||
+          !Number.isFinite(bank) ||
+          cash < 0 ||
+          bank < 0
+        ) {
           throw new Error("Tiền mặt/chuyển khoản không hợp lệ")
         }
         paid = cash + bank
@@ -1391,6 +1820,7 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
       }
 
       await post(`/api/v1/pos/orders/${order.id}/checkout`, checkoutPayload)
+      await refreshCashDrawer({ silent404: true })
 
       const r = await refreshReceipt(order.id)
       setReceiptModal(r)
@@ -1417,6 +1847,7 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
         } else {
           await createDraftOrder()
         }
+        await refreshCashDrawer({ silent404: true })
       } catch (e) {
         showErr(e)
       }
@@ -1577,6 +2008,15 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
         </div>
 
         <div className="posHeaderActions">
+          <button
+            className={`btn ${drawerIsOpen ? "" : "btnDanger"}`}
+            disabled={busy || drawerBusy}
+            onClick={openCashDrawerModal}
+          >
+            {drawerIsOpen
+              ? `Thùng tiền #${drawerSession.id}`
+              : "Mở ca thùng tiền"}
+          </button>
           <button
             className="btn"
             disabled={busy || historyBusy || refundBusy}
@@ -1893,12 +2333,24 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                   busy ||
                   !order ||
                   order.status !== "draft" ||
-                  cartItems.length === 0
+                  cartItems.length === 0 ||
+                  !drawerIsOpen
                 }
-                onClick={() => setPayModalOpen(true)}
+                onClick={() => {
+                  if (!drawerIsOpen) {
+                    showInfo("Chưa mở ca thùng tiền")
+                    return
+                  }
+                  setPayModalOpen(true)
+                }}
               >
                 THANH TOÁN
               </button>
+              {!drawerIsOpen ? (
+                <div className="payStatus payStatusErr">
+                  Chưa mở ca thùng tiền: không thể thanh toán.
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -2488,6 +2940,25 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
         </Modal>
       ) : null}
 
+      {drawerModalOpen ? (
+        <CashDrawerModal
+          session={drawerSession}
+          busy={busy || drawerBusy}
+          userRole={user?.role}
+          onClose={() => setDrawerModalOpen(false)}
+          onRefresh={async () => {
+            try {
+              await refreshCashDrawer({ silent404: true })
+            } catch (e) {
+              showErr(e)
+            }
+          }}
+          onOpenSession={openCashDrawerSession}
+          onCloseSession={closeCashDrawerSession}
+          onManagerWithdraw={managerWithdrawCash}
+        />
+      ) : null}
+
       {payModalOpen ? (
         <Modal
           title="Thanh toán"
@@ -2552,7 +3023,8 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                     onKeyDown={async (e) => {
                       if (!isEnterKey(e)) return
                       e.preventDefault()
-                      if (busy || !!paymentError || cartItems.length === 0) return
+                      if (busy || !!paymentError || cartItems.length === 0)
+                        return
                       try {
                         await checkout()
                       } catch (err) {
@@ -2574,7 +3046,8 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                     onKeyDown={async (e) => {
                       if (!isEnterKey(e)) return
                       e.preventDefault()
-                      if (busy || !!paymentError || cartItems.length === 0) return
+                      if (busy || !!paymentError || cartItems.length === 0)
+                        return
                       try {
                         await checkout()
                       } catch (err) {
@@ -2611,7 +3084,8 @@ export default function Pos({ receiptTemplate = defaultReceiptTemplate }) {
                     onKeyDown={async (e) => {
                       if (!isEnterKey(e)) return
                       e.preventDefault()
-                      if (busy || !!paymentError || cartItems.length === 0) return
+                      if (busy || !!paymentError || cartItems.length === 0)
+                        return
                       try {
                         await checkout()
                       } catch (err) {

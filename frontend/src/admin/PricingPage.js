@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { get, patch } from "../api"
 import Modal from "./Modal"
 import DataGrid from "./DataGrid"
+import { fmtDateTimeVN } from "../utils/datetime"
 import "./pricing.css"
 
 function toNumber(v) {
@@ -16,13 +17,7 @@ function fmtMoney(v) {
 }
 
 function fmtDateTime(v) {
-  if (!v) return ""
-  const d = new Date(v)
-  if (Number.isNaN(d.getTime())) return String(v)
-  return new Intl.DateTimeFormat("vi-VN", {
-    dateStyle: "short",
-    timeStyle: "medium",
-  }).format(d)
+  return fmtDateTimeVN(v, "")
 }
 
 function priceFieldLabel(field) {

@@ -58,3 +58,49 @@
   min-height: 0;
   overflow: hidden;
 }
+
+@media (max-width: 960px) {
+  .appShell {
+    padding: 8px;
+  }
+
+  .appShellGrid {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .appTopbar {
+    border-radius: 12px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .appTitle {
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .appTabs {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .appTabs::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .appTab {
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+
+  .appBody {
+    overflow: auto;
+  }
+}

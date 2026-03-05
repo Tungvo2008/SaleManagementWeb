@@ -34,6 +34,14 @@ def _assert_sellable_variant(v: Product | None) -> Product:
     return v
 
 
+def _to_utc_naive_from_vn(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        local_dt = dt.replace(tzinfo=VN_TZ)
+    else:
+        local_dt = dt.astimezone(VN_TZ)
+    return local_dt.astimezone(UTC_TZ).replace(tzinfo=None)
+
+
 @router.get("/movements", response_model=list[InventoryOut])
 def list_inventory_movement(db: Session = Depends(get_db)):
     r = db.query(Inventory).all()
@@ -85,9 +93,9 @@ def list_receive_history(
         qx = qx.where(Inventory.created_at >= start_utc, Inventory.created_at < end_utc)
     else:
         if date_from is not None:
-            qx = qx.where(Inventory.created_at >= date_from)
+            qx = qx.where(Inventory.created_at >= _to_utc_naive_from_vn(date_from))
         if date_to is not None:
-            qx = qx.where(Inventory.created_at <= date_to)
+            qx = qx.where(Inventory.created_at <= _to_utc_naive_from_vn(date_to))
 
     if q and q.strip():
         like = f"%{q.strip()}%"

@@ -1,5 +1,12 @@
 const API_BASE = process.env.REACT_APP_API_BASE || ""
 
+function redirectToLogin() {
+  if (typeof window === "undefined") return
+  const hash = window.location.hash || ""
+  if (hash.startsWith("#/login") || hash.startsWith("#/app/login")) return
+  window.location.hash = "#/login"
+}
+
 async function parseBody(res) {
   const text = await res.text()
   if (!text) return null
@@ -37,6 +44,18 @@ export async function api(path, { method = "GET", body, headers, ...rest } = {})
   const data = await parseBody(res)
 
   if (!res.ok) {
+    // Token hết hạn / không hợp lệ -> đẩy thẳng về login.
+    // Không áp dụng cho endpoint login để vẫn hiện đúng lỗi "sai tài khoản/mật khẩu".
+    const isLoginCall = path.includes("/api/v1/auth/login")
+    if (res.status === 401 && !isLoginCall) {
+      try {
+        window.dispatchEvent(new CustomEvent("auth:unauthorized"))
+      } catch {
+        // ignore
+      }
+      redirectToLogin()
+    }
+
     let msg = null
     if (data && typeof data === "object") {
       const d = data.detail ?? data.message

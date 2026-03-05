@@ -2,13 +2,11 @@ import { useEffect, useMemo, useState } from "react"
 import { get } from "../api"
 import DataGrid from "./DataGrid"
 import Modal from "./Modal"
+import { fmtDateTimeVN } from "../utils/datetime"
 import "./audit.css"
 
 function fmtDateTime(v) {
-  if (!v) return ""
-  const d = new Date(v)
-  if (Number.isNaN(d.getTime())) return String(v)
-  return new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "medium" }).format(d)
+  return fmtDateTimeVN(v, "")
 }
 
 function listToText(v) {

@@ -17,6 +17,7 @@ from app.api.v1.routes import (
     pos,
     pos_reports,
     pos_search,
+    cash_drawer,
     audit,
 )
 from app.api.v1.routes.auth import require_admin, require_pos, require_manager
@@ -39,4 +40,5 @@ api_router.include_router(pos.router, prefix="/pos", tags=["pos"], dependencies=
 api_router.include_router(pos_orders.router, prefix="/pos", tags=["pos"], dependencies=[Depends(require_pos)])
 api_router.include_router(pos_reports.router, prefix="/pos", tags=["pos"], dependencies=[Depends(require_manager)])
 api_router.include_router(pos_search.router, prefix="/pos", tags=["pos"], dependencies=[Depends(require_pos)])
+api_router.include_router(cash_drawer.router, prefix="/pos", tags=["pos"], dependencies=[Depends(require_pos)])
 api_router.include_router(audit.router, tags=["audit"], dependencies=[Depends(require_admin)])

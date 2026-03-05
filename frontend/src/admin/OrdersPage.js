@@ -4,6 +4,7 @@ import Modal from "./Modal"
 import DataGrid from "./DataGrid"
 import ExcelToolsModal from "./ExcelToolsModal"
 import { defaultReceiptTemplate, normalizeReceiptTemplate, loadReceiptTemplate } from "../pos/receiptTemplate"
+import { fmtDateTimeVN } from "../utils/datetime"
 import "./orders.css"
 
 function fmtMoney(v) {
@@ -150,13 +151,10 @@ export default function OrdersPage() {
             width: 200,
             minWidth: 180,
             getValue: (o) => o.checked_out_at || null,
-            exportValue: (o) =>
-              o.checked_out_at ? new Date(o.checked_out_at + "Z").toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "",
+            exportValue: (o) => (o.checked_out_at ? fmtDateTimeVN(o.checked_out_at) : ""),
             render: (o) => (
               <span className="ordMono">
-                {o.checked_out_at
-                  ? new Date(o.checked_out_at + "Z").toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
-                  : "—"}
+                {o.checked_out_at ? fmtDateTimeVN(o.checked_out_at) : "—"}
               </span>
             ),
           },
@@ -263,7 +261,7 @@ function ReceiptModal({ receipt, template, onClose }) {
   ${cfg.storePhone ? `<div class="muted">SDT: ${escapeHtml(cfg.storePhone)}</div>` : ""}
   ${receipt.customer_name ? `<div class="muted">Khach: ${escapeHtml(receipt.customer_name)}${receipt.customer_phone ? ` - ${escapeHtml(receipt.customer_phone)}` : ""}</div>` : ""}
   ${cfg.headerNote ? `<div class="muted">${escapeHtml(cfg.headerNote)}</div>` : ""}
-  <div class="muted">${new Date(receipt.created_at).toLocaleString("vi-VN")}</div>
+  <div class="muted">${fmtDateTimeVN(receipt.created_at)}</div>
   <table>
     <thead>
       <tr>
@@ -334,7 +332,7 @@ function ReceiptModal({ receipt, template, onClose }) {
           <div>
             <div className="ordReceiptTitle">Hoá đơn #{receipt.order_id}</div>
             <div className="ordReceiptMeta">
-              <span className="ordMono">{new Date(receipt.created_at).toLocaleString("vi-VN")}</span>
+              <span className="ordMono">{fmtDateTimeVN(receipt.created_at)}</span>
               {receipt.customer_name ? (
                 <span className="ordMono">
                   {" "}

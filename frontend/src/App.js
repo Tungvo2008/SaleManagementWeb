@@ -104,6 +104,17 @@ function App() {
   }, [])
 
   useEffect(() => {
+    function onUnauthorized() {
+      setUser(null)
+      if (!window.location.hash.startsWith("#/login")) {
+        window.location.hash = "#/login"
+      }
+    }
+    window.addEventListener("auth:unauthorized", onUnauthorized)
+    return () => window.removeEventListener("auth:unauthorized", onUnauthorized)
+  }, [])
+
+  useEffect(() => {
     let alive = true
     setAuthLoading(true)
     withTimeout(me(), 8000, "Auth check timeout")
@@ -263,7 +274,7 @@ function App() {
           </div>
         </div>
         <div className="appBody">
-          <Pos receiptTemplate={receiptTemplate} />
+          <Pos receiptTemplate={receiptTemplate} user={user} />
         </div>
       </div>
     )

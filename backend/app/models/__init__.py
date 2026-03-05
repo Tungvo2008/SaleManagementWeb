@@ -11,3 +11,5 @@ from app.models.customer import Customer
 from app.models.supplier import Supplier
 from app.models.price_history import PriceHistory
 from app.models.audit_log import AuditLog
+from app.models.cash_drawer_session import CashDrawerSession
+from app.models.cash_drawer_entry import CashDrawerEntry

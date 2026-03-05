@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import or_, select
@@ -14,6 +15,16 @@ from app.schemas.audit import AuditLogOut
 
 
 router = APIRouter(prefix="/audit")
+VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
+UTC_TZ = ZoneInfo("UTC")
+
+
+def _to_utc_naive_from_vn(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        local_dt = dt.replace(tzinfo=VN_TZ)
+    else:
+        local_dt = dt.astimezone(VN_TZ)
+    return local_dt.astimezone(UTC_TZ).replace(tzinfo=None)
 
 
 @router.get("/events", response_model=list[AuditLogOut])
@@ -46,9 +57,9 @@ def list_audit_events(
     if actor_user_id is not None:
         qx = qx.where(AuditLog.actor_user_id == actor_user_id)
     if date_from is not None:
-        qx = qx.where(AuditLog.created_at >= date_from)
+        qx = qx.where(AuditLog.created_at >= _to_utc_naive_from_vn(date_from))
     if date_to is not None:
-        qx = qx.where(AuditLog.created_at <= date_to)
+        qx = qx.where(AuditLog.created_at <= _to_utc_naive_from_vn(date_to))
 
     if q and q.strip():
         like = f"%{q.strip()}%"

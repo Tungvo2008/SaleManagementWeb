@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { get, patch, post } from "../api"
 import DataGrid from "./DataGrid"
 import Modal from "./Modal"
+import { fmtDateTimeVN } from "../utils/datetime"
 import "./partners.css"
 
 export default function EmployeesPage() {
@@ -83,7 +84,7 @@ export default function EmployeesPage() {
             title: "Tạo lúc",
             width: 190,
             minWidth: 150,
-            render: (v) => <span className="prtMono">{v.created_at ? new Date(v.created_at).toLocaleString("vi-VN") : ""}</span>,
+            render: (v) => <span className="prtMono">{fmtDateTimeVN(v.created_at, "")}</span>,
           },
           {
             key: "actions",

@@ -199,15 +199,15 @@
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .posHeaderActions .btn:first-child {
-  min-width: 132px;
+  min-width: 150px;
 }
 
-.posHeaderActions .btn:last-child {
-  min-width: 86px;
+.posHeaderActions .btn {
+  min-width: 96px;
 }
 
 .btnIconAction {

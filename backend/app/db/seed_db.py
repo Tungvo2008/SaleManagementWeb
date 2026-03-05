@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import delete
 
@@ -353,7 +354,7 @@ def seed_db() -> None:
             )
         db.add_all(inventory_logs)
 
-        now = datetime.now()
+        now = datetime.now(ZoneInfo("UTC")).replace(tzinfo=None)
         order_1 = Order(
             status="checked_out",
             customer_id=customers[0].id,
