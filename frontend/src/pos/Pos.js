@@ -71,6 +71,92 @@ function fmtDateTime(v) {
   return fmtDateTimeVN(v, "—")
 }
 
+function fmtInvoiceDateLine(v) {
+  const d = new Date(v)
+  if (!Number.isFinite(d.getTime())) return ""
+  const parts = new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).formatToParts(d)
+  const day = parts.find((p) => p.type === "day")?.value || "00"
+  const month = parts.find((p) => p.type === "month")?.value || "00"
+  const year = parts.find((p) => p.type === "year")?.value || "0000"
+  return `Ngày ${day} tháng ${month} năm ${year}`
+}
+
+function fmtQtyPrint(qty, uom) {
+  const n = asNum(qty)
+  const value = Number.isInteger(n)
+    ? String(n)
+    : n.toLocaleString("vi-VN", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      })
+  return `${value}${uom ? ` ${uom}` : ""}`
+}
+
+function moneyToVietnameseWords(value) {
+  const n = Math.max(0, Math.round(asNum(value)))
+  if (n === 0) return "Không đồng chẵn"
+  const digits = [
+    "không",
+    "một",
+    "hai",
+    "ba",
+    "bốn",
+    "năm",
+    "sáu",
+    "bảy",
+    "tám",
+    "chín",
+  ]
+  const units = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"]
+
+  function read3(x) {
+    const hundred = Math.floor(x / 100)
+    const ten = Math.floor((x % 100) / 10)
+    const one = x % 10
+    const out = []
+    if (hundred > 0) out.push(`${digits[hundred]} trăm`)
+    if (ten > 1) {
+      out.push(`${digits[ten]} mươi`)
+      if (one === 1) out.push("mốt")
+      else if (one === 5) out.push("lăm")
+      else if (one > 0) out.push(digits[one])
+    } else if (ten === 1) {
+      out.push("mười")
+      if (one === 5) out.push("lăm")
+      else if (one > 0) out.push(digits[one])
+    } else if (one > 0) {
+      if (hundred > 0) out.push("lẻ")
+      out.push(digits[one])
+    }
+    return out.join(" ")
+  }
+
+  let left = n
+  const groups = []
+  while (left > 0) {
+    groups.push(left % 1000)
+    left = Math.floor(left / 1000)
+  }
+
+  const words = []
+  for (let i = groups.length - 1; i >= 0; i -= 1) {
+    const g = groups[i]
+    if (!g) continue
+    const w = read3(g)
+    if (w) words.push(w)
+    if (units[i]) words.push(units[i])
+  }
+
+  const text = words.join(" ").replace(/\s+/g, " ").trim()
+  if (!text) return "Không đồng chẵn"
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)} đồng chẵn`
+}
+
 function useHotkeys(map) {
   useEffect(() => {
     function onKeyDown(e) {
@@ -197,21 +283,34 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
               if (!w) return
               const isThermal = (cfg.printLayout || "thermal") === "thermal"
               const paperWidthMm = cfg.paperSize === "58" ? 58 : 80
-              const html = `<!doctype html>
+              const invoiceNo = `HD${String(receipt.order_id).padStart(6, "0")}`
+              const invoiceDate = fmtInvoiceDateLine(receipt.created_at)
+              const amountInWords = moneyToVietnameseWords(receipt.grand_total)
+
+              const html = isThermal
+                ? `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8"/>
   <title>Receipt ${receipt.order_id}</title>
   <style>
-    @page { size: ${isThermal ? "auto" : "A4"}; margin: ${isThermal ? "0" : "10mm"}; }
-    body { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; margin: ${isThermal ? "0" : "16px"}; color: #121417; }
-    .wrap { width: ${isThermal ? `${paperWidthMm}mm` : "760px"}; padding: ${isThermal ? "2mm" : "0"}; }
+    @page { size: auto; margin: 0; }
+    body { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0; color: #121417; }
+    .wrap { width: ${paperWidthMm}mm; padding: 2mm; }
     h1 { font-size: 18px; margin: 0 0 8px; }
     .muted { color: #5d6066; font-size: 12px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { border-bottom: 1px solid rgba(18,20,23,0.12); padding: 8px 0; font-size: 13px; vertical-align: top; }
-    th { text-align: left; font-size: 12px; color: #5d6066; font-weight: 700; }
-    .right { text-align: right; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
+    th { text-align: left; font-size: 12px; color: #444; font-weight: 700; border-bottom: 1px solid rgba(18,20,23,0.35); padding: 6px 0; }
+    th:nth-child(2) { width: 52px; text-align: center; }
+    th:nth-child(3) { width: 92px; text-align: right; }
+    td { padding: 5px 0; font-size: 12px; vertical-align: top; }
+    .itemNameRow td { border-bottom: 0; padding-bottom: 1px; }
+    .itemValueRow td { border-bottom: 1px dashed rgba(18,20,23,0.55); padding-top: 0; padding-bottom: 7px; }
+    .itemValueRow td:nth-child(2) { text-align: center; }
+    .itemValueRow td:nth-child(3) { text-align: right; }
+    .name { font-weight: 700; font-size: 13px; }
+    .meta { color: #5d6066; font-size: 11px; margin-top: 1px; }
+    .priceLine { font-size: 12px; }
     .totals { margin-top: 12px; display: grid; gap: 6px; }
     .row { display: flex; justify-content: space-between; font-size: 13px; }
     .grand { font-weight: 800; font-size: 14px; }
@@ -219,7 +318,7 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
 </head>
 <body>
   <div class="wrap">
-  <h1>${escapeHtml(cfg.storeName || "Cua Hang")} - Hoa don #${receipt.order_id}</h1>
+  <h1>${escapeHtml(cfg.storeName || "Cua Hang")}</h1>
   ${cfg.storeAddress ? `<div class="muted">${escapeHtml(cfg.storeAddress)}</div>` : ""}
   ${cfg.storePhone ? `<div class="muted">SDT: ${escapeHtml(cfg.storePhone)}</div>` : ""}
   ${receipt.customer_name ? `<div class="muted">Khach: ${escapeHtml(receipt.customer_name)}${receipt.customer_phone ? ` - ${escapeHtml(receipt.customer_phone)}` : ""}</div>` : ""}
@@ -228,20 +327,19 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
   <table>
     <thead>
       <tr>
-        <th>Hàng</th>
-        <th class="right">SL</th>
-        <th class="right">Đơn giá</th>
-        <th class="right">TT</th>
+        <th>Đơn giá</th>
+        <th>SL</th>
+        <th>Thành tiền</th>
       </tr>
     </thead>
     <tbody>
       ${receipt.items
         .map(
           (it) => `
-        <tr>
-          <td>
-            <div style="font-weight:700">${escapeHtml(it.name)}</div>
-            <div class="muted">${[
+        <tr class="itemNameRow">
+          <td colspan="3">
+            <div class="name">${escapeHtml(it.name)}${it.uom ? ` (${escapeHtml(it.uom)})` : ""}</div>
+            <div class="meta">${[
               cfg.showPricingMode ? it.pricing_mode : null,
               Number(it.discount_total || 0) > 0
                 ? `KM:${fmtVnd(it.discount_total)}đ`
@@ -253,9 +351,11 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
               .map(escapeHtml)
               .join(" · ")}</div>
           </td>
-          <td class="right">${it.qty}${it.uom ? " " + it.uom : ""}</td>
-          <td class="right">${fmtVnd(it.unit_price)}đ</td>
-          <td class="right">${fmtVnd(it.line_total)}đ</td>
+        </tr>
+        <tr class="itemValueRow">
+          <td><div class="priceLine">${fmtVnd(it.unit_price)}đ</div></td>
+          <td>${escapeHtml(fmtQtyPrint(it.qty, ""))}</td>
+          <td>${fmtVnd(it.line_total)}đ</td>
         </tr>
       `,
         )
@@ -269,6 +369,105 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
   </div>
   ${cfg.footerText ? `<div class="muted">${escapeHtml(cfg.footerText)}</div>` : ""}
   ${cfg.showThankYou ? `<div class="muted">Cam on quy khach!</div>` : ""}
+  </div>
+  <script>window.print()</script>
+</body>
+</html>`
+                : `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Hoa don ${receipt.order_id}</title>
+  <style>
+    @page { size: A4; margin: 10mm; }
+    body { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0; color: #111; }
+    .wrap { width: 100%; max-width: 800px; margin: 0 auto; }
+    .center { text-align: center; }
+    .title { font-size: 44px; font-weight: 800; line-height: 1.08; letter-spacing: 0.3px; margin: 0; }
+    .sub { font-size: 24px; margin-top: 4px; }
+    .date { font-size: 24px; margin-top: 4px; }
+    .info { margin-top: 22px; font-size: 22px; line-height: 1.45; }
+    .line { margin-top: 14px; border-bottom: 2px solid #222; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; table-layout: fixed; }
+    th { font-size: 22px; padding: 10px 6px 8px; font-weight: 800; border-bottom: 2px solid #222; text-align: left; }
+    th:nth-child(2) { width: 120px; text-align: center; }
+    th:nth-child(3) { width: 220px; text-align: right; }
+    td { padding: 10px 6px; font-size: 22px; vertical-align: top; }
+    .itemNameRow td { border-bottom: 0; padding-bottom: 2px; }
+    .itemValueRow td { border-bottom: 2px dashed #666; padding-top: 0; padding-bottom: 10px; }
+    .itemValueRow td:nth-child(2) { text-align: center; }
+    .itemValueRow td:nth-child(3) { text-align: right; }
+    .name { font-weight: 700; }
+    .priceLine { color: #222; font-size: 20px; }
+    .totalBlock { width: 54%; margin-left: auto; margin-top: 18px; }
+    .totalRow { display: grid; grid-template-columns: 1fr 200px; gap: 8px; align-items: baseline; font-size: 22px; margin-top: 6px; }
+    .totalLabel { font-weight: 700; text-align: right; }
+    .totalValue { font-weight: 700; text-align: right; }
+    .grand .totalLabel, .grand .totalValue { font-size: 24px; font-weight: 800; }
+    .words { margin-top: 18px; font-size: 20px; font-style: italic; }
+    .footer { text-align: center; margin-top: 80px; font-size: 24px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="center">
+      <div class="title">HÓA ĐƠN BÁN HÀNG</div>
+      <div class="sub">Số HD: ${escapeHtml(invoiceNo)}</div>
+      <div class="date">${escapeHtml(invoiceDate)}</div>
+    </div>
+
+    <div class="info">
+      <div>Khách hàng: ${escapeHtml(receipt.customer_name || "Khách lẻ")}</div>
+      <div>SDT: ${escapeHtml(receipt.customer_phone || "")}</div>
+      <div>Địa chỉ: ${escapeHtml(cfg.storeAddress || "")}</div>
+    </div>
+
+    <div class="line"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>Đơn giá</th>
+          <th>SL</th>
+          <th>Thành tiền</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${receipt.items
+          .map(
+            (it) => `
+          <tr class="itemNameRow">
+            <td colspan="3">
+              <div class="name">${escapeHtml(it.name)}${it.uom ? ` (${escapeHtml(it.uom)})` : ""}</div>
+            </td>
+          </tr>
+          <tr class="itemValueRow">
+            <td><div class="priceLine">${fmtVnd(it.unit_price)}đ</div></td>
+            <td>${escapeHtml(fmtQtyPrint(it.qty, ""))}</td>
+            <td>${fmtVnd(it.line_total)}</td>
+          </tr>
+        `,
+          )
+          .join("")}
+      </tbody>
+    </table>
+
+    <div class="totalBlock">
+      <div class="totalRow">
+        <div class="totalLabel">Tổng tiền hàng:</div>
+        <div class="totalValue">${fmtVnd(receipt.subtotal)}</div>
+      </div>
+      <div class="totalRow">
+        <div class="totalLabel">Chiết khấu:</div>
+        <div class="totalValue">${fmtVnd(receipt.discount_total)}</div>
+      </div>
+      <div class="totalRow grand">
+        <div class="totalLabel">Tổng thanh toán:</div>
+        <div class="totalValue">${fmtVnd(receipt.grand_total)}</div>
+      </div>
+    </div>
+
+    <div class="words">(${escapeHtml(amountInWords)})</div>
+    <div class="footer">${escapeHtml(cfg.footerText || "Cảm ơn và hẹn gặp lại!")}</div>
   </div>
   <script>window.print()</script>
 </body>
