@@ -1234,6 +1234,8 @@ function CashDrawerModal({
 export default function Pos({
   receiptTemplate = defaultReceiptTemplate,
   user = null,
+  onGotoDashboard = () => {},
+  onLogout = () => {},
 }) {
   const [drafts, setDrafts] = useState([])
   const [order, setOrder] = useState(null)
@@ -1958,6 +1960,25 @@ export default function Pos({
   return (
     <div className="posKiotShell">
       <div className="posHeader">
+        <button
+          className="btn posHeaderEdgeBtn posHeaderHomeBtn"
+          onClick={onGotoDashboard}
+          title="Về trang chủ"
+          aria-label="Về trang chủ"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 640 640"
+            className="iconSvg"
+            aria-hidden="true"
+          >
+            <path
+              d="M320 112.5L80 304L80 528C80 554.5 101.5 576 128 576L224 576L224 400C224 373.5 245.5 352 272 352L368 352C394.5 352 416 373.5 416 400L416 576L512 576C538.5 576 560 554.5 560 528L560 304L320 112.5zM357.4 54.5C336 37.4 304 37.4 282.6 54.5L42.6 246C32.2 254.3 30.5 269.4 38.8 279.8C47.1 290.2 62.2 291.9 72.6 283.6L312.6 92.1C316.9 88.7 323.1 88.7 327.4 92.1L567.4 283.6C577.8 291.9 592.9 290.2 601.2 279.8C609.5 269.4 607.8 254.3 597.4 246L357.4 54.5z"
+              fill="currentColor"
+            />
+          </svg>
+        </button>
+
         <div className="posCustomerHead">
           <div className="posCustomerMini">
             <div className="posCustomerMiniLabel">Khách hàng</div>
@@ -2083,6 +2104,10 @@ export default function Pos({
             </svg>
           </button>
         </div>
+
+        <button className="btn posHeaderEdgeBtn posHeaderLogoutBtn" onClick={onLogout}>
+          Đăng xuất
+        </button>
       </div>
 
       <div className="posDraftTabs">
@@ -2129,14 +2154,21 @@ export default function Pos({
                 <div className="hint">Chưa có món. Scan để thêm.</div>
               ) : (
                 <div className="tableWrap">
-                  <table className="table">
+                  <table className="table cartTable">
+                    <colgroup>
+                      <col className="cartColName" />
+                      <col className="cartColQty" />
+                      <col className="cartColPrice" />
+                      <col className="cartColTotal" />
+                      <col className="cartColActions" />
+                    </colgroup>
                     <thead>
                       <tr>
                         <th>Hàng</th>
                         <th className="right">SL</th>
                         <th className="right">Đơn giá</th>
-                        <th className="right">TT</th>
-                        <th className="right">...</th>
+                        <th className="right">Tạm tính</th>
+                        <th className="right">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2221,35 +2253,64 @@ export default function Pos({
                           <td className="right" style={{ fontWeight: 900 }}>
                             {fmtVnd(it.line_total)} đ
                           </td>
-                          <td className="right">
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: 8,
-                                justifyContent: "flex-end",
-                                flexWrap: "wrap",
-                              }}
-                            >
+                          <td className="right cartActionsCell">
+                            <div className="cartActions">
                               <button
-                                className="btn"
+                                className="btn cartActionBtn"
                                 disabled={busy}
                                 onClick={() => openLineDiscount(it)}
+                                title="Khuyến mãi dòng"
+                                aria-label="Khuyến mãi dòng"
                               >
-                                KM
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 640 640"
+                                  className="iconSvg"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    d="M96.5 160L96.5 309.5C96.5 326.5 103.2 342.8 115.2 354.8L307.2 546.8C332.2 571.8 372.7 571.8 397.7 546.8L547.2 397.3C572.2 372.3 572.2 331.8 547.2 306.8L355.2 114.8C343.2 102.7 327 96 310 96L160.5 96C125.2 96 96.5 124.7 96.5 160zM208.5 176C226.2 176 240.5 190.3 240.5 208C240.5 225.7 226.2 240 208.5 240C190.8 240 176.5 225.7 176.5 208C176.5 190.3 190.8 176 208.5 176z"
+                                    fill="currentColor"
+                                  />
+                                </svg>
                               </button>
                               <button
-                                className="btn"
+                                className="btn cartActionBtn"
                                 disabled={busy}
                                 onClick={() => setEditLine(it)}
+                                title="Sửa dòng"
+                                aria-label="Sửa dòng"
                               >
-                                Sửa
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 640 640"
+                                  className="iconSvg"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    d="M535.6 85.7C513.7 63.8 478.3 63.8 456.4 85.7L432 110.1L529.9 208L554.3 183.6C576.2 161.7 576.2 126.3 554.3 104.4L535.6 85.7zM236.4 305.7C230.3 311.8 225.6 319.3 222.9 327.6L193.3 416.4C190.4 425 192.7 434.5 199.1 441C205.5 447.5 215 449.7 223.7 446.8L312.5 417.2C320.7 414.5 328.2 409.8 334.4 403.7L496 241.9L398.1 144L236.4 305.7zM160 128C107 128 64 171 64 224L64 480C64 533 107 576 160 576L416 576C469 576 512 533 512 480L512 384C512 366.3 497.7 352 480 352C462.3 352 448 366.3 448 384L448 480C448 497.7 433.7 512 416 512L160 512C142.3 512 128 497.7 128 480L128 224C128 206.3 142.3 192 160 192L256 192C273.7 192 288 177.7 288 160C288 142.3 273.7 128 256 128L160 128z"
+                                    fill="currentColor"
+                                  />
+                                </svg>
                               </button>
                               <button
-                                className="btn btnDanger"
+                                className="btn btnDanger cartActionBtn"
                                 disabled={busy}
                                 onClick={() => deleteItem(it.item_id)}
+                                title="Xoá dòng"
+                                aria-label="Xoá dòng"
                               >
-                                Xoá
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 640 640"
+                                  className="iconSvg"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    d="M232.7 69.9L224 96L128 96C110.3 96 96 110.3 96 128C96 145.7 110.3 160 128 160L512 160C529.7 160 544 145.7 544 128C544 110.3 529.7 96 512 96L416 96L407.3 69.9C402.9 56.8 390.7 48 376.9 48L263.1 48C249.3 48 237.1 56.8 232.7 69.9zM512 208L128 208L149.1 531.1C150.7 556.4 171.7 576 197 576L443 576C468.3 576 489.3 556.4 490.9 531.1L512 208z"
+                                    fill="currentColor"
+                                  />
+                                </svg>
                               </button>
                             </div>
                           </td>
@@ -2264,15 +2325,15 @@ export default function Pos({
 
           <div className="checkoutBar">
             <div className="checkoutLeft">
-              <div>
+              <div className="checkoutDiscountBox">
                 <div className="checkoutLabel">Khuyến mãi hoá đơn</div>
                 <div className="discSummary">
-                  <div className="pill">
+                  <div className="pill discountPill">
                     {order?.discount_mode === "percent"
                       ? `Theo %: ${asNum(order?.discount_value)}% (=${fmtVnd(discountTotal)} đ)`
                       : `Theo tiền: ${fmtVnd(discountTotal)} đ`}
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <div className="discountActions">
                     <button
                       className="btn btnPrimary"
                       disabled={busy || !order || order.status !== "draft"}
@@ -2622,7 +2683,7 @@ export default function Pos({
             </div>
           }
         >
-          <div className="split">
+          <div className="split invoiceDiscountEditor">
             <div>
               <div className="hint" style={{ marginTop: 0 }}>
                 Kiểu khuyến mãi
@@ -2660,7 +2721,7 @@ export default function Pos({
               />
             </div>
           </div>
-          <div className="miniCard">
+          <div className="miniCard invoiceDiscountPreview">
             <div className="miniTitle">Xem trước</div>
             {(() => {
               const disc = Math.min(

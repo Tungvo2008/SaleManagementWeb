@@ -11,6 +11,10 @@
   overflow: hidden;
 }
 
+.appShellGridNoTop {
+  grid-template-rows: 1fr;
+}
+
 .appTopbar {
   border: 1px solid rgba(var(--accent-rgb), 0.28);
   border-radius: 16px;
@@ -69,6 +73,10 @@
     min-height: 100vh;
     overflow: visible;
     grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .appShellGridNoTop {
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .appTopbar {

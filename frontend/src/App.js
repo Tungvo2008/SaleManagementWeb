@@ -264,20 +264,14 @@ function App() {
 
   if (route.mode === "pos") {
     return (
-      <div className="appShell appShellGrid">
-        <div className="appTopbar">
-          <div className="appTitle">{title}</div>
-          <div className="appTabs">
-            <button className="appTab" onClick={() => goto("dashboard")}>
-              Về trang chủ
-            </button>
-            <button className="appTab" onClick={handleLogout}>
-              Đăng xuất
-            </button>
-          </div>
-        </div>
+      <div className="appShell appShellGrid appShellGridNoTop">
         <div className="appBody">
-          <Pos receiptTemplate={receiptTemplate} user={user} />
+          <Pos
+            receiptTemplate={receiptTemplate}
+            user={user}
+            onGotoDashboard={() => goto("dashboard")}
+            onLogout={handleLogout}
+          />
         </div>
       </div>
     )
