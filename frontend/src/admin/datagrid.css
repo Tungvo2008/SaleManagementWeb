@@ -4,6 +4,22 @@
   gap: 10px;
 }
 
+.dgTopScroll{
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  border: 1px solid var(--adm-line);
+  border-radius: 999px;
+  background: #ffffff;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 12px;
+}
+
+.dgTopScrollInner{
+  height: 1px;
+}
+
 .dgToolbar{
   display:flex;
   align-items:center;
@@ -176,6 +192,10 @@
 @media (max-width: 900px){
   .dgWrap{
     gap: 8px;
+  }
+
+  .dgTopScroll{
+    height: 10px;
   }
 
   .dgBtn{

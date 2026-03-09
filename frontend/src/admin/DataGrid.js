@@ -47,6 +47,10 @@ export default function DataGrid({ id, columns, rows, rowKey, onSnapshot }) {
   const [cfg, setCfg] = useState(() => loadCfg(id) || defaults)
   const [showColumns, setShowColumns] = useState(false)
   const gridRef = useRef(null)
+  const topScrollRef = useRef(null)
+  const topScrollInnerRef = useRef(null)
+  const scrollSyncRef = useRef(null)
+  const [showTopScroll, setShowTopScroll] = useState(false)
 
   // Keep config compatible when columns change (new keys, removed keys).
   useEffect(() => {
@@ -216,6 +220,75 @@ export default function DataGrid({ id, columns, rows, rowKey, onSnapshot }) {
     })
   }
 
+  useEffect(() => {
+    function syncMetrics() {
+      const gridEl = gridRef.current
+      const topInner = topScrollInnerRef.current
+      const topEl = topScrollRef.current
+      if (!gridEl) return
+
+      const overflowX = gridEl.scrollWidth > gridEl.clientWidth + 1
+      setShowTopScroll(overflowX)
+
+      if (topInner) {
+        topInner.style.width = `${gridEl.scrollWidth}px`
+      }
+      if (topEl && Math.abs(topEl.scrollLeft - gridEl.scrollLeft) > 1) {
+        topEl.scrollLeft = gridEl.scrollLeft
+      }
+    }
+
+    syncMetrics()
+    const gridEl = gridRef.current
+    if (!gridEl) return
+
+    let ro = null
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => syncMetrics())
+      ro.observe(gridEl)
+    }
+
+    window.addEventListener("resize", syncMetrics)
+    return () => {
+      window.removeEventListener("resize", syncMetrics)
+      if (ro) ro.disconnect()
+    }
+  }, [
+    visibleCols,
+    rows.length,
+    gridTemplateColumns,
+    cfg.widths,
+    cfg.filters,
+    cfg.sortKey,
+    cfg.sortDir,
+  ])
+
+  useEffect(() => {
+    const gridEl = gridRef.current
+    const topEl = topScrollRef.current
+    if (!gridEl || !topEl) return
+
+    function onGridScroll() {
+      if (scrollSyncRef.current === "top") return
+      scrollSyncRef.current = "grid"
+      topEl.scrollLeft = gridEl.scrollLeft
+      scrollSyncRef.current = null
+    }
+    function onTopScroll() {
+      if (scrollSyncRef.current === "grid") return
+      scrollSyncRef.current = "top"
+      gridEl.scrollLeft = topEl.scrollLeft
+      scrollSyncRef.current = null
+    }
+
+    gridEl.addEventListener("scroll", onGridScroll, { passive: true })
+    topEl.addEventListener("scroll", onTopScroll, { passive: true })
+    return () => {
+      gridEl.removeEventListener("scroll", onGridScroll)
+      topEl.removeEventListener("scroll", onTopScroll)
+    }
+  }, [showTopScroll])
+
   const filteredRows = useMemo(() => {
     const fs = cfg.filters || {}
     const active = Object.entries(fs).filter(([, v]) => String(v || "").trim())
@@ -304,6 +377,12 @@ export default function DataGrid({ id, columns, rows, rowKey, onSnapshot }) {
           Tuỳ chỉnh cột
         </button>
       </div>
+
+      {showTopScroll ? (
+        <div ref={topScrollRef} className="dgTopScroll" title="Cuộn ngang nhanh">
+          <div ref={topScrollInnerRef} className="dgTopScrollInner" />
+        </div>
+      ) : null}
 
       <div ref={gridRef} className="dgGrid" style={{ gridTemplateColumns }}>
         {visibleCols.map((c) => (
