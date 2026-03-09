@@ -17,6 +17,7 @@ import OrdersPage from "./admin/OrdersPage"
 import AuditPage from "./admin/AuditPage"
 import EmployeesPage from "./admin/EmployeesPage"
 import ExcelPage from "./admin/ExcelPage"
+import CashDrawerHistoryPage from "./admin/CashDrawerHistoryPage"
 import ReceivePrintPage from "./receive/ReceivePrintPage"
 import MobileImagesPage from "./receive/MobileImagesPage"
 import LoginPage from "./LoginPage"
@@ -75,6 +76,7 @@ function getHashRoute() {
     if (page === "suppliers") return { mode: "app", page: "suppliers" }
     if (page === "excel") return { mode: "app", page: "excel" }
     if (page === "orders") return { mode: "app", page: "orders" }
+    if (page === "cash-drawer-history") return { mode: "app", page: "cash-drawer-history" }
     if (page === "audit") return { mode: "app", page: "audit" }
     if (page === "employees") return { mode: "app", page: "employees" }
     return { mode: "app", page: "dashboard" }
@@ -150,6 +152,7 @@ function App() {
     if (route.page === "suppliers") return "Nhà cung cấp"
     if (route.page === "excel") return "Nhập/Xuất Excel"
     if (route.page === "orders") return "Hoá đơn"
+    if (route.page === "cash-drawer-history") return "Lịch sử thùng tiền"
     if (route.page === "audit") return "Nhật ký hệ thống"
     if (route.page === "employees") return "Nhân viên"
     if (route.page === "template") return "Mẫu hóa đơn"
@@ -357,6 +360,8 @@ function App() {
           <ExcelPage />
         ) : route.page === "orders" ? (
           <OrdersPage />
+        ) : route.page === "cash-drawer-history" ? (
+          <CashDrawerHistoryPage />
         ) : route.page === "audit" ? (
           <AuditPage />
         ) : route.page === "employees" ? (

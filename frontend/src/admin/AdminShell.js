@@ -85,6 +85,9 @@ export default function AdminShell({ active, title, onGoto, user, onLogout, chil
               <NavButton active={active === "orders"} onClick={() => gotoAndClose("orders")}>
                 Hoá đơn
               </NavButton>
+              <NavButton active={active === "cash-drawer-history"} onClick={() => gotoAndClose("cash-drawer-history")}>
+                Lịch sử thùng tiền
+              </NavButton>
               <NavButton active={active === "customers"} onClick={() => gotoAndClose("customers")}>
                 Khách hàng
               </NavButton>

@@ -1,0 +1,114 @@
+.cdh {
+  display: grid;
+  gap: 12px;
+}
+
+.cdhTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cdhHint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.cdhActions {
+  display: flex;
+  gap: 8px;
+}
+
+.cdhBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cdhBtn:hover {
+  border-color: var(--brand);
+}
+
+.cdhBtnPrimary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.cdhBtnPrimary:hover {
+  background: #2f63ea;
+}
+
+.cdhBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.cdhFilters {
+  display: grid;
+  grid-template-columns: 170px 120px minmax(220px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.cdhField {
+  display: grid;
+  gap: 6px;
+}
+
+.cdhFieldGrow {
+  min-width: 220px;
+}
+
+.cdhFieldBtn {
+  align-self: end;
+}
+
+.cdhLabel {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cdhMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+}
+
+.cdhMiniBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cdhMiniBtn:hover {
+  border-color: var(--brand);
+}
+
+.cdhDetailMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cdhEntries {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+@media (max-width: 980px) {
+  .cdhFilters {
+    grid-template-columns: 1fr;
+  }
+}

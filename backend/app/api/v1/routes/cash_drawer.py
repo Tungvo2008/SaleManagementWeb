@@ -115,6 +115,24 @@ def list_sessions(
     return [_session_out(db, r, include_entries=False, entry_limit=0) for r in rows]
 
 
+@router.get("/sessions/{session_id}", response_model=CashDrawerSessionOut)
+def get_session(
+    session_id: int,
+    include_entries: bool = True,
+    entry_limit: int = Query(200, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    obj = db.get(CashDrawerSession, session_id)
+    if obj is None:
+        raise HTTPException(404, "Cash drawer session not found")
+    return _session_out(
+        db,
+        obj,
+        include_entries=include_entries,
+        entry_limit=entry_limit,
+    )
+
+
 @router.post("/open", response_model=CashDrawerSessionOut)
 def open_session(payload: CashDrawerOpenIn, db: Session = Depends(get_db), user: User = Depends(current_user)):
     existing = _get_open_session(db)
