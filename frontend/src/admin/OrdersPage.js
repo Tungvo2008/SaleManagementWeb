@@ -355,7 +355,7 @@ function ReceiptModal({ receipt, template, onClose }) {
           {receipt.items.map((it) => (
             <div key={it.item_id} className="ordReceiptRow">
               <div>
-                <div style={{ fontWeight: 900 }}>{it.name}</div>
+                <div style={{ fontWeight: 700 }}>{it.name}</div>
                 <div className="ordReceiptSub">
                   {[
                     cfg.showPricingMode ? it.pricing_mode : null,

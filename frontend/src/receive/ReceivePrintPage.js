@@ -243,7 +243,7 @@ function SupplierPickerModal({ onClose, onPicked, onCreateNew }) {
         {rows.map((s) => (
           <button key={s.id} type="button" className="btn" onClick={() => onPicked?.(s)}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-              <div style={{ fontWeight: 900, textAlign: "left" }}>{s.name}</div>
+              <div style={{ fontWeight: 700, textAlign: "left" }}>{s.name}</div>
               <div className="pill">{s.phone || s.code || `#${s.id}`}</div>
             </div>
             <div className="hint" style={{ marginTop: 6, textAlign: "left" }}>
@@ -1800,7 +1800,7 @@ export default function ReceivePrintPage() {
       {toast ? (
         <div className={`toast ${toast.kind === "error" ? "toastErr" : ""}`}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ fontWeight: 800 }}>{toast.kind === "error" ? "Lỗi" : "Thông báo"}</div>
+            <div style={{ fontWeight: 700 }}>{toast.kind === "error" ? "Lỗi" : "Thông báo"}</div>
             <button className="btn" onClick={() => setToast(null)} style={{ padding: "6px 10px" }}>
               Đóng
             </button>

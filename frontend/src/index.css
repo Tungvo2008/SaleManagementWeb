@@ -40,6 +40,13 @@ body {
   box-sizing: border-box;
 }
 
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 a {
   color: inherit;
 }

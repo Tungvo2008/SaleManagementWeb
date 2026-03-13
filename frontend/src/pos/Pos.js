@@ -200,7 +200,7 @@ function Toast({ kind, message, onClose }) {
           justifyContent: "space-between",
         }}
       >
-        <div style={{ fontWeight: 800 }}>
+        <div style={{ fontWeight: 700 }}>
           {kind === "error" ? "Lỗi" : "Thông báo"}
         </div>
         <button
@@ -903,7 +903,7 @@ function BillHistoryModal({
                   )}
                 </td>
                 <td>{r.payment_method || "—"}</td>
-                <td className="right" style={{ fontWeight: 900 }}>
+                <td className="right" style={{ fontWeight: 700 }}>
                   {fmtVnd(r.grand_total)} đ
                 </td>
                 <td className="right">
@@ -2450,7 +2450,7 @@ export default function Pos({
                             </div>
                           </td>
                           <td className="right">{fmtVnd(it.unit_price)} đ</td>
-                          <td className="right" style={{ fontWeight: 900 }}>
+                          <td className="right" style={{ fontWeight: 700 }}>
                             {fmtVnd(it.line_total)} đ
                           </td>
                           <td className="right cartActionsCell">
@@ -3135,7 +3135,7 @@ export default function Pos({
                           gap: 10,
                         }}
                       >
-                        <div style={{ fontWeight: 900, textAlign: "left" }}>
+                        <div style={{ fontWeight: 700, textAlign: "left" }}>
                           {c.name}
                         </div>
                         <div className="pill">{c.phone || "—"}</div>
