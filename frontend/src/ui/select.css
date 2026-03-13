@@ -22,7 +22,7 @@
   border: 1px solid var(--stroke);
   background: var(--sel-bg);
   color: var(--ink);
-  font-weight: 750;
+  font-weight: 600;
   cursor: pointer;
   outline: none;
 }
@@ -89,7 +89,7 @@
   color: var(--ink);
   cursor: pointer;
   font-size: 15px;
-  font-weight: 750;
+  font-weight: 600;
   text-align: left;
 }
 
@@ -103,7 +103,7 @@
 
 .uiSelectTick{
   color: rgba(var(--accent-rgb), 1);
-  font-weight: 900;
+  font-weight: 700;
 }
 .uiSelectTickOff{
   opacity: 0;

@@ -23,9 +23,9 @@ class VariantCreate(BaseModel):
     price: condecimal(max_digits=12, decimal_places=2)  # bắt buộc
     roll_price: condecimal(max_digits=12, decimal_places=2) | None = None
     cost_price: condecimal(max_digits=12, decimal_places=2, ge=0) | None = None
-    uom: str | None = Field(None, max_length=64)
+    uom: str = Field(..., max_length=64)
     stock: condecimal(max_digits=12, decimal_places=2, ge=0)  # bắt buộc (có thể lẻ: mét/kg/...)
-    sku: str | None = Field(None, max_length=64)
+    sku: str = Field(..., max_length=64)
     barcode: str | None = Field(None, max_length=64)
     image_url: str | None = Field(None, max_length=500)
     attrs: dict | None = None

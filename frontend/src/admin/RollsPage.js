@@ -3,6 +3,7 @@ import { get, patch, post } from "../api"
 import DataGrid from "./DataGrid"
 import Modal from "./Modal"
 import ExcelToolsModal from "./ExcelToolsModal"
+import FieldLabel from "../ui/FieldLabel"
 import "./rolls.css"
 
 function asNum(v) {
@@ -404,7 +405,9 @@ function ReceiveRollsModal({ variants, locations, busy, onClose, onSubmit }) {
     >
       {err ? <div className="admErr">{err}</div> : null}
       <div className="admField">
-        <div className="admLabel">Variant cuộn</div>
+        <FieldLabel className="admLabel" required>
+          Variant cuộn
+        </FieldLabel>
         <select className="admSelect" value={variantId} onChange={(e) => setVariantId(e.target.value)}>
           <option value="">(Chọn variant)</option>
           {(variants || []).map((v) => (
@@ -418,7 +421,9 @@ function ReceiveRollsModal({ variants, locations, busy, onClose, onSubmit }) {
 
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Số cuộn</div>
+          <FieldLabel className="admLabel" required>
+            Số cuộn
+          </FieldLabel>
           <input className="admInput" value={rollCount} onChange={(e) => setRollCount(e.target.value)} />
         </div>
         <div className="admField">
@@ -500,11 +505,15 @@ function TransferRollModal({ row, locations, busy, onClose, onSubmit }) {
       </div>
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Stock Unit ID</div>
+          <FieldLabel className="admLabel" required>
+            Stock Unit ID
+          </FieldLabel>
           <input className="admInput admMono" value={stockUnitId} onChange={(e) => setStockUnitId(e.target.value)} />
         </div>
         <div className="admField">
-          <div className="admLabel">Kệ đích</div>
+          <FieldLabel className="admLabel" required>
+            Kệ đích
+          </FieldLabel>
           <select className="admSelect" value={toLocationId} onChange={(e) => setToLocationId(e.target.value)}>
             <option value="">(Chọn kệ)</option>
             {locations.map((l) => (
@@ -565,7 +574,9 @@ function AdjustRollModal({ row, rowById, busy, onClose, onSubmit }) {
     >
       {err ? <div className="admErr">{err}</div> : null}
       <div className="admField">
-        <div className="admLabel">Stock Unit ID</div>
+        <FieldLabel className="admLabel" required>
+          Stock Unit ID
+        </FieldLabel>
         <input className="admInput admMono" value={stockUnitId} onChange={(e) => setStockUnitId(e.target.value)} />
         {picked ? (
           <div className="admLabel">
@@ -575,7 +586,9 @@ function AdjustRollModal({ row, rowById, busy, onClose, onSubmit }) {
       </div>
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Delta (+/-)</div>
+          <FieldLabel className="admLabel" required>
+            Delta (+/-)
+          </FieldLabel>
           <input className="admInput" value={qtyDelta} onChange={(e) => setQtyDelta(e.target.value)} placeholder="Ví dụ: -2 hoặc 5" />
         </div>
         <div className="admField">
@@ -639,7 +652,9 @@ function EditRollModal({ row, locations, busy, onClose, onSubmit }) {
       {err ? <div className="admErr">{err}</div> : null}
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Stock Unit ID</div>
+          <FieldLabel className="admLabel" required>
+            Stock Unit ID
+          </FieldLabel>
           <input className="admInput admMono" value={stockUnitId} onChange={(e) => setStockUnitId(e.target.value)} />
         </div>
         <div className="admField">

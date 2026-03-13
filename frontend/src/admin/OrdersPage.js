@@ -251,7 +251,7 @@ function ReceiptModal({ receipt, template, onClose }) {
     .right { text-align: right; }
     .totals { margin-top: 12px; display: grid; gap: 6px; }
     .row { display: flex; justify-content: space-between; font-size: 13px; }
-    .grand { font-weight: 800; font-size: 14px; }
+    .grand { font-weight: 700; font-size: 14px; }
   </style>
 </head>
 <body>

@@ -51,7 +51,7 @@
 }
 
 .rcvModalTitle{
-  font-weight: 900;
+  font-weight: 700;
   font-size: 18px;
   letter-spacing: -0.01em;
 }
@@ -82,7 +82,7 @@
   background: var(--card);
   box-shadow: var(--shadow-soft);
 }
-.rcvTitle{ font-weight: 900; letter-spacing: -0.01em; }
+.rcvTitle{ font-weight: 700; letter-spacing: -0.01em; }
 .rcvHeaderRight{
   display:flex;
   align-items:center;
@@ -155,7 +155,7 @@
   align-items: baseline;
 }
 .rcvRowName{
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 .rcvRowSub{
@@ -172,7 +172,7 @@
   padding: 10px 10px;
 }
 .rcvPickedName{
-  font-weight: 950;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 .rcvPickedMeta{
@@ -214,7 +214,7 @@
   min-width: 220px;
 }
 .rcvSupplierName{
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .rcvVarTable{
@@ -230,7 +230,7 @@
   border-radius: 14px;
   border: 1px solid var(--stroke);
   background: rgba(var(--accent-rgb), 0.08);
-  font-weight: 900;
+  font-weight: 700;
   font-size: 12px;
   color: rgba(18,20,23,.85);
 }
@@ -264,7 +264,7 @@
   padding: 10px 10px;
   border-radius: 12px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -292,7 +292,7 @@
   color: var(--ink);
   border-radius: 12px;
   padding: 10px 13px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -317,7 +317,7 @@
 
 .prdSectionTitle{
   font-size: 15px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
@@ -403,7 +403,7 @@
 }
 
 .prdRowTitle{
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .prdRowMeta{
@@ -466,7 +466,7 @@
 }
 
 .prdDropTitle{
-  font-weight: 900;
+  font-weight: 700;
   color: var(--ink);
 }
 
@@ -478,7 +478,7 @@
 .prdDropFile{
   margin-top: 4px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink);
 }
 

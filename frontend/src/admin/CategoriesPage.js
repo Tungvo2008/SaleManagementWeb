@@ -3,6 +3,7 @@ import { del, get, patch, post } from "../api"
 import Modal from "./Modal"
 import DataGrid from "./DataGrid"
 import ExcelToolsModal from "./ExcelToolsModal"
+import FieldLabel from "../ui/FieldLabel"
 import "./categories.css"
 
 export default function CategoriesPage() {
@@ -309,7 +310,9 @@ function CategoryModal({ title, busy, initial, onClose, onSave }) {
     >
       {err ? <div className="admErr">{err}</div> : null}
       <div className="admField">
-        <div className="admLabel">Tên danh mục</div>
+        <FieldLabel className="admLabel" required>
+          Tên danh mục
+        </FieldLabel>
         <input className="admInput" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Lưới / Dây / Phụ kiện..." />
       </div>
       <div className="admField">

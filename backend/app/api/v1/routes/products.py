@@ -31,6 +31,18 @@ def _assert_category_exists(db: Session, category_id: int | None) -> None:
         raise HTTPException(404, "Category not found")
 
 
+def _require_variant_fields(*, sku, uom, price) -> tuple[str, str]:
+    next_sku = str(sku or "").strip()
+    next_uom = str(uom or "").strip()
+    if not next_sku:
+        raise HTTPException(422, "SKU is required")
+    if not next_uom:
+        raise HTTPException(422, "uom is required")
+    if price is None:
+        raise HTTPException(422, "price is required")
+    return next_sku, next_uom
+
+
 def _record_variant_price_fields(
     db: Session,
     *,
@@ -145,11 +157,11 @@ def create_variant(parent_id: int, payload: VariantCreate, db: Session = Depends
     if not is_parent_container(parent):
         raise HTTPException(404, "Parent product not found")
 
-    # sku nếu có phải unique
-    if payload.sku:
-        exists = db.scalars(select(Product.id).where(Product.sku == payload.sku)).first()
-        if exists:
-            raise HTTPException(409, "SKU already exists")
+    sku, uom = _require_variant_fields(sku=payload.sku, uom=payload.uom, price=payload.price)
+
+    exists = db.scalars(select(Product.id).where(Product.sku == sku)).first()
+    if exists:
+        raise HTTPException(409, "SKU already exists")
 
     # barcode nếu có phải unique
     if payload.barcode:
@@ -166,9 +178,9 @@ def create_variant(parent_id: int, payload: VariantCreate, db: Session = Depends
         price=payload.price,
         roll_price=payload.roll_price,
         cost_price=payload.cost_price,
-        uom=payload.uom,
+        uom=uom,
         stock=payload.stock,
-        sku=payload.sku,
+        sku=sku,
         barcode=payload.barcode,
         attrs=payload.attrs,
         track_stock_unit=payload.track_stock_unit,
@@ -200,10 +212,11 @@ def create_standalone_variant(payload: VariantCreate, db: Session = Depends(get_
     """
     _assert_category_exists(db, payload.category_id)
 
-    if payload.sku:
-        exists = db.scalars(select(Product.id).where(Product.sku == payload.sku)).first()
-        if exists:
-            raise HTTPException(409, "SKU already exists")
+    sku, uom = _require_variant_fields(sku=payload.sku, uom=payload.uom, price=payload.price)
+
+    exists = db.scalars(select(Product.id).where(Product.sku == sku)).first()
+    if exists:
+        raise HTTPException(409, "SKU already exists")
 
     if payload.barcode:
         exists = db.scalars(select(Product.id).where(Product.barcode == payload.barcode)).first()
@@ -219,9 +232,9 @@ def create_standalone_variant(payload: VariantCreate, db: Session = Depends(get_
         price=payload.price,
         roll_price=payload.roll_price,
         cost_price=payload.cost_price,
-        uom=payload.uom,
+        uom=uom,
         stock=payload.stock,
-        sku=payload.sku,
+        sku=sku,
         barcode=payload.barcode,
         attrs=payload.attrs,
         track_stock_unit=payload.track_stock_unit,
@@ -294,11 +307,18 @@ def update_variant(variant_id: int, payload: VariantUpdate, db: Session = Depend
     else:
         _assert_category_exists(db, data.get("category_id"))
 
+    next_sku, next_uom = _require_variant_fields(
+        sku=data.get("sku", v.sku),
+        uom=data.get("uom", v.uom),
+        price=data.get("price", v.price),
+    )
+    data["sku"] = next_sku
+    data["uom"] = next_uom
+
     # nếu đổi sku thì check unique
-    if "sku" in data and data["sku"]:
-        exists = db.scalars(select(Product.id).where(Product.sku == data["sku"], Product.id != variant_id)).first()
-        if exists:
-            raise HTTPException(409, "SKU already exists")
+    exists = db.scalars(select(Product.id).where(Product.sku == data["sku"], Product.id != variant_id)).first()
+    if exists:
+        raise HTTPException(409, "SKU already exists")
 
     # nếu đổi barcode thì check unique
     if "barcode" in data and data["barcode"]:

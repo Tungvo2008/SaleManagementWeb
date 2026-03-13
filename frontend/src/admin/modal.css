@@ -33,7 +33,7 @@
   gap: 10px;
   background: #f8fbff;
 }
-.admModalTitle{ font-weight: 900; letter-spacing: -.01em; }
+.admModalTitle{ font-weight: 700; letter-spacing: -.01em; }
 
 .admModalBody{
   padding: 14px 14px;
@@ -58,7 +58,7 @@
   color: var(--adm-text);
   padding: 10px 10px;
   cursor:pointer;
-  font-weight: 800;
+  font-weight: 700;
 }
 .admBtn:hover{ background: #f8fafc; }
 .admBtnPrimary{

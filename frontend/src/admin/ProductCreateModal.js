@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { post } from "../api"
 import Modal from "./Modal"
+import FieldLabel from "../ui/FieldLabel"
 
 function parseAttrValues(text) {
   return String(text || "")
@@ -36,6 +37,10 @@ function cartesian(defs) {
     acc = next
   }
   return acc
+}
+
+function normalizeSku(value) {
+  return String(value || "").trim()
 }
 
 function cleanBarcodeBase(text) {
@@ -229,9 +234,7 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
   }, [trackStockUnit])
 
   function normalizeUom() {
-    const u = String(commonUom || "").trim()
-    if (u) return u
-    return trackStockUnit ? "m" : "pcs"
+    return String(commonUom || "").trim()
   }
 
   function getBaseProductName() {
@@ -299,6 +302,7 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
   function validateCommon() {
     const baseName = getBaseProductName()
     if (!baseName) throw new Error(hasVariants ? "Tên sản phẩm cha là bắt buộc." : "Tên sản phẩm là bắt buộc.")
+    if (!normalizeUom()) throw new Error("Đơn vị là bắt buộc.")
     if (trackStockUnit) {
       const mpr = Number(commonMetersPerRoll)
       if (!Number.isFinite(mpr) || mpr <= 0) throw new Error("Mét/cuộn phải > 0.")
@@ -307,12 +311,25 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
 
   function validateRow(row, label = "Biến thể") {
     if (!String(row.name || "").trim()) throw new Error(`${label}: Tên biến thể là bắt buộc.`)
+    if (!normalizeSku(row.sku)) throw new Error(`${label}: SKU là bắt buộc.`)
+    if (!String(row.price || "").trim()) throw new Error(`${label}: Giá là bắt buộc.`)
     const price = Number(row.price)
     if (!Number.isFinite(price) || price < 0) throw new Error(`${label}: Giá không hợp lệ.`)
 
     if (trackStockUnit && String(row.roll_price || "").trim()) {
       const rp = Number(row.roll_price)
       if (!Number.isFinite(rp) || rp < 0) throw new Error(`${label}: Giá cuộn không hợp lệ.`)
+    }
+  }
+
+  function validateUniqueSkus(rows) {
+    const seen = new Map()
+    for (const row of rows) {
+      const sku = normalizeSku(row.sku).toLowerCase()
+      const label = String(row.name || "Biến thể").trim() || "Biến thể"
+      if (!sku) continue
+      if (seen.has(sku)) throw new Error(`SKU bị trùng trong form: ${label} và ${seen.get(sku)}.`)
+      seen.set(sku, label)
     }
   }
 
@@ -333,7 +350,7 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
       price: String(Number(row.price)),
       roll_price: trackStockUnit && String(row.roll_price || "").trim() ? String(Number(row.roll_price)) : null,
       stock: "0",
-      sku: String(row.sku || "").trim() ? String(row.sku || "").trim() : null,
+      sku: normalizeSku(row.sku),
       barcode,
       image_url: imageUrl,
       attrs: Object.keys(attrsPayload).length ? attrsPayload : null,
@@ -360,7 +377,7 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
       price: String(Number(row.price)),
       roll_price: trackStockUnit && String(row.roll_price || "").trim() ? String(Number(row.roll_price)) : null,
       stock: "0",
-      sku: String(row.sku || "").trim() ? String(row.sku || "").trim() : null,
+      sku: normalizeSku(row.sku),
       barcode,
       image_url: imageUrl,
       attrs: Object.keys(attrsPayload).length ? attrsPayload : null,
@@ -373,6 +390,7 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
     setErr(null)
     validateCommon()
     if (hasVariants && !variantRows.length) throw new Error("Bạn đã bật biến thể nhưng chưa có dòng nào.")
+    validateUniqueSkus(hasVariants ? variantRows : [singleRow])
 
     setSaving(true)
     try {
@@ -493,7 +511,9 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
             <div className="prdSectionTitle">{hasVariants ? "Sản phẩm cha (Parent)" : "Thông tin sản phẩm"}</div>
             <div className="prdGrid2">
               <div>
-                <div className="admLabel">{hasVariants ? "Tên sản phẩm cha" : "Tên sản phẩm"}</div>
+                <FieldLabel className="admLabel" required>
+                  {hasVariants ? "Tên sản phẩm cha" : "Tên sản phẩm"}
+                </FieldLabel>
                 {hasVariants ? (
                   <input className="admInput" value={parentName} onChange={(e) => setParentName(e.target.value)} placeholder="VD: Lưới nylon 1m2" />
                 ) : (
@@ -526,7 +546,9 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
               <div className="prdInlineCreate">
                 <div className="prdGrid3">
                   <div>
-                    <div className="admLabel">Tên danh mục</div>
+                    <FieldLabel className="admLabel" required>
+                      Tên danh mục
+                    </FieldLabel>
                     <input className="admInput" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="VD: Lưới / Khoá / Túi..." />
                   </div>
                   <div>
@@ -558,7 +580,9 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
             <div className="prdSectionTitle">Thiết lập bán hàng</div>
             <div className="prdGrid3">
               <div>
-                <div className="admLabel">Đơn vị mặc định</div>
+                <FieldLabel className="admLabel" required>
+                  Đơn vị mặc định
+                </FieldLabel>
                 <input className="admInput" value={commonUom} onChange={(e) => setCommonUom(e.target.value)} placeholder="pcs / m / kg..." />
               </div>
               <div>
@@ -610,7 +634,9 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
               <div className="prdInlineCreate">
                 <div className="prdGrid3">
                   <div>
-                    <div className="admLabel">Tên nhà cung cấp</div>
+                    <FieldLabel className="admLabel" required>
+                      Tên nhà cung cấp
+                    </FieldLabel>
                     <input className="admInput" value={newSupplierName} onChange={(e) => setNewSupplierName(e.target.value)} placeholder="VD: Kim khí A" />
                   </div>
                   <div>
@@ -644,10 +670,12 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
 
             {trackStockUnit ? (
               <div className="prdGrid2" style={{ marginTop: 10 }}>
-                <div>
-                  <div className="admLabel">Mét/cuộn</div>
-                  <input className="admInput" value={commonMetersPerRoll} onChange={(e) => setCommonMetersPerRoll(e.target.value)} placeholder="VD: 30" />
-                </div>
+              <div>
+                <FieldLabel className="admLabel" required>
+                  Mét/cuộn
+                </FieldLabel>
+                <input className="admInput" value={commonMetersPerRoll} onChange={(e) => setCommonMetersPerRoll(e.target.value)} placeholder="VD: 30" />
+              </div>
                 <div />
               </div>
             ) : null}
@@ -659,7 +687,9 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
               <div className="prdSingleCard">
                 <div className="prdGrid2">
                   <div>
-                    <div className="admLabel">SKU</div>
+                    <FieldLabel className="admLabel" required>
+                      SKU
+                    </FieldLabel>
                     <input className="admInput" value={singleRow.sku} onChange={(e) => setSingleRow((p) => ({ ...p, sku: e.target.value }))} placeholder="..." />
                   </div>
                   <div>
@@ -675,7 +705,9 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
 
                 <div className="prdGrid2" style={{ marginTop: 10 }}>
                   <div>
-                    <div className="admLabel">Giá</div>
+                    <FieldLabel className="admLabel" required>
+                      Giá
+                    </FieldLabel>
                     <input className="admInput" value={singleRow.price} onChange={(e) => setSingleRow((p) => ({ ...p, price: e.target.value }))} placeholder="VD: 35000" />
                   </div>
                   {trackStockUnit ? (
@@ -758,11 +790,15 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
 
                   <div className="prdRowGridTop">
                     <div>
-                      <div className="admLabel">Tên biến thể</div>
+                      <FieldLabel className="admLabel" required>
+                        Tên biến thể
+                      </FieldLabel>
                       <input className="admInput" value={row.name} onChange={(e) => setVariantRow(row.id, { name: e.target.value })} placeholder="Tên biến thể" />
                     </div>
                     <div>
-                      <div className="admLabel">SKU</div>
+                      <FieldLabel className="admLabel" required>
+                        SKU
+                      </FieldLabel>
                       <input className="admInput" value={row.sku} onChange={(e) => setVariantRow(row.id, { sku: e.target.value })} placeholder="..." />
                     </div>
                     <div>
@@ -773,7 +809,9 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
 
                   <div className="prdRowGridBottom">
                     <div>
-                      <div className="admLabel">Giá</div>
+                      <FieldLabel className="admLabel" required>
+                        Giá
+                      </FieldLabel>
                       <input className="admInput" value={row.price} onChange={(e) => setVariantRow(row.id, { price: e.target.value })} placeholder="VD: 35000" />
                     </div>
                     {trackStockUnit ? (

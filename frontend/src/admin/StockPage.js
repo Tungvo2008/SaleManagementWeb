@@ -3,6 +3,7 @@ import { get, patch, post } from "../api"
 import Modal from "./Modal"
 import DataGrid from "./DataGrid"
 import ExcelToolsModal from "./ExcelToolsModal"
+import FieldLabel from "../ui/FieldLabel"
 import "./stock.css"
 
 function fmtQty(v) {
@@ -255,7 +256,9 @@ function InventoryAdjustModal({ variantsById, busy, onClose, onSubmit }) {
     >
       {err ? <div className="admErr">{err}</div> : null}
       <div className="admField">
-        <div className="admLabel">Variant ID</div>
+        <FieldLabel className="admLabel" required>
+          Variant ID
+        </FieldLabel>
         <input className="admInput admMono" value={variantId} onChange={(e) => setVariantId(e.target.value)} placeholder="Ví dụ: 12" />
         {picked ? (
           <div className="admLabel">
@@ -265,7 +268,9 @@ function InventoryAdjustModal({ variantsById, busy, onClose, onSubmit }) {
       </div>
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Delta (+/-)</div>
+          <FieldLabel className="admLabel" required>
+            Delta (+/-)
+          </FieldLabel>
           <input className="admInput" value={qtyDelta} onChange={(e) => setQtyDelta(e.target.value)} placeholder="Ví dụ: -2 hoặc 5" />
         </div>
         <div className="admField">
@@ -318,11 +323,15 @@ function TransferStockUnitModal({ locations, busy, onClose, onTransfer }) {
       {err ? <div className="admErr">{err}</div> : null}
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Stock Unit ID</div>
+          <FieldLabel className="admLabel" required>
+            Stock Unit ID
+          </FieldLabel>
           <input className="admInput admMono" value={stockUnitId} onChange={(e) => setStockUnitId(e.target.value)} placeholder="Ví dụ: 5" />
         </div>
         <div className="admField">
-          <div className="admLabel">Kệ đích</div>
+          <FieldLabel className="admLabel" required>
+            Kệ đích
+          </FieldLabel>
           <select className="admSelect" value={toLocationId} onChange={(e) => setToLocationId(e.target.value)}>
             <option value="">(Chọn kệ)</option>
             {locations.map((l) => (
@@ -386,7 +395,9 @@ function EditStockUnitModal({ locations, busy, onClose, onSave }) {
       {err ? <div className="admErr">{err}</div> : null}
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Stock Unit ID</div>
+          <FieldLabel className="admLabel" required>
+            Stock Unit ID
+          </FieldLabel>
           <input className="admInput admMono" value={stockUnitId} onChange={(e) => setStockUnitId(e.target.value)} placeholder="Ví dụ: 5" />
         </div>
         <div className="admField">

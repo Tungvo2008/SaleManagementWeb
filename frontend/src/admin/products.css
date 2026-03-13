@@ -27,7 +27,7 @@
   color: var(--adm-text);
   padding: 10px 10px;
   cursor:pointer;
-  font-weight: 900;
+  font-weight: 700;
 }
 .prodActionBtn:hover{ background: #f8fafc; }
 .prodActionPrimary{
@@ -52,7 +52,7 @@
   color: var(--adm-text);
   padding: 7px 10px;
   cursor:pointer;
-  font-weight: 900;
+  font-weight: 700;
   font-size: 12px;
 }
 .prodMiniBtn:hover{ background: #f8fafc; }
@@ -83,7 +83,7 @@
   font-size: 12px;
   color: var(--adm-muted);
   background: #f8fbff;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -131,7 +131,7 @@
   width: 24px;
   height: 24px;
   cursor:pointer;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -139,13 +139,13 @@
 .prodExpanderEmpty{ width: 24px; height: 24px; display:inline-block; }
 
 .prodParentName{
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .prodVariantIndent{
   opacity:.7;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .prodPill{
@@ -188,7 +188,7 @@
   color: var(--adm-text);
   border-radius: 12px;
   padding: 10px 13px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -211,7 +211,7 @@
 
 .prdSectionTitle{
   font-size: 15px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
@@ -280,7 +280,7 @@
 }
 
 .prdDropTitle{
-  font-weight: 900;
+  font-weight: 700;
   color: #1f2937;
 }
 
@@ -292,7 +292,7 @@
 .prdDropFile{
   margin-top: 4px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   color: #111827;
 }
 
@@ -335,7 +335,7 @@
   margin-bottom: 10px;
 }
 
-.prdRowTitle{ font-weight: 900; }
+.prdRowTitle{ font-weight: 700; }
 .prdRowMeta{ font-size: 12px; color: var(--adm-muted); text-align: right; }
 
 .prdRowGridTop,

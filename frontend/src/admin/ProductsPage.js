@@ -3,12 +3,17 @@ import { del, get, patch, post } from "../api"
 import Modal from "./Modal"
 import ProductCreateModal from "./ProductCreateModal"
 import ExcelToolsModal from "./ExcelToolsModal"
+import FieldLabel from "../ui/FieldLabel"
 import "./products.css"
 
 function fmtMoney(v) {
   const n = typeof v === "number" ? v : Number(v || 0)
   if (!Number.isFinite(n)) return v == null ? "" : String(v)
   return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(n)
+}
+
+function normalizeSku(value) {
+  return String(value || "").trim()
 }
 
 export default function ProductsPage() {
@@ -551,7 +556,9 @@ function CreateParentModal({ categories, busy, onClose, onCreate }) {
     >
       {err ? <div className="admErr">{err}</div> : null}
       <div className="admField">
-        <div className="admLabel">Tên nhóm</div>
+        <FieldLabel className="admLabel" required>
+          Tên nhóm
+        </FieldLabel>
         <input className="admInput" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Lưới Nylon" />
       </div>
       <div className="admGrid2">
@@ -622,6 +629,18 @@ function CreateVariantModal({ parents, initialParentId, busy, onClose, onCreate 
                 setErr("Tên biến thể là bắt buộc.")
                 return
               }
+              if (!uom.trim()) {
+                setErr("Đơn vị là bắt buộc.")
+                return
+              }
+              if (!normalizeSku(sku)) {
+                setErr("SKU là bắt buộc.")
+                return
+              }
+              if (!price.trim()) {
+                setErr("Giá là bắt buộc.")
+                return
+              }
               const p = Number(price)
               const cp = costPrice.trim() ? Number(costPrice) : null
               const s = Number(stock)
@@ -648,12 +667,12 @@ function CreateVariantModal({ parents, initialParentId, busy, onClose, onCreate 
               }
               const payload = {
                 name: name.trim(),
-                uom: uom.trim() ? uom.trim() : null,
+                uom: uom.trim(),
                 price: String(p),
                 cost_price: cp == null ? null : String(cp),
                 roll_price: rollPrice.trim() ? String(Number(rollPrice)) : null,
                 stock: String(s),
-                sku: sku.trim() ? sku.trim() : null,
+                sku: normalizeSku(sku),
                 barcode: barcode.trim() ? barcode.trim() : null,
                 image_url: imageUrl.trim() ? imageUrl.trim() : null,
                 attrs,
@@ -672,7 +691,9 @@ function CreateVariantModal({ parents, initialParentId, busy, onClose, onCreate 
       {err ? <div className="admErr">{err}</div> : null}
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Nhóm sản phẩm (parent)</div>
+          <FieldLabel className="admLabel" required>
+            Nhóm sản phẩm (parent)
+          </FieldLabel>
           <select className="admSelect" value={parentId} onChange={(e) => setParentId(e.target.value)}>
             <option value="">(Chọn nhóm)</option>
             {parents.map((p) => (
@@ -683,19 +704,25 @@ function CreateVariantModal({ parents, initialParentId, busy, onClose, onCreate 
           </select>
         </div>
         <div className="admField">
-          <div className="admLabel">Đơn vị (uom)</div>
+          <FieldLabel className="admLabel" required>
+            Đơn vị (uom)
+          </FieldLabel>
           <input className="admInput" value={uom} onChange={(e) => setUom(e.target.value)} placeholder="Ví dụ: pcs / m / kg" />
         </div>
       </div>
 
       <div className="admField">
-        <div className="admLabel">Tên biến thể</div>
+        <FieldLabel className="admLabel" required>
+          Tên biến thể
+        </FieldLabel>
         <input className="admInput" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Lưới Nylon - Đen (cuộn 50m)" />
       </div>
 
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Giá (theo uom)</div>
+          <FieldLabel className="admLabel" required>
+            Giá (theo uom)
+          </FieldLabel>
           <input className="admInput" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Ví dụ: 2.8" />
         </div>
         <div className="admField">
@@ -725,7 +752,9 @@ function CreateVariantModal({ parents, initialParentId, busy, onClose, onCreate 
 
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">SKU</div>
+          <FieldLabel className="admLabel" required>
+            SKU
+          </FieldLabel>
           <input className="admInput" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="..." />
         </div>
         <div className="admField">
@@ -790,6 +819,18 @@ function EditVariantModal({ variant, busy, onClose, onSave }) {
                 setErr("Tên biến thể là bắt buộc.")
                 return
               }
+              if (!uom.trim()) {
+                setErr("Đơn vị là bắt buộc.")
+                return
+              }
+              if (!normalizeSku(sku)) {
+                setErr("SKU là bắt buộc.")
+                return
+              }
+              if (!price.trim()) {
+                setErr("Giá là bắt buộc.")
+                return
+              }
               if (costPrice.trim()) {
                 const cp = Number(costPrice)
                 if (!Number.isFinite(cp) || cp < 0) {
@@ -799,12 +840,12 @@ function EditVariantModal({ variant, busy, onClose, onSave }) {
               }
               const payload = {
                 name: name.trim(),
-                uom: uom.trim() ? uom.trim() : null,
-                price: price.trim() ? String(Number(price)) : null,
+                uom: uom.trim(),
+                price: String(Number(price)),
                 cost_price: costPrice.trim() ? String(Number(costPrice)) : null,
                 roll_price: rollPrice.trim() ? String(Number(rollPrice)) : null,
                 stock: stock.trim() ? String(Number(stock)) : null,
-                sku: sku.trim() ? sku.trim() : null,
+                sku: normalizeSku(sku),
                 barcode: barcode.trim() ? barcode.trim() : null,
                 image_url: imageUrl.trim() ? imageUrl.trim() : null,
                 track_stock_unit: !!track,
@@ -831,17 +872,23 @@ function EditVariantModal({ variant, busy, onClose, onSave }) {
       {err ? <div className="admErr">{err}</div> : null}
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Tên</div>
+          <FieldLabel className="admLabel" required>
+            Tên
+          </FieldLabel>
           <input className="admInput" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="admField">
-          <div className="admLabel">Đơn vị (uom)</div>
+          <FieldLabel className="admLabel" required>
+            Đơn vị (uom)
+          </FieldLabel>
           <input className="admInput" value={uom} onChange={(e) => setUom(e.target.value)} placeholder="pcs / m / kg" />
         </div>
       </div>
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Giá</div>
+          <FieldLabel className="admLabel" required>
+            Giá
+          </FieldLabel>
           <input className="admInput" value={price} onChange={(e) => setPrice(e.target.value)} />
         </div>
         <div className="admField">
@@ -868,7 +915,9 @@ function EditVariantModal({ variant, busy, onClose, onSave }) {
       </div>
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">SKU</div>
+          <FieldLabel className="admLabel" required>
+            SKU
+          </FieldLabel>
           <input className="admInput" value={sku} onChange={(e) => setSku(e.target.value)} />
         </div>
         <div className="admField">

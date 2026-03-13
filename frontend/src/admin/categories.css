@@ -38,7 +38,7 @@
   color: var(--adm-text);
   padding: 10px 10px;
   cursor:pointer;
-  font-weight: 900;
+  font-weight: 700;
 }
 .catActionBtn:hover{ background: #f8fafc; }
 .catActionPrimary{
@@ -53,7 +53,7 @@
 .catActionBtn.catActionPrimary:active{ filter: brightness(0.98); }
 
 .catMono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-.catName{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 950; }
+.catName{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 700; }
 .catText{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity: .95; }
 .catWarn{ margin-top: 10px; font-size: 12px; opacity: .75; }
 
@@ -110,7 +110,7 @@
   min-width: 220px;
 }
 .catUploadName{
-  font-weight: 900;
+  font-weight: 700;
 }
 .catUploadSub{
   font-size: 12px;
@@ -150,5 +150,5 @@
 }
 .catPreviewEmpty{
   opacity: .65;
-  font-weight: 900;
+  font-weight: 700;
 }

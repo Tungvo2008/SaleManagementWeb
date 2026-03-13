@@ -17,7 +17,7 @@
 
 .loginTitle {
   font-size: 22px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 .loginSub {
@@ -71,7 +71,7 @@
     rgba(var(--accent-rgb), 0.78)
   );
   color: #fff;
-  font-weight: 900;
+  font-weight: 700;
   font-size: 14px;
   cursor: pointer;
 }

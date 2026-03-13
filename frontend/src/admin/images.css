@@ -30,13 +30,13 @@
   padding: 10px 14px;
   min-height: 44px;
   cursor:pointer;
-  font-weight: 900;
+  font-weight: 700;
   white-space: nowrap;
 }
 .imgpActionBtn:hover{ background: #f8fafc; }
 
 .imgpMono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-.imgpName{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 800; }
+.imgpName{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 700; }
 .imgpText{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 .imgpThumbWrap{
@@ -118,7 +118,7 @@
 }
 
 .imgpDropTitle{
-  font-weight: 800;
+  font-weight: 700;
   color: #1f2937;
 }
 

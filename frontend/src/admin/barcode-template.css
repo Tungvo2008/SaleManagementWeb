@@ -12,7 +12,7 @@
 }
 .bctTitle {
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
 }
 .bctSub {
   color: #6b7280;
@@ -53,7 +53,7 @@
 }
 .bctPanelHead {
   padding: 12px 14px;
-  font-weight: 800;
+  font-weight: 700;
   border-bottom: 1px solid #e5eaf3;
 }
 .bctPanelBody {
@@ -115,16 +115,16 @@
 }
 .bctName {
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.1;
   max-height: 2.2em;
   overflow: hidden;
 }
-.bctMeta {
-  display: flex;
-  justify-content: space-between;
+.bctPrice {
+  margin-top: 1mm;
   font-size: 8px;
-  color: #4b5563;
+  color: #111827;
+  font-weight: 700;
 }
 .bctCode {
   margin-top: 2mm;

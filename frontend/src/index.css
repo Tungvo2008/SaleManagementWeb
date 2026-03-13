@@ -29,7 +29,9 @@ body {
     radial-gradient(900px 700px at 80% 20%, rgba(216, 111, 51, 0.14), transparent 55%),
     radial-gradient(1200px 900px at 50% 110%, rgba(18, 20, 23, 0.08), transparent 60%),
     linear-gradient(160deg, var(--bg0), var(--bg1));
-  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

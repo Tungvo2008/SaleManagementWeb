@@ -3,6 +3,7 @@ import { del, get, patch, post } from "../api"
 import Modal from "./Modal"
 import DataGrid from "./DataGrid"
 import ExcelToolsModal from "./ExcelToolsModal"
+import FieldLabel from "../ui/FieldLabel"
 import "./partners.css"
 
 function fmtMoney(v) {
@@ -307,7 +308,9 @@ function CustomerModal({ title, busy, initial, onClose, onSave }) {
           <input className="admInput" value={code} onChange={(e) => setCode(e.target.value)} placeholder="KH001" />
         </div>
         <div className="admField">
-          <div className="admLabel">Tên khách hàng *</div>
+          <FieldLabel className="admLabel" required>
+            Tên khách hàng
+          </FieldLabel>
           <input className="admInput" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A" />
         </div>
       </div>

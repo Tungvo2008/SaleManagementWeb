@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { login } from "./auth"
+import FieldLabel from "./ui/FieldLabel"
 import "./login.css"
 
 export default function LoginPage({ onLoggedIn }) {
@@ -45,7 +46,9 @@ export default function LoginPage({ onLoggedIn }) {
         <div className="loginSub">Vui lòng đăng nhập để sử dụng hệ thống.</div>
 
         <div className="loginField">
-          <div className="loginLabel">Tài khoản</div>
+          <FieldLabel className="loginLabel" required>
+            Tài khoản
+          </FieldLabel>
           <input
             className="loginInput"
             value={username}
@@ -56,7 +59,9 @@ export default function LoginPage({ onLoggedIn }) {
         </div>
 
         <div className="loginField">
-          <div className="loginLabel">Mật khẩu</div>
+          <FieldLabel className="loginLabel" required>
+            Mật khẩu
+          </FieldLabel>
           <input
             className="loginInput"
             type="password"
@@ -81,4 +86,3 @@ export default function LoginPage({ onLoggedIn }) {
     </div>
   )
 }
-

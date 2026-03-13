@@ -19,7 +19,7 @@
 
 .tplTitle {
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -87,7 +87,7 @@
   padding: 12px 14px;
   border-bottom: 1px solid var(--stroke);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
@@ -147,7 +147,7 @@
 
 .pvStore {
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .pvMuted {
@@ -200,6 +200,6 @@
 }
 
 .pvGrand {
-  font-weight: 800;
+  font-weight: 700;
 }
 

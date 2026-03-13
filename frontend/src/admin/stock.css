@@ -30,7 +30,7 @@
   color: var(--adm-text);
   padding: 10px 10px;
   cursor:pointer;
-  font-weight: 900;
+  font-weight: 700;
 }
 .stkActionBtn:hover{ background: #f8fafc; }
 .stkActionPrimary{

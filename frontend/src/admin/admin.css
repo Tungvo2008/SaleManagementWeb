@@ -124,7 +124,7 @@
 .admTitle{
   color: var(--adm-text);
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.2;
 }
 .admHint{
@@ -149,7 +149,7 @@
 }
 .admUserName{
   color: var(--adm-text);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 13px;
 }
 .admUserRole{
@@ -163,7 +163,7 @@
   color: var(--adm-text);
   padding: 10px 10px;
   cursor:pointer;
-  font-weight: 800;
+  font-weight: 700;
 }
 .admLogoutBtn:hover{
   background: #f8fafc;
@@ -179,7 +179,7 @@
   background: #ffffff;
   color: var(--adm-text);
   padding: 9px 11px;
-  font-weight: 900;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
 }

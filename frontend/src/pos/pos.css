@@ -117,7 +117,7 @@
   color: var(--ink);
   border-radius: 12px;
   padding: 10px 12px;
-  font-weight: 750;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 1px 0 rgba(18, 20, 23, 0.06);
 }
@@ -183,7 +183,7 @@
 .posCustomerMiniValue {
   margin-top: 2px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -198,7 +198,7 @@
 .posCustomerBtns .btn {
   min-width: 78px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .posHeaderActions {
@@ -279,7 +279,7 @@
   color: rgba(255, 255, 255, 0.95);
   border-radius: 12px;
   padding: 8px 12px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -398,7 +398,7 @@
 .discountPill{
   font-size: 14px;
   padding: 8px 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .discountActions{
@@ -419,7 +419,7 @@
 
 .invoiceDiscountEditor .hint{
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .invoiceDiscountEditor .input{
@@ -440,7 +440,7 @@
 .checkoutLabel {
   font-size: 13px;
   color: var(--muted);
-  font-weight: 800;
+  font-weight: 700;
   margin-bottom: 6px;
 }
 
@@ -470,12 +470,12 @@
 .checkoutRow b {
   color: var(--ink);
   font-size: 17px;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .checkoutGrand {
   color: var(--ink);
-  font-weight: 900;
+  font-weight: 700;
   font-size: 18px;
 }
 
@@ -523,7 +523,7 @@
   padding: 16px 14px;
   border-radius: 16px;
   font-size: 18px;
-  font-weight: 950;
+  font-weight: 700;
   letter-spacing: 0.02em;
 }
 
@@ -601,19 +601,19 @@
   height: 100%;
   display: grid;
   place-items: center;
-  font-weight: 950;
+  font-weight: 700;
   font-size: 22px;
   color: rgba(18, 20, 23, 0.75);
 }
 
 .pName {
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.15;
 }
 
 .pPrice {
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .pMeta {
@@ -647,7 +647,7 @@
 }
 
 .panelTitle {
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -708,7 +708,7 @@
   color: var(--ink);
   border-radius: 14px;
   padding: 10px 10px;
-  font-weight: 850;
+  font-weight: 700;
   font-size: 13px;
   cursor: pointer;
   text-align: left;
@@ -783,7 +783,7 @@
 }
 
 .miniTitle {
-  font-weight: 850;
+  font-weight: 700;
 }
 
 .miniMeta {
@@ -814,7 +814,7 @@
 }
 
 .listTitle {
-  font-weight: 850;
+  font-weight: 700;
 }
 
 .listMeta {
@@ -863,7 +863,7 @@
   text-align: left;
   font-size: 12px;
   color: var(--muted);
-  font-weight: 850;
+  font-weight: 700;
   border-bottom: 1px solid var(--stroke);
   padding: 10px 0;
 }
@@ -885,7 +885,7 @@
 }
 
 .tName {
-  font-weight: 850;
+  font-weight: 700;
 }
 
 .tMeta {
@@ -909,13 +909,13 @@
   border: 1px solid var(--stroke);
   background: rgba(255, 255, 255, 0.75);
   cursor: pointer;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .qtyText {
   min-width: 74px;
   text-align: center;
-  font-weight: 850;
+  font-weight: 700;
 }
 
 .cartActionsCell {
@@ -1022,11 +1022,11 @@
 .payLabel {
   color: var(--muted);
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .payValue {
-  font-weight: 950;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -1091,7 +1091,7 @@
 }
 
 .modalTitle {
-  font-weight: 950;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -1138,7 +1138,7 @@
 }
 
 .cardTitle {
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -1151,7 +1151,7 @@
 }
 
 .receiptTitle {
-  font-weight: 950;
+  font-weight: 700;
   letter-spacing: -0.02em;
   font-size: 16px;
 }

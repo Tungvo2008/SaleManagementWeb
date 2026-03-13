@@ -35,7 +35,7 @@
   color: var(--adm-text);
   padding: 10px 10px;
   cursor:pointer;
-  font-weight: 900;
+  font-weight: 700;
 }
 .dgBtn:hover{ background: #f8fafc; }
 
@@ -60,7 +60,7 @@
   padding: 10px 12px;
   background: rgba(47,107,255,.12);
   border-bottom: 1px solid var(--adm-line);
-  font-weight: 900;
+  font-weight: 700;
   height: var(--dgHeadH);
   box-sizing: border-box;
 }
@@ -84,7 +84,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-weight: 900;
+  font-weight: 700;
   padding: 0;
   cursor:pointer;
   min-width: 0;

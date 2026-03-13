@@ -8,6 +8,7 @@ import {
   normalizeReceiptTemplate,
 } from "./receiptTemplate"
 import UiSelect from "../ui/Select"
+import FieldLabel from "../ui/FieldLabel"
 
 const LS_ORDER_ID = "pos.orderId"
 
@@ -313,7 +314,7 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
     .priceLine { font-size: 12px; }
     .totals { margin-top: 12px; display: grid; gap: 6px; }
     .row { display: flex; justify-content: space-between; font-size: 13px; }
-    .grand { font-weight: 800; font-size: 14px; }
+    .grand { font-weight: 700; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -383,13 +384,13 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
     body { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0; color: #111; }
     .wrap { width: 100%; max-width: 800px; margin: 0 auto; }
     .center { text-align: center; }
-    .title { font-size: 44px; font-weight: 800; line-height: 1.08; letter-spacing: 0.3px; margin: 0; }
+    .title { font-size: 44px; font-weight: 700; line-height: 1.08; letter-spacing: 0.3px; margin: 0; }
     .sub { font-size: 24px; margin-top: 4px; }
     .date { font-size: 24px; margin-top: 4px; }
     .info { margin-top: 22px; font-size: 22px; line-height: 1.45; }
     .line { margin-top: 14px; border-bottom: 2px solid #222; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; table-layout: fixed; }
-    th { font-size: 22px; padding: 10px 6px 8px; font-weight: 800; border-bottom: 2px solid #222; text-align: left; }
+    th { font-size: 22px; padding: 10px 6px 8px; font-weight: 700; border-bottom: 2px solid #222; text-align: left; }
     th:nth-child(2) { width: 120px; text-align: center; }
     th:nth-child(3) { width: 220px; text-align: right; }
     td { padding: 10px 6px; font-size: 22px; vertical-align: top; }
@@ -403,7 +404,7 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
     .totalRow { display: grid; grid-template-columns: 1fr 200px; gap: 8px; align-items: baseline; font-size: 22px; margin-top: 6px; }
     .totalLabel { font-weight: 700; text-align: right; }
     .totalValue { font-weight: 700; text-align: right; }
-    .grand .totalLabel, .grand .totalValue { font-size: 24px; font-weight: 800; }
+    .grand .totalLabel, .grand .totalValue { font-size: 24px; font-weight: 700; }
     .words { margin-top: 18px; font-size: 20px; font-style: italic; }
     .footer { text-align: center; margin-top: 80px; font-size: 24px; font-style: italic; }
   </style>
@@ -1311,9 +1312,9 @@ function CashDrawerModal({
               <div className="cardBody" style={{ display: "grid", gap: 10 }}>
                 <div className="split">
                   <div>
-                    <div className="hint" style={{ marginTop: 0 }}>
+                    <FieldLabel className="hint" style={{ marginTop: 0 }} required>
                       Số tiền rút
-                    </div>
+                    </FieldLabel>
                     <input
                       className="input"
                       value={withdrawAmount}
@@ -1356,9 +1357,9 @@ function CashDrawerModal({
             <div className="cardBody" style={{ display: "grid", gap: 10 }}>
               <div className="split">
                 <div>
-                  <div className="hint" style={{ marginTop: 0 }}>
+                  <FieldLabel className="hint" style={{ marginTop: 0 }} required>
                     Kiểm quỹ thực tế
-                  </div>
+                  </FieldLabel>
                   <input
                     className="input"
                     value={countedCash}
@@ -3157,7 +3158,9 @@ export default function Pos({
                 <div className="hint" style={{ marginTop: 0 }}>
                   Tạo khách hàng mới ngay trong POS để gắn vào hoá đơn.
                 </div>
-                <div className="hint">Tên khách hàng *</div>
+                <FieldLabel className="hint" required>
+                  Tên khách hàng
+                </FieldLabel>
                 <input
                   className="input"
                   value={newCustomerName}

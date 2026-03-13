@@ -3,6 +3,7 @@ import { get, patch, post } from "../api"
 import DataGrid from "./DataGrid"
 import Modal from "./Modal"
 import { fmtDateTimeVN } from "../utils/datetime"
+import FieldLabel from "../ui/FieldLabel"
 import "./partners.css"
 
 export default function EmployeesPage() {
@@ -186,7 +187,9 @@ function EmployeeModal({ title, busy, initial, isEdit = false, onClose, onSave }
       {err ? <div className="admErr">{err}</div> : null}
       <div className="admGrid2">
         <div className="admField">
-          <div className="admLabel">Username</div>
+          <FieldLabel className="admLabel" required>
+            Username
+          </FieldLabel>
           <input className="admInput" value={username} onChange={(e) => setUsername(e.target.value)} />
         </div>
         <div className="admField">
@@ -198,7 +201,9 @@ function EmployeeModal({ title, busy, initial, isEdit = false, onClose, onSave }
           </select>
         </div>
         <div className="admField">
-          <div className="admLabel">{isEdit ? "Mật khẩu mới (tuỳ chọn)" : "Mật khẩu"}</div>
+          <FieldLabel className="admLabel" required={!isEdit}>
+            {isEdit ? "Mật khẩu mới (tuỳ chọn)" : "Mật khẩu"}
+          </FieldLabel>
           <input className="admInput" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <label className="admCheck" style={{ marginTop: 28 }}>

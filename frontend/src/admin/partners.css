@@ -33,7 +33,7 @@
   padding: 10px 14px;
   min-height: 44px;
   cursor:pointer;
-  font-weight: 900;
+  font-weight: 700;
   white-space: nowrap;
 }
 .prtActionBtn:hover{ background: #f8fafc; }
@@ -73,5 +73,5 @@
 }
 
 .prtMono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-.prtName{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 900; }
+.prtName{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 700; }
 .prtRight{ text-align:right; }

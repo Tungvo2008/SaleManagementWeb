@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { get, patch, post } from "../api"
 import { loadBarcodeTemplate, normalizeBarcodeTemplate } from "./barcodeTemplate"
+import FieldLabel from "../ui/FieldLabel"
 import "./receive.css"
 import "../pos/pos.css"
 
@@ -29,6 +30,10 @@ function genBarcodeFromText(text) {
   return `BC-${base}-${rnd}`
 }
 
+function normalizeSku(value) {
+  return String(value || "").trim()
+}
+
 function openPrintLabels({ title, labels, printWindow = null }) {
   const w = printWindow || window.open("", "_blank", "width=980,height=720")
   if (!w) return
@@ -47,12 +52,12 @@ function openPrintLabels({ title, labels, printWindow = null }) {
     body{ font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0; color:#111827; }
     .wrap{ padding: ${isThermal ? "0" : `${cfg.pageMarginMm}mm`}; }
     .top{ display:flex; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 8mm; }
-    .h1{ font-weight: 800; font-size: 16px; }
+    .h1{ font-weight: 700; font-size: 16px; }
     .muted{ color:#6b7280; font-size: 12px; }
     .grid{ display:grid; grid-template-columns: repeat(${isThermal ? 1 : cfg.columns}, ${cfg.labelWidthMm}mm); gap: ${isThermal ? 0 : cfg.gapMm}mm; justify-content: start; }
     .lb{ box-sizing: border-box; border: ${isThermal ? "none" : "1px dashed rgba(17,24,39,.25)"}; border-radius: ${isThermal ? "0" : "2mm"}; padding: ${isThermal ? "1.2mm" : "1.8mm"}; width:${cfg.labelWidthMm}mm; height:${cfg.labelHeightMm}mm; display:grid; grid-template-rows: auto auto 1fr; overflow:hidden; }
-    .name{ font-size: 12px; font-weight: 800; line-height: 1.15; max-height: 28px; overflow:hidden; }
-    .meta{ margin-top: 2mm; display:flex; justify-content: space-between; gap: 6px; font-size: 11px; color:#374151; }
+    .name{ font-size: 12px; font-weight: 700; line-height: 1.15; max-height: 28px; overflow:hidden; }
+    .price{ margin-top: 1mm; font-size: 11px; color:#111827; font-weight: 700; }
     .code{ font-size: 11px; color:#6b7280; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
     .img{ margin-top: 1mm; display:flex; justify-content:center; align-items:center; height: ${cfg.barcodeHeightMm + 4}mm; }
     img{ max-width: 100%; max-height: ${cfg.barcodeHeightMm + 2}mm; object-fit: contain; }
@@ -75,18 +80,14 @@ function openPrintLabels({ title, labels, printWindow = null }) {
         .map((lb) => {
           const code = String(lb.code || "")
           const img = code
-            ? `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(code)}&scale=${cfg.barcodeScale}&height=${cfg.barcodeHeightMm}&includetext=${cfg.showBarcodeText ? "true" : "false"}`
+            ? `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(code)}&scale=${cfg.barcodeScale}&height=${cfg.barcodeHeightMm}&includetext=true`
             : ""
           const name = String(lb.name || "")
-          const sku = lb.sku ? String(lb.sku) : ""
           const price = lb.price != null ? String(lb.price) : ""
           return `
             <div class="lb">
-              ${cfg.showName ? `<div class="name">${name.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</div>` : `<div></div>`}
-              <div class="meta">
-                <div class="code">${cfg.showSku && sku ? `SKU: ${sku}` : ""}</div>
-                <div>${cfg.showPrice && price ? `${price}đ` : ""}</div>
-              </div>
+              <div class="name">${name.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</div>
+              <div class="price">${price ? `${price}đ` : ""}</div>
               <div class="img">${img ? `<img alt="${code}" src="${img}"/>` : `<div class="code">${code}</div>`}</div>
             </div>
           `
@@ -295,9 +296,9 @@ function CreateCategoryModal({ busy, onClose, onCreated, onError }) {
     >
       <div className="split">
         <div>
-          <div className="hint" style={{ marginTop: 0 }}>
+          <FieldLabel className="hint" style={{ marginTop: 0 }} required>
             Tên danh mục
-          </div>
+          </FieldLabel>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Lưới / Dây / Phụ kiện..." />
         </div>
         <div>
@@ -362,9 +363,9 @@ function CreateSupplierModal({ busy, onClose, onCreated, onError }) {
     >
       <div className="split">
         <div>
-          <div className="hint" style={{ marginTop: 0 }}>
+          <FieldLabel className="hint" style={{ marginTop: 0 }} required>
             Tên nhà cung cấp
-          </div>
+          </FieldLabel>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: NCC A" />
         </div>
         <div>
@@ -699,9 +700,7 @@ function CreateProductModal({
   }
 
   function normalizeUom() {
-    const u = String(commonUom || "").trim()
-    if (u) return u
-    return trackStockUnit ? "m" : "pcs"
+    return String(commonUom || "").trim()
   }
 
   function getBaseProductName() {
@@ -716,6 +715,7 @@ function CreateProductModal({
     if (!baseName) {
       throw new Error(hasVariants ? "Tên sản phẩm cha (parent) là bắt buộc." : "Tên sản phẩm là bắt buộc.")
     }
+    if (!normalizeUom()) throw new Error("Đơn vị là bắt buộc.")
     if (trackStockUnit) {
       const mpr = Number(commonMetersPerRoll)
       if (!Number.isFinite(mpr) || mpr <= 0) throw new Error("Mét/cuộn phải > 0.")
@@ -724,12 +724,25 @@ function CreateProductModal({
 
   function validateRow(row, label = "Biến thể") {
     if (!String(row.name || "").trim()) throw new Error(`${label}: Tên biến thể là bắt buộc.`)
+    if (!normalizeSku(row.sku)) throw new Error(`${label}: SKU là bắt buộc.`)
+    if (!String(row.price || "").trim()) throw new Error(`${label}: Giá là bắt buộc.`)
     const p = Number(row.price)
     if (!Number.isFinite(p) || p < 0) throw new Error(`${label}: Giá không hợp lệ.`)
 
     if (trackStockUnit && String(row.roll_price || "").trim()) {
       const rp = Number(row.roll_price)
       if (!Number.isFinite(rp) || rp < 0) throw new Error(`${label}: Giá cuộn không hợp lệ.`)
+    }
+  }
+
+  function validateUniqueSkus(rows) {
+    const seen = new Map()
+    for (const row of rows) {
+      const sku = normalizeSku(row.sku).toLowerCase()
+      const label = String(row.name || "Biến thể").trim() || "Biến thể"
+      if (!sku) continue
+      if (seen.has(sku)) throw new Error(`SKU bị trùng trong form: ${label} và ${seen.get(sku)}.`)
+      seen.set(sku, label)
     }
   }
 
@@ -753,7 +766,7 @@ function CreateProductModal({
       price: String(Number(row.price)),
       roll_price: trackStockUnit && String(row.roll_price || "").trim() ? String(Number(row.roll_price)) : null,
       stock: "0",
-      sku: String(row.sku || "").trim() ? String(row.sku || "").trim() : null,
+      sku: normalizeSku(row.sku),
       barcode,
       image_url: imageUrl,
       attrs: Object.keys(attrsPayload).length ? attrsPayload : null,
@@ -784,7 +797,7 @@ function CreateProductModal({
       price: String(Number(row.price)),
       roll_price: trackStockUnit && String(row.roll_price || "").trim() ? String(Number(row.roll_price)) : null,
       stock: "0",
-      sku: String(row.sku || "").trim() ? String(row.sku || "").trim() : null,
+      sku: normalizeSku(row.sku),
       barcode,
       image_url: imageUrl,
       attrs: Object.keys(attrsPayload).length ? attrsPayload : null,
@@ -800,6 +813,7 @@ function CreateProductModal({
     if (hasVariants && !variantRows.length) {
       throw new Error("Bạn đã bật biến thể nhưng chưa có dòng nào. Hãy tạo dòng ở tab Biến thể.")
     }
+    validateUniqueSkus(hasVariants ? variantRows : [singleRow])
 
     setSaving(true)
     try {
@@ -874,9 +888,9 @@ function CreateProductModal({
       <div className="prdInlineCreate">
         <div className="prdGrid3">
           <div>
-            <div className="hint" style={{ marginTop: 0 }}>
+            <FieldLabel className="hint" style={{ marginTop: 0 }} required>
               Tên danh mục
-            </div>
+            </FieldLabel>
             <input className="input" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="VD: Lưới / Khoá / Túi..." />
           </div>
           <div>
@@ -943,9 +957,9 @@ function CreateProductModal({
               <div className="prdSectionTitle">Sản phẩm cha (Parent)</div>
               <div className="prdGrid2">
                 <div>
-                  <div className="hint" style={{ marginTop: 0 }}>
+                  <FieldLabel className="hint" style={{ marginTop: 0 }} required>
                     Tên sản phẩm cha
-                  </div>
+                  </FieldLabel>
                   <input className="input" value={parentName} onChange={(e) => setParentName(e.target.value)} placeholder="VD: Lưới nylon 1m2" />
                 </div>
                 <div>
@@ -980,9 +994,9 @@ function CreateProductModal({
               <div className="prdSectionTitle">Thông tin sản phẩm</div>
               <div className="prdGrid2">
                 <div>
-                  <div className="hint" style={{ marginTop: 0 }}>
+                  <FieldLabel className="hint" style={{ marginTop: 0 }} required>
                     Tên sản phẩm
-                  </div>
+                  </FieldLabel>
                   <input className="input" value={singleRow.name} onChange={(e) => setSingleRow((p) => ({ ...p, name: e.target.value }))} placeholder="VD: Lưới nylon xanh 1m2" />
                 </div>
                 <div>
@@ -1018,9 +1032,9 @@ function CreateProductModal({
             <div className="prdSectionTitle">Thiết lập bán hàng</div>
             <div className="prdGrid3">
               <div>
-                <div className="hint" style={{ marginTop: 0 }}>
+                <FieldLabel className="hint" style={{ marginTop: 0 }} required>
                   Đơn vị mặc định
-                </div>
+                </FieldLabel>
                 <input className="input" value={commonUom} onChange={(e) => setCommonUom(e.target.value)} placeholder="pcs / m / kg..." />
               </div>
               <div>
@@ -1078,12 +1092,12 @@ function CreateProductModal({
 
             {trackStockUnit ? (
               <div className="prdGrid2" style={{ marginTop: 10 }}>
-                <div>
-                  <div className="hint" style={{ marginTop: 0 }}>
-                    Mét/cuộn
-                  </div>
-                  <input className="input" value={commonMetersPerRoll} onChange={(e) => setCommonMetersPerRoll(e.target.value)} placeholder="VD: 30" />
-                </div>
+              <div>
+                <FieldLabel className="hint" style={{ marginTop: 0 }} required>
+                  Mét/cuộn
+                </FieldLabel>
+                <input className="input" value={commonMetersPerRoll} onChange={(e) => setCommonMetersPerRoll(e.target.value)} placeholder="VD: 30" />
+              </div>
                 <div />
               </div>
             ) : null}
@@ -1095,9 +1109,9 @@ function CreateProductModal({
               <div className="prdSingleCard">
                 <div className="prdGrid2">
                   <div>
-                    <div className="hint" style={{ marginTop: 0 }}>
+                    <FieldLabel className="hint" style={{ marginTop: 0 }} required>
                       SKU
-                    </div>
+                    </FieldLabel>
                     <input className="input" value={singleRow.sku} onChange={(e) => setSingleRow((p) => ({ ...p, sku: e.target.value }))} placeholder="..." />
                   </div>
                   <div>
@@ -1115,9 +1129,9 @@ function CreateProductModal({
 
                 <div className="prdGrid2" style={{ marginTop: 10 }}>
                   <div>
-                    <div className="hint" style={{ marginTop: 0 }}>
+                    <FieldLabel className="hint" style={{ marginTop: 0 }} required>
                       Giá
-                    </div>
+                    </FieldLabel>
                     <input className="input" value={singleRow.price} onChange={(e) => setSingleRow((p) => ({ ...p, price: e.target.value }))} placeholder="VD: 35000" />
                   </div>
                   {trackStockUnit ? (
@@ -1211,15 +1225,15 @@ function CreateProductModal({
 
                   <div className="prdRowGridTop">
                     <div>
-                      <div className="hint" style={{ marginTop: 0 }}>
+                      <FieldLabel className="hint" style={{ marginTop: 0 }} required>
                         Tên biến thể
-                      </div>
+                      </FieldLabel>
                       <input className="input" value={row.name} onChange={(e) => setVariantRow(row.id, { name: e.target.value })} placeholder="Tên biến thể" />
                     </div>
                     <div>
-                      <div className="hint" style={{ marginTop: 0 }}>
+                      <FieldLabel className="hint" style={{ marginTop: 0 }} required>
                         SKU
-                      </div>
+                      </FieldLabel>
                       <input className="input" value={row.sku} onChange={(e) => setVariantRow(row.id, { sku: e.target.value })} placeholder="..." />
                     </div>
                     <div>
@@ -1237,9 +1251,9 @@ function CreateProductModal({
 
                   <div className="prdRowGridBottom">
                     <div>
-                      <div className="hint" style={{ marginTop: 0 }}>
+                      <FieldLabel className="hint" style={{ marginTop: 0 }} required>
                         Giá
-                      </div>
+                      </FieldLabel>
                       <input className="input" value={row.price} onChange={(e) => setVariantRow(row.id, { price: e.target.value })} placeholder="VD: 35000" />
                     </div>
                     {trackStockUnit ? (

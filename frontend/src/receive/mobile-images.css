@@ -14,7 +14,7 @@
   margin-bottom: 12px;
 }
 .mimgTitle{
-  font-weight: 950;
+  font-weight: 700;
   letter-spacing: -0.02em;
   font-size: 18px;
 }
@@ -51,13 +51,13 @@
   border-bottom: 1px solid var(--mimg-stroke);
   background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.72));
 }
-.mimgCardTitle{ font-weight: 950; }
+.mimgCardTitle{ font-weight: 700; }
 .mimgPill{
   padding: 6px 10px;
   border-radius: 999px;
   border: 1px solid rgba(15,23,42,.10);
   background: rgba(255,255,255,.8);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 12px;
   white-space: nowrap;
 }
@@ -108,7 +108,7 @@
   box-shadow: 0 0 0 4px rgba(var(--accent-rgb), .10);
 }
 .mimgRowName{
-  font-weight: 950;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 .mimgRowSub{
@@ -156,7 +156,7 @@
   color: #14532d;
   border-radius: 14px;
   padding: 10px 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .mimgPicked{
@@ -165,7 +165,7 @@
   border-radius: 16px;
   padding: 10px 10px;
 }
-.mimgPickedName{ font-weight: 950; letter-spacing: -0.01em; }
+.mimgPickedName{ font-weight: 700; letter-spacing: -0.01em; }
 .mimgPickedMeta{
   margin-top: 8px;
   display:flex;
@@ -183,7 +183,7 @@
 }
 .mimgLabel{
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 700;
   color: rgba(15,23,42,.68);
   margin-bottom: 6px;
 }
@@ -217,7 +217,7 @@
   border-radius: 14px;
   border: 1px solid rgba(15,23,42,.14);
   background: rgba(255,255,255,.92);
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 .mimgBtnPrimary{

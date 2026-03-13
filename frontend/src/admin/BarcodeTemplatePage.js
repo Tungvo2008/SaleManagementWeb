@@ -7,9 +7,9 @@ import {
 import "./barcode-template.css"
 
 const sampleLabels = [
-  { code: "BC-LUOI-XANH-001", name: "Lưới nylon xanh 1m", sku: "LUOI-XANH-1M", price: "22,000" },
-  { code: "BC-LUOI-XANH-002", name: "Lưới nylon xanh 1m", sku: "LUOI-XANH-1M", price: "22,000" },
-  { code: "BC-TEE-RED-M", name: "Áo thun trơn đỏ M", sku: "TEE-RED-M", price: "199,000" },
+  { code: "BC-LUOI-XANH-001", name: "Lưới nylon xanh 1m", price: "22,000" },
+  { code: "BC-LUOI-XANH-002", name: "Lưới nylon xanh 1m", price: "22,000" },
+  { code: "BC-TEE-RED-M", name: "Áo thun trơn đỏ M", price: "199,000" },
 ]
 
 export default function BarcodeTemplatePage({ template, onSave, onReset }) {
@@ -116,10 +116,9 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
         <div className="bctPanel">
           <div className="bctPanelHead">Hiển thị nội dung</div>
           <div className="bctPanelBody bctChecks">
-            <label><input type="checkbox" checked={cfg.showName} onChange={(e) => setField("showName", e.target.checked)} /> <span>Tên sản phẩm</span></label>
-            <label><input type="checkbox" checked={cfg.showSku} onChange={(e) => setField("showSku", e.target.checked)} /> <span>SKU</span></label>
-            <label><input type="checkbox" checked={cfg.showPrice} onChange={(e) => setField("showPrice", e.target.checked)} /> <span>Giá</span></label>
-            <label><input type="checkbox" checked={cfg.showBarcodeText} onChange={(e) => setField("showBarcodeText", e.target.checked)} /> <span>Hiện số barcode dưới mã vạch</span></label>
+            <div className="bctHint" style={{ marginTop: 0 }}>
+              Mẫu tem hiện cố định: <b>Tên sản phẩm + Giá + Barcode</b>.
+            </div>
           </div>
         </div>
 
@@ -130,11 +129,8 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
               <div className="bctPreviewGrid" style={{ gap: `${cfg.gapMm}mm`, gridTemplateColumns: `repeat(${cfg.columns}, ${cfg.labelWidthMm}mm)` }}>
                 {sampleLabels.map((lb, idx) => (
                   <div key={idx} className="bctLabel" style={{ width: `${cfg.labelWidthMm}mm`, height: `${cfg.labelHeightMm}mm` }}>
-                    {cfg.showName ? <div className="bctName">{lb.name}</div> : null}
-                    <div className="bctMeta">
-                      {cfg.showSku ? <span>SKU: {lb.sku}</span> : <span />}
-                      {cfg.showPrice ? <span>{lb.price}đ</span> : null}
-                    </div>
+                    <div className="bctName">{lb.name}</div>
+                    <div className="bctPrice">{lb.price}đ</div>
                     <div className="bctCode">[{lb.code}]</div>
                   </div>
                 ))}
