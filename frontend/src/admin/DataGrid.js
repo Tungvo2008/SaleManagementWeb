@@ -34,7 +34,12 @@ function toComparable(v) {
   return { kind: "str", v: String(v).toLowerCase() }
 }
 
-export default function DataGrid({ id, columns, rows, rowKey, onSnapshot }) {
+function shouldIgnoreRowClick(target) {
+  if (!(target instanceof Element)) return false
+  return !!target.closest("button, a, input, textarea, select, label")
+}
+
+export default function DataGrid({ id, columns, rows, rowKey, onSnapshot, onRowClick, rowClassName }) {
   const defaults = useMemo(() => {
     const visibleKeys = columns.filter((c) => c.defaultVisible !== false).map((c) => c.key)
     const widths = {}
@@ -434,11 +439,17 @@ export default function DataGrid({ id, columns, rows, rowKey, onSnapshot }) {
 
         {sortedRows.map((r) => {
           const k = rowKey(r)
+          const extraRowClass = typeof rowClassName === "function" ? rowClassName(r) : ""
           return visibleCols.map((c) => (
             <div
               key={`${k}:${c.key}`}
-              className={`dgCell ${c.align === "right" ? "dgRight" : ""}`}
+              className={`dgCell ${c.align === "right" ? "dgRight" : ""} ${onRowClick ? "dgCellClickable" : ""} ${extraRowClass || ""}`}
               title={c.title}
+              onClick={(e) => {
+                if (!onRowClick) return
+                if (shouldIgnoreRowClick(e.target)) return
+                onRowClick(r)
+              }}
             >
               {c.render(r)}
             </div>

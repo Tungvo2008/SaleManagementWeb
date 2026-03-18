@@ -57,6 +57,110 @@
 .catText{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity: .95; }
 .catWarn{ margin-top: 10px; font-size: 12px; opacity: .75; }
 
+.catProducts{
+  border: 1px solid var(--adm-line);
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.catProductsHead{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.catProductsTitle{
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.catProductsHint{
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: .8;
+}
+
+.catProductsList{
+  display: grid;
+  gap: 10px;
+}
+
+.catProductCard{
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 14px;
+  background: #f8fbff;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.catProductTitleRow{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.catProductTitle{
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.catProductSub{
+  font-size: 13px;
+  color: var(--adm-muted);
+}
+
+.catProductChildren{
+  display: grid;
+  gap: 8px;
+}
+
+.catProductChild{
+  border-top: 1px dashed rgba(15,23,42,.12);
+  padding-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.catProductChildName{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-weight: 700;
+}
+
+.catProductChildMeta{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: rgba(15,23,42,.82);
+}
+
+.catProductMetaPill{
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,.14);
+  background: rgba(15,23,42,.04);
+  padding: 3px 8px;
+  font-size: 11px;
+  color: rgba(15,23,42,.8);
+}
+
+.catProductsEmpty{
+  color: var(--adm-muted);
+  font-size: 13px;
+}
+
 .catUploadRow{
   display:flex;
   align-items:center;
@@ -151,4 +255,14 @@
 .catPreviewEmpty{
   opacity: .65;
   font-weight: 700;
+}
+
+@media (max-width: 720px){
+  .catProducts{
+    padding: 12px;
+  }
+
+  .catProductsTitle{
+    font-size: 16px;
+  }
 }

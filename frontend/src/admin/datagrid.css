@@ -132,6 +132,18 @@
   align-self: stretch;
 }
 
+.dgCellClickable{
+  cursor: pointer;
+}
+
+.dgCellClickable:hover{
+  background: rgba(47,107,255,.05);
+}
+
+.dgRowSelected{
+  background: rgba(47,107,255,.10);
+}
+
 .dgFilterCell{
   position: sticky;
   top: var(--dgHeadH);

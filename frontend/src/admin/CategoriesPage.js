@@ -4,6 +4,7 @@ import Modal from "./Modal"
 import DataGrid from "./DataGrid"
 import ExcelToolsModal from "./ExcelToolsModal"
 import FieldLabel from "../ui/FieldLabel"
+import { formatMoneyVN } from "../utils/number"
 import "./categories.css"
 
 export default function CategoriesPage() {
@@ -11,7 +12,10 @@ export default function CategoriesPage() {
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
   const [rows, setRows] = useState([])
+  const [variants, setVariants] = useState([])
+  const [parents, setParents] = useState([])
   const [q, setQ] = useState("")
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null)
 
   const [showCreate, setShowCreate] = useState(false)
   const [editRow, setEditRow] = useState(null)
@@ -23,11 +27,19 @@ export default function CategoriesPage() {
     setLoading(true)
     setErr(null)
     try {
-      const list = await get("/api/v1/categories/")
+      const [list, variantList, parentList] = await Promise.all([
+        get("/api/v1/categories/"),
+        get("/api/v1/products/variants"),
+        get("/api/v1/products/parents"),
+      ])
       setRows(Array.isArray(list) ? list : [])
+      setVariants(Array.isArray(variantList) ? variantList : [])
+      setParents(Array.isArray(parentList) ? parentList : [])
     } catch (e) {
       setErr(e?.message || "Không tải được danh sách danh mục")
       setRows([])
+      setVariants([])
+      setParents([])
     } finally {
       setLoading(false)
     }
@@ -54,6 +66,68 @@ export default function CategoriesPage() {
     if (err) return `Lỗi: ${err}`
     return `${filtered.length}/${rows.length} danh mục · Bấm tiêu đề cột để sắp xếp`
   }, [loading, err, filtered.length, rows.length])
+
+  const categoryById = useMemo(() => {
+    const m = new Map()
+    for (const r of rows) m.set(String(r.id), r)
+    return m
+  }, [rows])
+
+  const variantsByParentId = useMemo(() => {
+    const m = new Map()
+    for (const v of variants) {
+      if (v.parent_id == null) continue
+      const key = String(v.parent_id)
+      if (!m.has(key)) m.set(key, [])
+      m.get(key).push(v)
+    }
+    return m
+  }, [variants])
+
+  const selectedCategory = useMemo(() => {
+    if (selectedCategoryId == null) return null
+    return categoryById.get(String(selectedCategoryId)) || null
+  }, [categoryById, selectedCategoryId])
+
+  const categoryProducts = useMemo(() => {
+    if (!selectedCategory) return []
+    const catId = String(selectedCategory.id)
+    const items = []
+
+    for (const p of parents) {
+      if (String(p.category_id ?? "") !== catId) continue
+      const childRows = [...(variantsByParentId.get(String(p.id)) || [])].sort(
+        (a, b) => Number(b.id || 0) - Number(a.id || 0)
+      )
+      items.push({
+        kind: "parent",
+        key: `parent-${p.id}`,
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        variantCount: childRows.length,
+        children: childRows,
+      })
+    }
+
+    for (const v of variants) {
+      if (v.parent_id != null) continue
+      if (String(v.category_id ?? "") !== catId) continue
+      items.push({
+        kind: "single",
+        key: `single-${v.id}`,
+        ...v,
+      })
+    }
+
+    return items.sort((a, b) => Number(b.id || 0) - Number(a.id || 0))
+  }, [selectedCategory, parents, variantsByParentId, variants])
+
+  useEffect(() => {
+    if (selectedCategoryId == null) return
+    if (filtered.some((r) => String(r.id) === String(selectedCategoryId))) return
+    setSelectedCategoryId(null)
+  }, [filtered, selectedCategoryId])
 
   return (
     <div className="cat">
@@ -97,6 +171,10 @@ export default function CategoriesPage() {
         onSnapshot={(s) => {
           snapRef.current = s
         }}
+        onRowClick={(r) => {
+          setSelectedCategoryId((prev) => (String(prev) === String(r.id) ? null : r.id))
+        }}
+        rowClassName={(r) => (String(selectedCategoryId) === String(r.id) ? "dgRowSelected" : "")}
         columns={[
           { key: "id", title: "ID", width: 90, minWidth: 70, render: (r) => <span className="catMono">{r.id}</span> },
           { key: "name", title: "Tên", fill: true, minWidth: 260, render: (r) => <span className="catName">{r.name}</span> },
@@ -134,6 +212,78 @@ export default function CategoriesPage() {
         rows={filtered}
         rowKey={(r) => r.id}
       />
+
+      {selectedCategory ? (
+        <div className="catProducts">
+          <div className="catProductsHead">
+            <div>
+              <div className="catProductsTitle">Sản phẩm trong danh mục: {selectedCategory.name}</div>
+              <div className="catProductsHint">
+                {categoryProducts.length} nhóm/sản phẩm. Bấm lại vào dòng danh mục để thu gọn.
+              </div>
+            </div>
+            <button className="catActionBtn" disabled={busy} onClick={() => setSelectedCategoryId(null)}>
+              Đóng
+            </button>
+          </div>
+
+          <div className="catProductsList">
+            {categoryProducts.length === 0 ? (
+              <div className="catProductsEmpty">Danh mục này chưa có sản phẩm nào.</div>
+            ) : (
+              categoryProducts.map((item) =>
+                item.kind === "parent" ? (
+                  <div className="catProductCard" key={item.key}>
+                    <div className="catProductTitleRow">
+                      <div className="catProductTitle">{item.name}</div>
+                      <div className="catProductMetaPill">
+                        Parent #{item.id} · {item.variantCount} biến thể
+                      </div>
+                    </div>
+                    {item.description ? <div className="catProductSub">{item.description}</div> : null}
+
+                    {item.children.length ? (
+                      <div className="catProductChildren">
+                        {item.children.map((v) => (
+                          <div className="catProductChild" key={v.id}>
+                            <div className="catProductChildName">
+                              {v.name}
+                              <span className="catProductMetaPill">#{v.id}</span>
+                            </div>
+                            <div className="catProductChildMeta">
+                              <span className="catMono">{v.sku || "—"}</span>
+                              <span className="catMono">{v.barcode || "—"}</span>
+                              <span>{v.uom || "—"}</span>
+                              <span>Tồn: {formatMoneyVN(v.stock)}</span>
+                              <span>Giá: {formatMoneyVN(v.price)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="catProductsEmpty">Nhóm này chưa có biến thể.</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="catProductCard" key={item.key}>
+                    <div className="catProductTitleRow">
+                      <div className="catProductTitle">{item.name}</div>
+                      <div className="catProductMetaPill">Sản phẩm đơn #{item.id}</div>
+                    </div>
+                    <div className="catProductChildMeta">
+                      <span className="catMono">{item.sku || "—"}</span>
+                      <span className="catMono">{item.barcode || "—"}</span>
+                      <span>{item.uom || "—"}</span>
+                      <span>Tồn: {formatMoneyVN(item.stock)}</span>
+                      <span>Giá: {formatMoneyVN(item.price)}</span>
+                    </div>
+                  </div>
+                )
+              )
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {showCreate ? (
         <CategoryModal

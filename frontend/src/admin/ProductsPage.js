@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { del, get, patch, post } from "../api"
 import Modal from "./Modal"
 import ProductCreateModal from "./ProductCreateModal"
@@ -21,6 +21,7 @@ export default function ProductsPage() {
   const [busy, setBusy] = useState(false)
   const [rows, setRows] = useState([]) // variants
   const [q, setQ] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("")
 
   const [parents, setParents] = useState([])
   const [categories, setCategories] = useState([])
@@ -41,6 +42,21 @@ export default function ProductsPage() {
     for (const r of rows) m.set(String(r.id), r)
     return m
   }, [rows])
+
+  const categoryById = useMemo(() => {
+    const m = new Map()
+    for (const c of categories) m.set(String(c.id), c)
+    return m
+  }, [categories])
+
+  const resolveCategoryIdForVariant = useCallback((v, parent) => {
+    return v?.category_id ?? parent?.category_id ?? null
+  }, [])
+
+  const resolveCategoryNameForVariant = useCallback((v, parent) => {
+    const id = resolveCategoryIdForVariant(v, parent)
+    return id == null ? "" : categoryById.get(String(id))?.name || ""
+  }, [categoryById, resolveCategoryIdForVariant])
 
   async function loadAll() {
     setLoading(true)
@@ -121,38 +137,65 @@ export default function ProductsPage() {
       return 0
     })
     const qq = (q || "").trim().toLowerCase()
-    if (!qq) {
+    const categoryNeedle = String(categoryFilter || "").trim()
+    if (!qq && !categoryNeedle) {
       for (const g of groups) g.variants.sort((a, b) => Number(b.id || 0) - Number(a.id || 0))
       return groups
     }
 
     const out = []
     for (const g of groups) {
-      const parentHay = [g.parent.id, g.parent.name, g.parent.description]
+      const parentHay = [
+        g.parent.id,
+        g.parent.name,
+        g.parent.description,
+        g.parent?.category_id != null ? categoryById.get(String(g.parent.category_id))?.name || "" : "",
+      ]
         .filter((v) => v !== null && v !== undefined)
         .map((v) => String(v).toLowerCase())
         .join(" · ")
-      const parentMatched = parentHay.includes(qq)
+      const parentMatched = !qq ? false : parentHay.includes(qq)
 
       const matchedVariants = g.variants.filter((r) => {
-        const hay = [r.id, r.name, r.sku, r.barcode, r.uom, r.parent_id]
+        const hay = [
+          r.id,
+          r.name,
+          r.sku,
+          r.barcode,
+          r.uom,
+          r.parent_id,
+          resolveCategoryNameForVariant(r, g.parent),
+        ]
           .filter((v) => v !== null && v !== undefined)
           .map((v) => String(v).toLowerCase())
           .join(" · ")
-        return hay.includes(qq)
+        return !qq || hay.includes(qq)
       })
 
-      if (!parentMatched && matchedVariants.length === 0) continue
+      const parentCategoryMatched =
+        !categoryNeedle || String(g.parent?.category_id ?? "") === categoryNeedle
+      const categoryMatchedVariants = matchedVariants.filter(
+        (r) => !categoryNeedle || String(resolveCategoryIdForVariant(r, g.parent) ?? "") === categoryNeedle
+      )
+
+      if (!parentCategoryMatched && categoryMatchedVariants.length === 0) continue
+      if (qq && !parentMatched && categoryMatchedVariants.length === 0) continue
       out.push({
         ...g,
-        parentMatched,
-        variants: parentMatched ? g.variants : matchedVariants,
+        parentMatched: parentMatched && parentCategoryMatched,
+        variants:
+          parentMatched && parentCategoryMatched
+            ? g.variants.filter(
+                (r) =>
+                  !categoryNeedle || String(resolveCategoryIdForVariant(r, g.parent) ?? "") === categoryNeedle
+              )
+            : categoryMatchedVariants,
       })
     }
 
     for (const g of out) g.variants.sort((a, b) => Number(b.id || 0) - Number(a.id || 0))
     return out
-  }, [parents, rows, q])
+  }, [parents, rows, q, categoryFilter, categoryById, resolveCategoryIdForVariant, resolveCategoryNameForVariant])
 
   const visibleVariantsCount = useMemo(() => tree.reduce((acc, g) => acc + g.variants.length, 0), [tree])
 
@@ -162,20 +205,27 @@ export default function ProductsPage() {
       const standalone = isStandaloneGroup(group)
       if (standalone) {
         const v = group.variants[0]
-        out.push({ ...v, parent_name: null })
+        out.push({ ...v, parent_name: null, category_name: resolveCategoryNameForVariant(v, group.parent) })
         continue
       }
       // Xuất Excel nên ưu tiên đầy đủ dữ liệu biến thể (không phụ thuộc việc nhóm đang gập/mở).
       // Việc "gập/mở" chỉ là UI để nhìn cho gọn.
-      for (const v of group.variants) out.push({ ...v, parent_name: group.parent?.name || null })
+      for (const v of group.variants) {
+        out.push({
+          ...v,
+          parent_name: group.parent?.name || null,
+          category_name: resolveCategoryNameForVariant(v, group.parent),
+        })
+      }
     }
     return out
-  }, [tree])
+  }, [tree, resolveCategoryNameForVariant])
 
   const exportSnapshot = useMemo(() => {
     const visibleCols = [
       { key: "id", title: "ID", getValue: (r) => r.id },
       { key: "parent_name", title: "Nhóm (Parent)", getValue: (r) => r.parent_name || "" },
+      { key: "category_name", title: "Danh mục", getValue: (r) => r.category_name || "" },
       { key: "name", title: "Tên", getValue: (r) => r.name || "" },
       { key: "sku", title: "SKU", getValue: (r) => r.sku || "" },
       { key: "barcode", title: "Barcode", getValue: (r) => r.barcode || "" },
@@ -217,11 +267,23 @@ export default function ProductsPage() {
           {loading ? "Đang tải..." : err ? `Lỗi: ${err}` : `${tree.length} nhóm/sản phẩm · ${visibleVariantsCount}/${rows.length} biến thể`}
         </div>
         <div className="prodActions">
+          <select
+            className="admSelect prodFilterSelect"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="">Tất cả danh mục</option>
+            {categories.map((c) => (
+              <option key={c.id} value={String(c.id)}>
+                {c.name}
+              </option>
+            ))}
+          </select>
           <input
             className="admInput"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Tìm theo parent / variant / SKU / barcode / ID..."
+            placeholder="Tìm theo parent / variant / SKU / barcode / ID / danh mục..."
             style={{ width: 360 }}
           />
           <button className="prodActionBtn" disabled={busy || loading} onClick={() => loadAll()}>
@@ -252,6 +314,7 @@ export default function ProductsPage() {
       <div className="prodTree">
         <div className="prodTreeHead">
           <div>Sản phẩm</div>
+          <div>Danh mục</div>
           <div>SKU / Barcode</div>
           <div>Đơn vị</div>
           <div className="prodRight">Tồn</div>
@@ -279,6 +342,7 @@ export default function ProductsPage() {
                       <span className="prodName">{v.name}</span>
                       <span className="prodPill">#{v.id}</span>
                     </div>
+                    <div className="prodName">{resolveCategoryNameForVariant(v, group.parent) || "—"}</div>
                     <div className="prodVariantCodes">
                       <span className="prodMono">{v.sku || "—"}</span>
                       <span className="prodMono">{v.barcode || "—"}</span>
@@ -322,6 +386,11 @@ export default function ProductsPage() {
                     <span className="prodPill">Parent #{group.parent.id}</span>
                     {hasChildren ? <span className="prodPill">{group.variants.length} biến thể</span> : <span className="prodPill">Chưa có biến thể</span>}
                   </div>
+                  <div className="prodName">
+                    {group.parent?.category_id != null
+                      ? categoryById.get(String(group.parent.category_id))?.name || "—"
+                      : "—"}
+                  </div>
                   <div className="prodMono">—</div>
                   <div className="prodMono">—</div>
                   <div className="prodMono prodRight">—</div>
@@ -351,6 +420,7 @@ export default function ProductsPage() {
                           <span className="prodName">{v.name}</span>
                           <span className="prodPill">#{v.id}</span>
                         </div>
+                        <div className="prodName">{resolveCategoryNameForVariant(v, group.parent) || "—"}</div>
                         <div className="prodVariantCodes">
                           <span className="prodMono">{v.sku || "—"}</span>
                           <span className="prodMono">{v.barcode || "—"}</span>
