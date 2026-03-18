@@ -3,6 +3,7 @@ import { get, patch } from "../api"
 import Modal from "./Modal"
 import DataGrid from "./DataGrid"
 import { fmtDateTimeVN } from "../utils/datetime"
+import { formatMoneyVN } from "../utils/number"
 import "./pricing.css"
 
 function toNumber(v) {
@@ -13,7 +14,7 @@ function toNumber(v) {
 function fmtMoney(v) {
   const n = toNumber(v)
   if (n == null) return ""
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(n)
+  return formatMoneyVN(n)
 }
 
 function fmtDateTime(v) {

@@ -4,12 +4,11 @@ import Modal from "./Modal"
 import DataGrid from "./DataGrid"
 import ExcelToolsModal from "./ExcelToolsModal"
 import FieldLabel from "../ui/FieldLabel"
+import { formatMoneyVN } from "../utils/number"
 import "./partners.css"
 
 function fmtMoney(v) {
-  const n = typeof v === "number" ? v : Number(v || 0)
-  if (!Number.isFinite(n)) return v == null ? "" : String(v)
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(n)
+  return formatMoneyVN(v)
 }
 
 export default function CustomersPage() {

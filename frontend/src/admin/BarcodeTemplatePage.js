@@ -4,12 +4,13 @@ import {
   defaultBarcodeTemplate,
   normalizeBarcodeTemplate,
 } from "../receive/barcodeTemplate"
+import { formatMoneyVN } from "../utils/number"
 import "./barcode-template.css"
 
 const sampleLabels = [
-  { code: "BC-LUOI-XANH-001", name: "Lưới nylon xanh 1m", price: "22,000" },
-  { code: "BC-LUOI-XANH-002", name: "Lưới nylon xanh 1m", price: "22,000" },
-  { code: "BC-TEE-RED-M", name: "Áo thun trơn đỏ M", price: "199,000" },
+  { code: "BC-LUOI-XANH-001", name: "Lưới nylon xanh 1m", price: "22000" },
+  { code: "BC-LUOI-XANH-002", name: "Lưới nylon xanh 1m", price: "22000" },
+  { code: "BC-TEE-RED-M", name: "Áo thun trơn đỏ M", price: "199000" },
 ]
 
 export default function BarcodeTemplatePage({ template, onSave, onReset }) {
@@ -130,7 +131,7 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
                 {sampleLabels.map((lb, idx) => (
                   <div key={idx} className="bctLabel" style={{ width: `${cfg.labelWidthMm}mm`, height: `${cfg.labelHeightMm}mm` }}>
                     <div className="bctName">{lb.name}</div>
-                    <div className="bctPrice">{lb.price}đ</div>
+                    <div className="bctPrice">{formatMoneyVN(lb.price)}đ</div>
                     <div className="bctCode">[{lb.code}]</div>
                   </div>
                 ))}

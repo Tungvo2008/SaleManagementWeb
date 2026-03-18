@@ -1,7 +1,8 @@
+import { formatMoneyVN } from "../utils/number"
+
 export function fmtVnd(n) {
-  const x = typeof n === "string" ? Number(n) : Number(n ?? 0)
-  if (!Number.isFinite(x)) return "-"
-  return x.toLocaleString("vi-VN")
+  const out = formatMoneyVN(n, { empty: "-" })
+  return out || "-"
 }
 
 export function fmtQty(n) {
@@ -10,4 +11,3 @@ export function fmtQty(n) {
   if (typeof n === "string") return n
   return String(n)
 }
-

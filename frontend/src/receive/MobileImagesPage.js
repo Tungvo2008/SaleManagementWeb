@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { get, patch, post } from "../api"
+import { formatMoneyVN } from "../utils/number"
 import "./mobile-images.css"
 
 function fmtMoney(v) {
-  const n = typeof v === "number" ? v : Number(v || 0)
-  if (!Number.isFinite(n)) return v == null ? "" : String(v)
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(n)
+  return formatMoneyVN(v)
 }
 
 function isTouchDevice() {
@@ -299,4 +298,3 @@ export default function MobileImagesPage() {
     </div>
   )
 }
-

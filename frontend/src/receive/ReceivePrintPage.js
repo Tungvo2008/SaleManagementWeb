@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 import { get, patch, post } from "../api"
 import { loadBarcodeTemplate, normalizeBarcodeTemplate } from "./barcodeTemplate"
 import FieldLabel from "../ui/FieldLabel"
+import { formatMoneyVN } from "../utils/number"
 import "./receive.css"
 import "../pos/pos.css"
 
@@ -12,9 +13,7 @@ function asNum(v) {
 }
 
 function fmtMoney(v) {
-  const n = typeof v === "number" ? v : Number(v || 0)
-  if (!Number.isFinite(n)) return String(v ?? "")
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(n)
+  return formatMoneyVN(v)
 }
 
 function cleanBarcodeBase(text) {
@@ -83,7 +82,7 @@ function openPrintLabels({ title, labels, printWindow = null }) {
             ? `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(code)}&scale=${cfg.barcodeScale}&height=${cfg.barcodeHeightMm}&includetext=true`
             : ""
           const name = String(lb.name || "")
-          const price = lb.price != null ? String(lb.price) : ""
+          const price = lb.price != null ? formatMoneyVN(lb.price) : ""
           return `
             <div class="lb">
               <div class="name">${name.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</div>

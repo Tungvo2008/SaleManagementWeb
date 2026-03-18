@@ -4,12 +4,11 @@ import Modal from "./Modal"
 import ProductCreateModal from "./ProductCreateModal"
 import ExcelToolsModal from "./ExcelToolsModal"
 import FieldLabel from "../ui/FieldLabel"
+import { formatMoneyVN } from "../utils/number"
 import "./products.css"
 
 function fmtMoney(v) {
-  const n = typeof v === "number" ? v : Number(v || 0)
-  if (!Number.isFinite(n)) return v == null ? "" : String(v)
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(n)
+  return formatMoneyVN(v)
 }
 
 function normalizeSku(value) {

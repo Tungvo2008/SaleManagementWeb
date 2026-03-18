@@ -5,12 +5,11 @@ import DataGrid from "./DataGrid"
 import ExcelToolsModal from "./ExcelToolsModal"
 import { defaultReceiptTemplate, normalizeReceiptTemplate, loadReceiptTemplate } from "../pos/receiptTemplate"
 import { fmtDateTimeVN } from "../utils/datetime"
+import { formatMoneyVN } from "../utils/number"
 import "./orders.css"
 
 function fmtMoney(v) {
-  const n = typeof v === "number" ? v : Number(v || 0)
-  if (!Number.isFinite(n)) return String(v ?? "")
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(n)
+  return formatMoneyVN(v)
 }
 
 function todayYMD() {

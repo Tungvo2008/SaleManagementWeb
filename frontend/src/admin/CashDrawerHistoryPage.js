@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from "react"
 import { get } from "../api"
 import DataGrid from "./DataGrid"
 import Modal from "./Modal"
-import { fmtVnd } from "../pos/money"
+import { formatMoneyVN } from "../utils/number"
 import { fmtDateTimeVN } from "../utils/datetime"
 import "./cash-drawer-history.css"
 
 function fmtMoney(v) {
-  return `${fmtVnd(v)} đ`
+  return `${formatMoneyVN(v, { empty: "-" })} đ`
 }
 
 function sessionStatusLabel(v) {

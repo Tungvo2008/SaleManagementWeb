@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { defaultReceiptTemplate } from "./receiptTemplate"
 import { fmtDateTimeVN } from "../utils/datetime"
+import { formatMoneyVN } from "../utils/number"
 import "./template-page.css"
 import UiSelect from "../ui/Select"
 
 function fmtVnd(n) {
-  const x = typeof n === "string" ? Number(n) : Number(n ?? 0)
-  if (!Number.isFinite(x)) return "-"
-  return x.toLocaleString("vi-VN")
+  return formatMoneyVN(n, { empty: "-" }) || "-"
 }
 
 const sampleReceipt = {

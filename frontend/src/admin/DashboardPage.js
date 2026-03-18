@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 import { get } from "../api"
+import { formatMoneyVN } from "../utils/number"
 import "./dashboard.css"
 
 function fmtMoney(v) {
-  const n = typeof v === "number" ? v : Number(v || 0)
-  if (!Number.isFinite(n)) return String(v ?? "")
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(n)
+  return formatMoneyVN(v)
 }
 
 function todayYMD() {

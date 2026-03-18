@@ -4,6 +4,7 @@ import DataGrid from "./DataGrid"
 import Modal from "./Modal"
 import ExcelToolsModal from "./ExcelToolsModal"
 import FieldLabel from "../ui/FieldLabel"
+import { formatMoneyVN } from "../utils/number"
 import "./rolls.css"
 
 function asNum(v) {
@@ -17,8 +18,7 @@ function fmtQty(v) {
 }
 
 function fmtMoney(v, digits = 2) {
-  const n = asNum(v)
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: digits }).format(n)
+  return formatMoneyVN(v, { maximumFractionDigits: digits })
 }
 
 function getRollState(row) {
