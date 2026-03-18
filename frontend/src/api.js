@@ -1,4 +1,5 @@
 const API_BASE = process.env.REACT_APP_API_BASE || ""
+let refreshPromise = null
 
 function redirectToLogin() {
   if (typeof window === "undefined") return
@@ -17,7 +18,31 @@ async function parseBody(res) {
   }
 }
 
-export async function api(path, { method = "GET", body, headers, ...rest } = {}) {
+async function refreshAuthOnce() {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_BASE}/api/v1/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then(async (res) => {
+        const data = await parseBody(res)
+        if (!res.ok) {
+          const err = new Error(
+            (data && typeof data === "object" && (data.detail || data.message)) || `HTTP ${res.status}`
+          )
+          err.status = res.status
+          throw err
+        }
+        return data
+      })
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+  return refreshPromise
+}
+
+export async function api(path, { method = "GET", body, headers, _retried = false, ...rest } = {}) {
   const hasBody = body !== undefined
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData
   const init = {
@@ -44,9 +69,22 @@ export async function api(path, { method = "GET", body, headers, ...rest } = {})
   const data = await parseBody(res)
 
   if (!res.ok) {
-    // Token hết hạn / không hợp lệ -> đẩy thẳng về login.
-    // Không áp dụng cho endpoint login để vẫn hiện đúng lỗi "sai tài khoản/mật khẩu".
     const isLoginCall = path.includes("/api/v1/auth/login")
+    const isRefreshCall = path.includes("/api/v1/auth/refresh")
+
+    // Access token hết hạn trong lúc vẫn đang dùng -> refresh im lặng rồi retry
+    // đúng 1 lần, để không văng khỏi màn hình đang thao tác dở.
+    if (res.status === 401 && !_retried && !isLoginCall && !isRefreshCall) {
+      try {
+        await refreshAuthOnce()
+        return api(path, { method, body, headers, _retried: true, ...rest })
+      } catch {
+        // refresh fail -> xử lý như session hết hạn thật sự ở block bên dưới
+      }
+    }
+
+    // Session hết hạn thật / refresh fail -> mới đẩy về login.
+    // Không áp dụng cho endpoint login để vẫn hiện đúng lỗi "sai tài khoản/mật khẩu".
     if (res.status === 401 && !isLoginCall) {
       try {
         window.dispatchEvent(new CustomEvent("auth:unauthorized"))

@@ -48,9 +48,9 @@ def _set_auth_cookies(*, response: Response, access_token: str, refresh_token: s
         key=REFRESH_COOKIE,
         value=refresh_token,
         **cookie_kwargs,
-        # Use max_age instead of expires to avoid timezone-aware datetime issues.
-        # Server is the source of truth (DB expires_at).
-        max_age=int(settings.REFRESH_TOKEN_TTL_DAYS) * 24 * 60 * 60,
+        # Sliding idle session window. Server DB expires_at is still the source
+        # of truth; cookie max_age just mirrors it on the client.
+        max_age=int(settings.SESSION_IDLE_TTL_MINUTES) * 60,
     )
 
 

@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "dev-secret-change-me"
     JWT_ISSUER: str = "warehouse-backend"
     ACCESS_TOKEN_TTL_MINUTES: int = 60
+    SESSION_IDLE_TTL_MINUTES: int = 480
     REFRESH_TOKEN_TTL_DAYS: int = 14
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str = "lax"

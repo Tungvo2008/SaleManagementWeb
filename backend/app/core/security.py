@@ -137,7 +137,9 @@ def now_utc() -> datetime:
 
 
 def refresh_expires_at() -> datetime:
-    return now_utc() + timedelta(days=int(settings.REFRESH_TOKEN_TTL_DAYS))
+    # Sliding idle timeout: while the user is active and keeps refreshing, the
+    # session stays alive. If inactive longer than this window, refresh fails.
+    return now_utc() + timedelta(minutes=int(settings.SESSION_IDLE_TTL_MINUTES))
 
 
 def hash_refresh_token(token: str) -> str:

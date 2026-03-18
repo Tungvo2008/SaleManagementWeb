@@ -6,6 +6,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:-sqlite:///./data/app.db}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
       JWT_ISSUER: ${JWT_ISSUER:-warehouse-backend}
+      SESSION_IDLE_TTL_MINUTES: ${SESSION_IDLE_TTL_MINUTES:-480}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
     volumes:
       - backend_data:/app/data
