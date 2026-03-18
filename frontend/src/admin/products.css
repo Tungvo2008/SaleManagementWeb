@@ -18,10 +18,20 @@
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
 }
 
 .prodFilterSelect{
-  min-width: 190px;
+  width: 240px;
+  min-width: 220px;
+  flex: 0 0 240px;
+}
+
+.prodSearchInput{
+  width: 360px;
+  min-width: 280px;
+  flex: 1 1 360px;
+  max-width: 420px;
 }
 
 .prodActionBtn{
@@ -89,6 +99,86 @@
   background: #f8fbff;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+.prodHeadCell{
+  min-width: 0;
+}
+
+.prodHeadCellSortable{
+  padding-right: 0;
+}
+
+.prodHeadTitle{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prodSortBtn{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.prodSortIcon{
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid rgba(15,23,42,.14);
+  background: rgba(15,23,42,.04);
+  font-size: 11px;
+  opacity: .75;
+  flex: 0 0 auto;
+}
+
+.prodSortIconOn{
+  opacity: 1;
+  border-color: rgba(15,23,42,.22);
+  background: rgba(15,23,42,.08);
+}
+
+.prodTreeFilters{
+  display: grid;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(15,23,42,.08);
+  background: #f8fbff;
+}
+
+.prodFilterCell{
+  min-width: 0;
+}
+
+.prodFilterInput{
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,.14);
+  background: #ffffff;
+  color: inherit;
+  padding: 8px 10px;
+  outline: none;
+  min-width: 0;
+}
+
+.prodFilterInput:focus{
+  border-color: rgba(75,123,255,.55);
+  box-shadow: 0 0 0 3px rgba(75,123,255,.20);
+}
+
+.prodFilterBlank{
+  width: 100%;
+  height: 38px;
 }
 
 .prodTreeBody{
@@ -179,11 +269,60 @@
   color: var(--adm-muted);
 }
 
+.prodCols{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.prodColRow{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,.10);
+  background: rgba(15,23,42,.03);
+}
+
 @media (max-width: 1440px){
   .prodTreeHead,
   .prodTreeRow{
     grid-template-columns: minmax(220px, 1.8fr) minmax(120px, .9fr) minmax(170px, 1fr) 78px 88px 96px 96px 96px 100px 154px;
     gap: 8px;
+  }
+
+  .prodTreeFilters{
+    gap: 8px;
+  }
+
+  .prodFilterSelect{
+    width: 220px;
+    min-width: 200px;
+    flex-basis: 220px;
+  }
+
+  .prodSearchInput{
+    min-width: 240px;
+    max-width: 360px;
+  }
+}
+
+@media (max-width: 720px){
+  .prodCols{
+    grid-template-columns: 1fr;
+  }
+
+  .prodActions{
+    justify-content: stretch;
+  }
+
+  .prodFilterSelect,
+  .prodSearchInput{
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    flex-basis: 100%;
   }
 }
 

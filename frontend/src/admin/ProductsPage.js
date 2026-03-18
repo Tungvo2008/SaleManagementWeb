@@ -7,6 +7,63 @@ import FieldLabel from "../ui/FieldLabel"
 import { formatMoneyVN } from "../utils/number"
 import "./products.css"
 
+const PRODUCT_GRID_STORAGE_KEY = "adm.products.tree.v1"
+
+const PRODUCT_COLUMNS = [
+  { key: "name", title: "Sản phẩm", width: "minmax(240px, 2fr)" },
+  { key: "category", title: "Danh mục", width: "minmax(140px, 1fr)" },
+  { key: "codes", title: "SKU / Barcode", width: "minmax(190px, 1.15fr)" },
+  { key: "uom", title: "Đơn vị", width: "90px" },
+  { key: "stock", title: "Tồn", width: "100px", align: "right" },
+  { key: "price", title: "Giá", width: "110px", align: "right" },
+  { key: "roll_price", title: "Giá cuộn", width: "110px", align: "right" },
+  { key: "cost_price", title: "Giá nhập", width: "110px", align: "right" },
+  { key: "status", title: "Trạng thái", width: "110px" },
+  { key: "actions", title: "Thao tác", width: "170px", align: "right", sortable: false, filterable: false },
+]
+
+const PRODUCT_DEFAULT_GRID_CFG = {
+  visibleKeys: PRODUCT_COLUMNS.map((c) => c.key),
+  sortKey: null,
+  sortDir: null,
+  filters: {},
+}
+
+function loadProductGridCfg() {
+  try {
+    const raw = localStorage.getItem(PRODUCT_GRID_STORAGE_KEY)
+    if (!raw) return PRODUCT_DEFAULT_GRID_CFG
+    const parsed = JSON.parse(raw)
+    return {
+      visibleKeys: Array.isArray(parsed?.visibleKeys) ? parsed.visibleKeys : PRODUCT_DEFAULT_GRID_CFG.visibleKeys,
+      sortKey: parsed?.sortKey || null,
+      sortDir: parsed?.sortDir || null,
+      filters: parsed && typeof parsed.filters === "object" && parsed.filters ? parsed.filters : {},
+    }
+  } catch {
+    return PRODUCT_DEFAULT_GRID_CFG
+  }
+}
+
+function saveProductGridCfg(cfg) {
+  localStorage.setItem(PRODUCT_GRID_STORAGE_KEY, JSON.stringify(cfg))
+}
+
+function isNumericLike(v) {
+  if (typeof v === "number") return Number.isFinite(v)
+  if (typeof v !== "string") return false
+  const s = v.trim()
+  if (!s) return false
+  return /^-?\d+(\.\d+)?$/.test(s)
+}
+
+function toComparable(v) {
+  if (v === null || v === undefined || v === "") return { kind: "null", v: null }
+  if (typeof v === "boolean") return { kind: "num", v: v ? 1 : 0 }
+  if (isNumericLike(v)) return { kind: "num", v: Number(v) }
+  return { kind: "str", v: String(v).toLowerCase() }
+}
+
 function fmtMoney(v) {
   return formatMoneyVN(v)
 }
@@ -36,6 +93,8 @@ export default function ProductsPage() {
   const [editVariant, setEditVariant] = useState(null)
   const [deleteVariant, setDeleteVariant] = useState(null)
   const [showExcel, setShowExcel] = useState(false)
+  const [showColumns, setShowColumns] = useState(false)
+  const [gridCfg, setGridCfg] = useState(() => loadProductGridCfg())
 
   const variantsById = useMemo(() => {
     const m = new Map()
@@ -57,6 +116,16 @@ export default function ProductsPage() {
     const id = resolveCategoryIdForVariant(v, parent)
     return id == null ? "" : categoryById.get(String(id))?.name || ""
   }, [categoryById, resolveCategoryIdForVariant])
+
+  const visibleCols = useMemo(() => {
+    const allowed = new Set(gridCfg.visibleKeys || PRODUCT_DEFAULT_GRID_CFG.visibleKeys)
+    return PRODUCT_COLUMNS.filter((c) => allowed.has(c.key))
+  }, [gridCfg.visibleKeys])
+
+  const gridTemplateColumns = useMemo(
+    () => visibleCols.map((c) => c.width).join(" "),
+    [visibleCols]
+  )
 
   async function loadAll() {
     setLoading(true)
@@ -90,6 +159,97 @@ export default function ProductsPage() {
     loadAll().catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  function toggleParent(parentId) {
+    setExpandedParentIds((prev) => {
+      const next = new Set(prev)
+      const key = String(parentId)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function isStandaloneGroup(group) {
+    if (!group || group.variants.length !== 1) return false
+    if (group.standalone) return true
+    const v = group.variants[0]
+    if (v?.attrs && typeof v.attrs === "object" && v.attrs._single_product === true) return true
+    const pName = String(group.parent?.name || "").trim().toLowerCase()
+    const vName = String(v?.name || "").trim().toLowerCase()
+    return !group.synthetic && !!pName && pName === vName
+  }
+
+  const getParentStatus = useCallback((group) => {
+    return group.synthetic ? "Parent tạm" : "Nhóm sản phẩm"
+  }, [])
+
+  const getRowValue = useCallback(({ kind, group, variant, key }) => {
+    if (kind === "parent") {
+      if (key === "name") return `${group.parent?.name || ""} ${group.parent?.description || ""}`.trim()
+      if (key === "category") {
+        return group.parent?.category_id != null
+          ? categoryById.get(String(group.parent.category_id))?.name || ""
+          : ""
+      }
+      if (key === "codes") return ""
+      if (key === "uom") return ""
+      if (key === "stock") return null
+      if (key === "price") return null
+      if (key === "roll_price") return null
+      if (key === "cost_price") return null
+      if (key === "status") return getParentStatus(group)
+      return ""
+    }
+
+    const v = variant
+    if (!v) return ""
+    if (key === "name") return v.name || ""
+    if (key === "category") return resolveCategoryNameForVariant(v, group.parent)
+    if (key === "codes") return `${v.sku || ""} ${v.barcode || ""}`.trim()
+    if (key === "uom") return v.uom || ""
+    if (key === "stock") return v.stock
+    if (key === "price") return v.price
+    if (key === "roll_price") return v.roll_price
+    if (key === "cost_price") return v.cost_price
+    if (key === "status") return v.track_stock_unit ? "Theo cuộn" : "Thường"
+    return ""
+  }, [categoryById, getParentStatus, resolveCategoryNameForVariant])
+
+  const rowMatchesFilters = useCallback(({ kind, group, variant }) => {
+    const active = Object.entries(gridCfg.filters || {}).filter(
+      ([key, value]) =>
+        key !== "actions" &&
+        PRODUCT_COLUMNS.find((c) => c.key === key)?.filterable !== false &&
+        String(value || "").trim()
+    )
+    if (!active.length) return true
+    return active.every(([key, rawNeedle]) => {
+      const hay = String(getRowValue({ kind, group, variant, key }) ?? "").toLowerCase()
+      const tokens = String(rawNeedle || "")
+        .trim()
+        .toLowerCase()
+        .split(/\s+/g)
+        .filter(Boolean)
+      return tokens.every((t) => hay.includes(t))
+    })
+  }, [getRowValue, gridCfg.filters])
+
+  function compareRows(a, b, key, dir) {
+    const mult = dir === "desc" ? -1 : 1
+    const av = toComparable(a)
+    const bv = toComparable(b)
+    if (av.kind === "null" && bv.kind === "null") return 0
+    if (av.kind === "null") return 1
+    if (bv.kind === "null") return -1
+    if (av.kind !== bv.kind) {
+      const rank = (k) => (k === "num" ? 0 : 1)
+      return (rank(av.kind) - rank(bv.kind)) * mult
+    }
+    if (av.v < bv.v) return -1 * mult
+    if (av.v > bv.v) return 1 * mult
+    return 0
+  }
 
   const tree = useMemo(() => {
     const parentMap = new Map()
@@ -138,22 +298,17 @@ export default function ProductsPage() {
     })
     const qq = (q || "").trim().toLowerCase()
     const categoryNeedle = String(categoryFilter || "").trim()
-    if (!qq && !categoryNeedle) {
-      for (const g of groups) g.variants.sort((a, b) => Number(b.id || 0) - Number(a.id || 0))
-      return groups
-    }
 
     const out = []
     for (const g of groups) {
-      const parentHay = [
-        g.parent.id,
-        g.parent.name,
-        g.parent.description,
-        g.parent?.category_id != null ? categoryById.get(String(g.parent.category_id))?.name || "" : "",
-      ]
-        .filter((v) => v !== null && v !== undefined)
-        .map((v) => String(v).toLowerCase())
-        .join(" · ")
+      const parentHay = String(getRowValue({ kind: "parent", group: g, key: "name" }) || "")
+        .concat(
+          " · ",
+          String(getRowValue({ kind: "parent", group: g, key: "category" }) || ""),
+          " · ",
+          String(g.parent.id || "")
+        )
+        .toLowerCase()
       const parentMatched = !qq ? false : parentHay.includes(qq)
 
       const matchedVariants = g.variants.filter((r) => {
@@ -177,25 +332,78 @@ export default function ProductsPage() {
       const categoryMatchedVariants = matchedVariants.filter(
         (r) => !categoryNeedle || String(resolveCategoryIdForVariant(r, g.parent) ?? "") === categoryNeedle
       )
+      const parentFilterMatched = rowMatchesFilters({ kind: "parent", group: g })
+      const columnMatchedVariants = categoryMatchedVariants.filter((r) =>
+        rowMatchesFilters({ kind: "variant", group: g, variant: r })
+      )
 
-      if (!parentCategoryMatched && categoryMatchedVariants.length === 0) continue
-      if (qq && !parentMatched && categoryMatchedVariants.length === 0) continue
+      if (!parentCategoryMatched && columnMatchedVariants.length === 0) continue
+      if (qq && !parentMatched && columnMatchedVariants.length === 0) continue
+      if (!parentFilterMatched && columnMatchedVariants.length === 0) continue
+
+      const nextVariants =
+        parentMatched && parentCategoryMatched && parentFilterMatched
+          ? g.variants.filter(
+              (r) =>
+                (!categoryNeedle || String(resolveCategoryIdForVariant(r, g.parent) ?? "") === categoryNeedle) &&
+                rowMatchesFilters({ kind: "variant", group: g, variant: r })
+            )
+          : columnMatchedVariants
+
       out.push({
         ...g,
         parentMatched: parentMatched && parentCategoryMatched,
-        variants:
-          parentMatched && parentCategoryMatched
-            ? g.variants.filter(
-                (r) =>
-                  !categoryNeedle || String(resolveCategoryIdForVariant(r, g.parent) ?? "") === categoryNeedle
-              )
-            : categoryMatchedVariants,
+        variants: nextVariants,
       })
     }
 
-    for (const g of out) g.variants.sort((a, b) => Number(b.id || 0) - Number(a.id || 0))
+    const sortKey = gridCfg.sortKey
+    const sortDir = gridCfg.sortDir
+
+    for (const g of out) {
+      g.variants.sort((a, b) => {
+        if (!sortKey || sortKey === "actions") return Number(b.id || 0) - Number(a.id || 0)
+        const cmp = compareRows(
+          getRowValue({ kind: "variant", group: g, variant: a, key: sortKey }),
+          getRowValue({ kind: "variant", group: g, variant: b, key: sortKey }),
+          sortKey,
+          sortDir
+        )
+        return cmp || Number(b.id || 0) - Number(a.id || 0)
+      })
+    }
+
+    if (sortKey && sortKey !== "actions") {
+      out.sort((a, b) => {
+        const aStandalone = isStandaloneGroup(a)
+        const bStandalone = isStandaloneGroup(b)
+        const aKind = aStandalone ? "variant" : "parent"
+        const bKind = bStandalone ? "variant" : "parent"
+        const aVariant = aStandalone ? a.variants[0] : null
+        const bVariant = bStandalone ? b.variants[0] : null
+        const cmp = compareRows(
+          getRowValue({ kind: aKind, group: a, variant: aVariant, key: sortKey }),
+          getRowValue({ kind: bKind, group: b, variant: bVariant, key: sortKey }),
+          sortKey,
+          sortDir
+        )
+        return cmp || Number(b.parent?.id || 0) - Number(a.parent?.id || 0)
+      })
+    }
+
     return out
-  }, [parents, rows, q, categoryFilter, categoryById, resolveCategoryIdForVariant, resolveCategoryNameForVariant])
+  }, [
+    parents,
+    rows,
+    q,
+    categoryFilter,
+    gridCfg.sortDir,
+    gridCfg.sortKey,
+    getRowValue,
+    rowMatchesFilters,
+    resolveCategoryIdForVariant,
+    resolveCategoryNameForVariant,
+  ])
 
   const visibleVariantsCount = useMemo(() => tree.reduce((acc, g) => acc + g.variants.length, 0), [tree])
 
@@ -240,24 +448,163 @@ export default function ProductsPage() {
     return { visibleCols, rows: exportVariants, cfg: {} }
   }, [exportVariants])
 
-  function toggleParent(parentId) {
-    setExpandedParentIds((prev) => {
-      const next = new Set(prev)
-      const key = String(parentId)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
+  function updateGridCfg(updater) {
+    setGridCfg((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater
+      saveProductGridCfg(next)
       return next
     })
   }
 
-  function isStandaloneGroup(group) {
-    if (!group || group.variants.length !== 1) return false
-    if (group.standalone) return true
-    const v = group.variants[0]
-    if (v?.attrs && typeof v.attrs === "object" && v.attrs._single_product === true) return true
-    const pName = String(group.parent?.name || "").trim().toLowerCase()
-    const vName = String(v?.name || "").trim().toLowerCase()
-    return !group.synthetic && !!pName && pName === vName
+  function toggleSort(key) {
+    updateGridCfg((prev) => {
+      const curKey = prev.sortKey || null
+      const curDir = prev.sortDir || null
+      let nextKey = key
+      let nextDir = "asc"
+      if (curKey === key && curDir === "asc") nextDir = "desc"
+      else if (curKey === key && curDir === "desc") {
+        nextKey = null
+        nextDir = null
+      }
+      return { ...prev, sortKey: nextKey, sortDir: nextDir }
+    })
+  }
+
+  function setColumnFilter(key, value) {
+    updateGridCfg((prev) => ({
+      ...prev,
+      filters: { ...(prev.filters || {}), [key]: value },
+    }))
+  }
+
+  function clearColumnFilters() {
+    updateGridCfg((prev) => ({ ...prev, filters: {} }))
+  }
+
+  function toggleColumn(key) {
+    if (key === "name") return
+    updateGridCfg((prev) => {
+      const cur = new Set(prev.visibleKeys || PRODUCT_DEFAULT_GRID_CFG.visibleKeys)
+      if (cur.has(key)) cur.delete(key)
+      else cur.add(key)
+      cur.add("name")
+      return { ...prev, visibleKeys: Array.from(cur) }
+    })
+  }
+
+  function renderTreeCell({ col, group, variant, kind }) {
+    if (col.key === "name") {
+      if (kind === "parent") {
+        const key = String(group.parent.id)
+        const hasChildren = group.variants.length > 0
+        const expanded = q.trim() ? true : expandedParentIds.has(key)
+        return (
+          <div className="prodTreeNameCell">
+            {hasChildren ? (
+              <button
+                type="button"
+                className="prodExpanderBtn"
+                onClick={() => toggleParent(key)}
+                title={expanded ? "Thu gọn" : "Mở rộng"}
+              >
+                {expanded ? "▾" : "▸"}
+              </button>
+            ) : (
+              <span className="prodExpanderEmpty" />
+            )}
+            <span className="prodParentName">{group.parent.name || `Parent #${group.parent.id}`}</span>
+            <span className="prodPill">Parent #{group.parent.id}</span>
+            {hasChildren ? (
+              <span className="prodPill">{group.variants.length} biến thể</span>
+            ) : (
+              <span className="prodPill">Chưa có biến thể</span>
+            )}
+          </div>
+        )
+      }
+      if (kind === "variant") {
+        return (
+          <div className="prodTreeNameCell">
+            <span className="prodVariantIndent">└</span>
+            <span className="prodName">{variant.name}</span>
+            <span className="prodPill">#{variant.id}</span>
+          </div>
+        )
+      }
+      return (
+        <div className="prodTreeNameCell">
+          <span className="prodExpanderEmpty" />
+          <span className="prodName">{variant.name}</span>
+          <span className="prodPill">#{variant.id}</span>
+        </div>
+      )
+    }
+
+    if (col.key === "category") {
+      if (kind === "parent") {
+        return (
+          <div className="prodName">
+            {group.parent?.category_id != null
+              ? categoryById.get(String(group.parent.category_id))?.name || "—"
+              : "—"}
+          </div>
+        )
+      }
+      return <div className="prodName">{resolveCategoryNameForVariant(variant, group.parent) || "—"}</div>
+    }
+
+    if (col.key === "codes") {
+      if (kind === "parent") return <div className="prodMono">—</div>
+      return (
+        <div className="prodVariantCodes">
+          <span className="prodMono">{variant.sku || "—"}</span>
+          <span className="prodMono">{variant.barcode || "—"}</span>
+        </div>
+      )
+    }
+
+    if (col.key === "uom") return <div className="prodMono">{kind === "parent" ? "—" : variant.uom || "—"}</div>
+    if (col.key === "stock") return <div className="prodMono prodRight">{kind === "parent" ? "—" : fmtMoney(variant.stock)}</div>
+    if (col.key === "price") return <div className="prodMono prodRight">{kind === "parent" ? "—" : fmtMoney(variant.price)}</div>
+    if (col.key === "roll_price") return <div className="prodMono prodRight">{kind === "parent" ? "—" : fmtMoney(variant.roll_price)}</div>
+    if (col.key === "cost_price") return <div className="prodMono prodRight">{kind === "parent" ? "—" : fmtMoney(variant.cost_price)}</div>
+    if (col.key === "status") {
+      return (
+        <div className="prodMono">
+          {kind === "parent" ? getParentStatus(group) : variant.track_stock_unit ? "Theo cuộn" : "Thường"}
+        </div>
+      )
+    }
+    if (col.key === "actions") {
+      if (kind === "parent") {
+        return (
+          <div className="prodTreeActions">
+            <button
+              className="prodMiniBtn"
+              disabled={busy}
+              onClick={() => {
+                setCreateVariantParentId(String(group.parent.id))
+                setShowCreateVariant(true)
+              }}
+            >
+              + Biến thể
+            </button>
+          </div>
+        )
+      }
+      return (
+        <div className="prodTreeActions">
+          <button className="prodMiniBtn" disabled={busy} onClick={() => setEditVariant(variant)}>
+            Sửa
+          </button>
+          <button className="prodMiniBtn prodMiniDanger" disabled={busy} onClick={() => setDeleteVariant(variant)}>
+            Xoá
+          </button>
+        </div>
+      )
+    }
+    return <div>—</div>
   }
 
   return (
@@ -280,14 +627,21 @@ export default function ProductsPage() {
             ))}
           </select>
           <input
-            className="admInput"
+            className="admInput prodSearchInput"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Tìm theo parent / variant / SKU / barcode / ID / danh mục..."
-            style={{ width: 360 }}
           />
+          {Object.values(gridCfg.filters || {}).some((v) => String(v || "").trim()) ? (
+            <button className="prodActionBtn" disabled={busy || loading} onClick={clearColumnFilters}>
+              Xoá lọc cột
+            </button>
+          ) : null}
           <button className="prodActionBtn" disabled={busy || loading} onClick={() => loadAll()}>
             Tải lại
+          </button>
+          <button className="prodActionBtn" disabled={busy || loading} onClick={() => setShowColumns(true)}>
+            Tuỳ chỉnh cột
           </button>
           <button className="prodActionBtn" disabled={busy || loading} onClick={() => setShowExcel(true)}>
             Excel
@@ -312,17 +666,52 @@ export default function ProductsPage() {
       </div>
 
       <div className="prodTree">
-        <div className="prodTreeHead">
-          <div>Sản phẩm</div>
-          <div>Danh mục</div>
-          <div>SKU / Barcode</div>
-          <div>Đơn vị</div>
-          <div className="prodRight">Tồn</div>
-          <div className="prodRight">Giá</div>
-          <div className="prodRight">Giá cuộn</div>
-          <div className="prodRight">Giá nhập</div>
-          <div>Trạng thái</div>
-          <div className="prodRight">Thao tác</div>
+        <div className="prodTreeHead" style={{ gridTemplateColumns }}>
+          {visibleCols.map((col) => (
+            <div
+              key={col.key}
+              className={`prodHeadCell ${col.align === "right" ? "prodRight" : ""} ${
+                col.sortable === false ? "" : "prodHeadCellSortable"
+              }`}
+            >
+              {col.sortable === false ? (
+                <div className="prodHeadTitle">{col.title}</div>
+              ) : (
+                <button
+                  type="button"
+                  className="prodSortBtn"
+                  onClick={() => toggleSort(col.key)}
+                  title="Bấm để sắp xếp"
+                >
+                  <span className="prodHeadTitle">{col.title}</span>
+                  <span className={`prodSortIcon ${gridCfg.sortKey === col.key ? "prodSortIconOn" : ""}`}>
+                    {gridCfg.sortKey === col.key && gridCfg.sortDir === "asc"
+                      ? "↑"
+                      : gridCfg.sortKey === col.key && gridCfg.sortDir === "desc"
+                        ? "↓"
+                        : "↕"}
+                  </span>
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="prodTreeFilters" style={{ gridTemplateColumns }}>
+          {visibleCols.map((col) => (
+            <div key={`filter-${col.key}`} className={`prodFilterCell ${col.align === "right" ? "prodRight" : ""}`}>
+              {col.filterable === false ? (
+                <div className="prodFilterBlank" />
+              ) : (
+                <input
+                  className="prodFilterInput"
+                  value={gridCfg.filters?.[col.key] || ""}
+                  onChange={(e) => setColumnFilter(col.key, e.target.value)}
+                  placeholder="Lọc..."
+                />
+              )}
+            </div>
+          ))}
         </div>
 
         <div className="prodTreeBody">
@@ -336,31 +725,12 @@ export default function ProductsPage() {
               const v = group.variants[0]
               return (
                 <div className="prodTreeGroup" key={`standalone-${v.id}`}>
-                  <div className="prodTreeRow prodTreeVariant prodTreeStandalone">
-                    <div className="prodTreeNameCell">
-                      <span className="prodExpanderEmpty" />
-                      <span className="prodName">{v.name}</span>
-                      <span className="prodPill">#{v.id}</span>
-                    </div>
-                    <div className="prodName">{resolveCategoryNameForVariant(v, group.parent) || "—"}</div>
-                    <div className="prodVariantCodes">
-                      <span className="prodMono">{v.sku || "—"}</span>
-                      <span className="prodMono">{v.barcode || "—"}</span>
-                    </div>
-                    <div className="prodMono">{v.uom || "—"}</div>
-                    <div className="prodMono prodRight">{fmtMoney(v.stock)}</div>
-                    <div className="prodMono prodRight">{fmtMoney(v.price)}</div>
-                    <div className="prodMono prodRight">{fmtMoney(v.roll_price)}</div>
-                    <div className="prodMono prodRight">{fmtMoney(v.cost_price)}</div>
-                    <div className="prodMono">{v.track_stock_unit ? "Theo cuộn" : "Thường"}</div>
-                    <div className="prodTreeActions">
-                      <button className="prodMiniBtn" disabled={busy} onClick={() => setEditVariant(v)}>
-                        Sửa
-                      </button>
-                      <button className="prodMiniBtn prodMiniDanger" disabled={busy} onClick={() => setDeleteVariant(v)}>
-                        Xoá
-                      </button>
-                    </div>
+                  <div className="prodTreeRow prodTreeVariant prodTreeStandalone" style={{ gridTemplateColumns }}>
+                    {visibleCols.map((col) => (
+                      <div key={`standalone-${v.id}-${col.key}`} className={col.align === "right" ? "prodRight" : ""}>
+                        {renderTreeCell({ col, group, variant: v, kind: "single" })}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )
@@ -368,77 +738,25 @@ export default function ProductsPage() {
 
             return (
               <div className="prodTreeGroup" key={`parent-${key}`}>
-                <div className={`prodTreeRow prodTreeParent ${group.synthetic ? "prodTreeParentSynthetic" : ""}`}>
-                  <div className="prodTreeNameCell">
-                    {hasChildren ? (
-                      <button
-                        type="button"
-                        className="prodExpanderBtn"
-                        onClick={() => toggleParent(key)}
-                        title={expanded ? "Thu gọn" : "Mở rộng"}
-                      >
-                        {expanded ? "▾" : "▸"}
-                      </button>
-                    ) : (
-                      <span className="prodExpanderEmpty" />
-                    )}
-                    <span className="prodParentName">{group.parent.name || `Parent #${group.parent.id}`}</span>
-                    <span className="prodPill">Parent #{group.parent.id}</span>
-                    {hasChildren ? <span className="prodPill">{group.variants.length} biến thể</span> : <span className="prodPill">Chưa có biến thể</span>}
-                  </div>
-                  <div className="prodName">
-                    {group.parent?.category_id != null
-                      ? categoryById.get(String(group.parent.category_id))?.name || "—"
-                      : "—"}
-                  </div>
-                  <div className="prodMono">—</div>
-                  <div className="prodMono">—</div>
-                  <div className="prodMono prodRight">—</div>
-                  <div className="prodMono prodRight">—</div>
-                  <div className="prodMono prodRight">—</div>
-                  <div className="prodMono prodRight">—</div>
-                  <div className="prodMono">{group.synthetic ? "Parent tạm" : "Nhóm sản phẩm"}</div>
-                  <div className="prodRight">
-                    <button
-                      className="prodMiniBtn"
-                      disabled={busy}
-                      onClick={() => {
-                        setCreateVariantParentId(String(group.parent.id))
-                        setShowCreateVariant(true)
-                      }}
-                    >
-                      + Biến thể
-                    </button>
-                  </div>
+                <div
+                  className={`prodTreeRow prodTreeParent ${group.synthetic ? "prodTreeParentSynthetic" : ""}`}
+                  style={{ gridTemplateColumns }}
+                >
+                  {visibleCols.map((col) => (
+                    <div key={`parent-${key}-${col.key}`} className={col.align === "right" ? "prodRight" : ""}>
+                      {renderTreeCell({ col, group, kind: "parent" })}
+                    </div>
+                  ))}
                 </div>
 
                 {hasChildren && expanded
                   ? group.variants.map((v) => (
-                      <div className="prodTreeRow prodTreeVariant" key={`variant-${v.id}`}>
-                        <div className="prodTreeNameCell">
-                          <span className="prodVariantIndent">└</span>
-                          <span className="prodName">{v.name}</span>
-                          <span className="prodPill">#{v.id}</span>
-                        </div>
-                        <div className="prodName">{resolveCategoryNameForVariant(v, group.parent) || "—"}</div>
-                        <div className="prodVariantCodes">
-                          <span className="prodMono">{v.sku || "—"}</span>
-                          <span className="prodMono">{v.barcode || "—"}</span>
-                        </div>
-                        <div className="prodMono">{v.uom || "—"}</div>
-                        <div className="prodMono prodRight">{fmtMoney(v.stock)}</div>
-                        <div className="prodMono prodRight">{fmtMoney(v.price)}</div>
-                        <div className="prodMono prodRight">{fmtMoney(v.roll_price)}</div>
-                        <div className="prodMono prodRight">{fmtMoney(v.cost_price)}</div>
-                        <div className="prodMono">{v.track_stock_unit ? "Theo cuộn" : "Thường"}</div>
-                        <div className="prodTreeActions">
-                          <button className="prodMiniBtn" disabled={busy} onClick={() => setEditVariant(v)}>
-                            Sửa
-                          </button>
-                          <button className="prodMiniBtn prodMiniDanger" disabled={busy} onClick={() => setDeleteVariant(v)}>
-                            Xoá
-                          </button>
-                        </div>
+                      <div className="prodTreeRow prodTreeVariant" key={`variant-${v.id}`} style={{ gridTemplateColumns }}>
+                        {visibleCols.map((col) => (
+                          <div key={`variant-${v.id}-${col.key}`} className={col.align === "right" ? "prodRight" : ""}>
+                            {renderTreeCell({ col, group, variant: v, kind: "variant" })}
+                          </div>
+                        ))}
                       </div>
                     ))
                   : null}
@@ -449,6 +767,36 @@ export default function ProductsPage() {
           {!loading && tree.length === 0 ? <div className="prodEmpty">Không có dữ liệu phù hợp.</div> : null}
         </div>
       </div>
+
+      {showColumns ? (
+        <Modal
+          title="Tuỳ chỉnh cột"
+          onClose={() => setShowColumns(false)}
+          footer={
+            <button className="admBtn admBtnPrimary" onClick={() => setShowColumns(false)}>
+              Xong
+            </button>
+          }
+        >
+          <div className="prodCols">
+            {PRODUCT_COLUMNS.map((col) => {
+              const checked = (gridCfg.visibleKeys || []).includes(col.key)
+              return (
+                <label key={col.key} className="prodColRow">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={col.key === "name"}
+                    onChange={() => toggleColumn(col.key)}
+                  />
+                  <span>{col.title}</span>
+                </label>
+              )
+            })}
+          </div>
+          <div className="admLabel">Cột “Sản phẩm” luôn được giữ lại để không làm vỡ dạng cây parent/variant.</div>
+        </Modal>
+      ) : null}
 
       {showCreateProduct ? (
         <ProductCreateModal
