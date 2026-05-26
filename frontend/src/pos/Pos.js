@@ -9,6 +9,7 @@ import {
 } from "./receiptTemplate"
 import UiSelect from "../ui/Select"
 import FieldLabel from "../ui/FieldLabel"
+import { buildPrintAutoCloseScript, openPrintDocument } from "../utils/print"
 
 const LS_ORDER_ID = "pos.orderId"
 
@@ -223,11 +224,11 @@ function Toast({ kind, message, onClose }) {
   )
 }
 
-function Modal({ title, children, footer, onClose, wide }) {
+function Modal({ title, children, footer, onClose, wide, className = "" }) {
   return (
     <div className="modalOverlay" onMouseDown={onClose}>
       <div
-        className={`modal ${wide ? "modalWide" : ""}`}
+        className={`modal ${wide ? "modalWide" : ""} ${className}`.trim()}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="cardHeader">
@@ -280,7 +281,7 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
               // Using `noopener,noreferrer` here can make `document.write` fail
               // on some browsers (new window becomes inaccessible), resulting in
               // a blank print popup.
-              const w = window.open("", "_blank", "width=420,height=700")
+              const w = openPrintDocument({ title: `Receipt ${receipt.order_id}`, html: "<!doctype html><title>Loading...</title>", features: "width=420,height=700" })
               if (!w) return
               const isThermal = (cfg.printLayout || "thermal") === "thermal"
               const paperWidthMm = cfg.paperSize === "58" ? 58 : 80
@@ -371,7 +372,7 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
   ${cfg.footerText ? `<div class="muted">${escapeHtml(cfg.footerText)}</div>` : ""}
   ${cfg.showThankYou ? `<div class="muted">Cam on quy khach!</div>` : ""}
   </div>
-  <script>window.print()</script>
+  <script>${buildPrintAutoCloseScript()}</script>
 </body>
 </html>`
                 : `<!doctype html>
@@ -470,7 +471,7 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
     <div class="words">(${escapeHtml(amountInWords)})</div>
     <div class="footer">${escapeHtml(cfg.footerText || "Cảm ơn và hẹn gặp lại!")}</div>
   </div>
-  <script>window.print()</script>
+  <script>${buildPrintAutoCloseScript()}</script>
 </body>
 </html>`
               try {
@@ -590,10 +591,25 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
 function LineEditModal({ item, onClose, onSave }) {
   const [mode, setMode] = useState(item.pricing_mode)
   const [qty, setQty] = useState(String(item.qty))
+  const [discountMode, setDiscountMode] = useState(item.discount_mode || "none")
+  const [discountValue, setDiscountValue] = useState(
+    item.discount_value != null ? String(item.discount_value) : "0",
+  )
   const [err, setErr] = useState("")
 
   const isRollLine =
     item.pricing_mode === "meter" || item.pricing_mode === "roll"
+
+  const previewBase = (() => {
+    if (mode === "roll") {
+      return asNum(item.line_total) + asNum(item.discount_total)
+    }
+    const q = Number(qty)
+    if (!Number.isFinite(q) || q <= 0) {
+      return asNum(item.line_total) + asNum(item.discount_total)
+    }
+    return q * asNum(item.unit_price)
+  })()
 
   function submit() {
     setErr("")
@@ -602,19 +618,37 @@ function LineEditModal({ item, onClose, onSave }) {
       setErr("Số lượng phải > 0")
       return
     }
+    if (discountMode !== "none") {
+      const val = discountValue === "" ? 0 : Number(discountValue)
+      if (!Number.isFinite(val) || val < 0) {
+        setErr("Giá trị khuyến mãi không hợp lệ")
+        return
+      }
+      if (discountMode === "percent" && val > 100) {
+        setErr("Phần trăm phải <= 100")
+        return
+      }
+    }
     if (isRollLine) {
-      onSave({ mode, qty: mode === "meter" ? String(q) : undefined })
+      onSave({
+        mode,
+        qty: mode === "meter" ? String(q) : undefined,
+        discountMode,
+        discountValue,
+      })
     } else {
-      onSave({ qty: String(q) })
+      onSave({ qty: String(q), discountMode, discountValue })
     }
   }
 
   return (
     <Modal
-      title={`Sửa dòng: ${item.name}`}
+      wide
+      className="modalEditLine"
+      title={`Sửa sản phẩm: ${item.name}`}
       onClose={onClose}
       footer={
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+        <div className="lineEditFooterActions">
           <button className="btn" onClick={onClose}>
             Huỷ
           </button>
@@ -625,7 +659,7 @@ function LineEditModal({ item, onClose, onSave }) {
       }
     >
       {isRollLine ? (
-        <div className="split">
+        <div className="split lineEditSplit">
           <div>
             <div className="hint" style={{ marginTop: 0 }}>
               Chế độ bán
@@ -678,6 +712,66 @@ function LineEditModal({ item, onClose, onSave }) {
           />
         </div>
       )}
+      <div className="miniCard" style={{ marginTop: 12 }}>
+        <div className="miniTitle">Khuyến mãi sản phẩm</div>
+        <div className="split lineEditSplit" style={{ marginTop: 10 }}>
+          <div>
+            <div className="hint" style={{ marginTop: 0 }}>
+              Kiểu khuyến mãi
+            </div>
+            <UiSelect
+              value={discountMode}
+              onChange={(v) => setDiscountMode(String(v))}
+              options={[
+                { value: "none", label: "Không" },
+                { value: "amount", label: "Theo số tiền" },
+                { value: "percent", label: "Theo %" },
+              ]}
+            />
+          </div>
+          <div>
+            <div className="hint" style={{ marginTop: 0 }}>
+              Giá trị {discountMode === "percent" ? "(%)" : "(đ)"}
+            </div>
+            <input
+              className="input"
+              disabled={discountMode === "none"}
+              value={discountMode === "none" ? "" : discountValue}
+              onChange={(e) => setDiscountValue(clampMoneyInput(e.target.value))}
+              onFocus={selectAllOnFocus}
+              onKeyDown={(e) => {
+                if (!isEnterKey(e)) return
+                e.preventDefault()
+                submit()
+              }}
+              placeholder={discountMode === "percent" ? "Ví dụ: 10" : "0"}
+            />
+          </div>
+        </div>
+        <div className="miniMeta">
+          {(() => {
+            const disc =
+              discountMode === "none"
+                ? 0
+                : Math.min(
+                    previewBase,
+                    computeDiscountAmount({
+                      mode: discountMode,
+                      valueStr: discountValue,
+                      base: previewBase,
+                    }) || 0,
+                  )
+            const net = Math.max(0, previewBase - disc)
+            return (
+              <>
+                <span className="pill">Gốc: {fmtVnd(previewBase)} đ</span>
+                <span className="pill">KM: {fmtVnd(disc)} đ</span>
+                <span className="pill">Còn: {fmtVnd(net)} đ</span>
+              </>
+            )
+          })()}
+        </div>
+      </div>
       {err ? <div className="payStatus payStatusErr">{err}</div> : null}
     </Modal>
   )
@@ -1469,9 +1563,6 @@ export default function Pos({
   const [invoiceDiscMode, setInvoiceDiscMode] = useState("amount") // "amount" | "percent"
   const [invoiceDiscValue, setInvoiceDiscValue] = useState("0") // amount or percent
 
-  const [lineDiscItem, setLineDiscItem] = useState(null)
-  const [lineDiscMode, setLineDiscMode] = useState("none") // none|amount|percent
-  const [lineDiscValue, setLineDiscValue] = useState("0")
   const [historyOpen, setHistoryOpen] = useState(false)
   const [historyBusy, setHistoryBusy] = useState(false)
   const [historyRows, setHistoryRows] = useState([])
@@ -1504,7 +1595,6 @@ export default function Pos({
     setReceiptModal(null)
     setCustomerModalOpen(false)
     setInvoiceDiscOpen(false)
-    setLineDiscItem(null)
     setHistoryOpen(false)
     setRefundReceipt(null)
     setDrawerModalOpen(false)
@@ -1917,7 +2007,7 @@ export default function Pos({
     }
   }
 
-  async function updateItem(item) {
+  async function updateItem(item, { refresh = true } = {}) {
     if (!order) return
     setBusy(true)
     try {
@@ -1932,7 +2022,27 @@ export default function Pos({
           { mode: item.mode, qty: item.qty },
         )
       }
-      await refreshReceipt(order.id)
+      if (refresh) await refreshReceipt(order.id)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function updateItemDiscount(
+    itemId,
+    discountMode,
+    discountValue,
+    { refresh = true } = {},
+  ) {
+    if (!order) return
+    setBusy(true)
+    try {
+      const payload =
+        discountMode === "none"
+          ? { mode: "none", value: null }
+          : { mode: discountMode, value: String(Number(discountValue || 0)) }
+      await patch(`/api/v1/pos/orders/${order.id}/items/${itemId}/discount`, payload)
+      if (refresh) await refreshReceipt(order.id)
     } finally {
       setBusy(false)
     }
@@ -2092,15 +2202,6 @@ export default function Pos({
     setInvoiceDiscOpen(true)
   }
 
-  function openLineDiscount(it) {
-    const mode = it.discount_mode || "none"
-    setLineDiscItem(it)
-    setLineDiscMode(mode)
-    setLineDiscValue(
-      it.discount_value != null ? String(it.discount_value) : "0",
-    )
-  }
-
   async function applyInvoiceDiscount() {
     if (busy || !order || order.status !== "draft") return
     const val = invoiceDiscValue === "" ? 0 : Number(invoiceDiscValue)
@@ -2120,29 +2221,6 @@ export default function Pos({
       discount_value: String(val),
     })
     setInvoiceDiscOpen(false)
-  }
-
-  async function applyLineDiscount() {
-    if (busy || !order || order.status !== "draft" || !lineDiscItem) return
-    if (lineDiscMode !== "none") {
-      const val = lineDiscValue === "" ? 0 : Number(lineDiscValue)
-      if (!Number.isFinite(val) || val < 0)
-        throw new Error("Giá trị khuyến mãi không hợp lệ")
-      if (lineDiscMode === "percent" && val > 100)
-        throw new Error("Phần trăm phải <= 100")
-    }
-
-    const payload =
-      lineDiscMode === "none"
-        ? { mode: "none", value: null }
-        : { mode: lineDiscMode, value: String(Number(lineDiscValue || 0)) }
-
-    await patch(
-      `/api/v1/pos/orders/${order.id}/items/${lineDiscItem.item_id}/discount`,
-      payload,
-    )
-    await refreshReceipt(order.id)
-    setLineDiscItem(null)
   }
 
   // debounce typeahead search
@@ -2178,55 +2256,6 @@ export default function Pos({
             />
           </svg>
         </button>
-
-        <div className="posCustomerHead">
-          <div className="posCustomerMini">
-            <div className="posCustomerMiniLabel">Khách hàng</div>
-            <div className="posCustomerMiniValue">
-              {customerName ? (
-                <>
-                  {customerName}
-                  {customerPhone ? ` · ${customerPhone}` : ""}
-                </>
-              ) : (
-                "Khách lẻ"
-              )}
-            </div>
-          </div>
-          <div className="posCustomerBtns">
-            <button
-              className="btn btnPrimary"
-              disabled={busy || !order || order.status !== "draft"}
-              onClick={async () => {
-                try {
-                  setCustomerModalOpen(true)
-                  setCustomerQ("")
-                  setCustomerRows([])
-                  await loadCustomers("")
-                } catch (e) {
-                  showErr(e)
-                }
-              }}
-            >
-              Chọn KH
-            </button>
-            <button
-              className="btn"
-              disabled={
-                busy || !order || order.status !== "draft" || !customerId
-              }
-              onClick={async () => {
-                try {
-                  await clearCustomer()
-                } catch (e) {
-                  showErr(e)
-                }
-              }}
-            >
-              Huỷ KH
-            </button>
-          </div>
-        </div>
 
         <div className="posHeaderActions">
           <button
@@ -2305,6 +2334,55 @@ export default function Pos({
           </button>
         </div>
 
+        <div className="posCustomerHead">
+          <div className="posCustomerMini">
+            <div className="posCustomerMiniLabel">Khách hàng</div>
+            <div className="posCustomerMiniValue">
+              {customerName ? (
+                <>
+                  {customerName}
+                  {customerPhone ? ` · ${customerPhone}` : ""}
+                </>
+              ) : (
+                "Khách lẻ"
+              )}
+            </div>
+          </div>
+          <div className="posCustomerBtns">
+            <button
+              className="btn btnPrimary"
+              disabled={busy || !order || order.status !== "draft"}
+              onClick={async () => {
+                try {
+                  setCustomerModalOpen(true)
+                  setCustomerQ("")
+                  setCustomerRows([])
+                  await loadCustomers("")
+                } catch (e) {
+                  showErr(e)
+                }
+              }}
+            >
+              Chọn KH
+            </button>
+            <button
+              className="btn"
+              disabled={
+                busy || !order || order.status !== "draft" || !customerId
+              }
+              onClick={async () => {
+                try {
+                  await clearCustomer()
+                } catch (e) {
+                  showErr(e)
+                }
+              }}
+            >
+              Huỷ KH
+            </button>
+          </div>
+        </div>
+
         <button className="btn posHeaderEdgeBtn posHeaderLogoutBtn" onClick={onLogout}>
           Đăng xuất
         </button>
@@ -2375,9 +2453,19 @@ export default function Pos({
                       {cartItems.map((it) => (
                         <tr key={it.item_id}>
                           <td>
-                            <div className="tName">{it.name}</div>
+                            <button
+                              type="button"
+                              className="cartItemEditBtn"
+                              onClick={() => setEditLine(it)}
+                              disabled={busy}
+                              title={`Sửa sản phẩm: ${it.name}`}
+                            >
+                              <div className="tName">{it.name}</div>
+                            </button>
                             <div className="tMeta">
-                              <span className="pill">{it.pricing_mode}</span>
+                              {it.pricing_mode === "meter" ? (
+                                <span className="pill">{it.pricing_mode}</span>
+                              ) : null}
                               {asNum(it.discount_total) > 0 ? (
                                 <span className="pill">
                                   KM: {fmtVnd(asNum(it.discount_total))} đ
@@ -2386,13 +2474,17 @@ export default function Pos({
                               {it.barcode ? (
                                 <span className="pill">BC: {it.barcode}</span>
                               ) : null}
-                              {it.sku ? (
-                                <span className="pill">SKU: {it.sku}</span>
-                              ) : null}
                             </div>
                           </td>
                           <td className="right">
-                            <div className="qtyBox">
+                            <div
+                              className={`qtyBox ${
+                                it.pricing_mode === "normal" ||
+                                it.pricing_mode === "meter"
+                                  ? "qtyBoxStacked"
+                                  : ""
+                              }`}
+                            >
                               {(it.pricing_mode === "normal" ||
                                 it.pricing_mode === "meter") && (
                                 <button
@@ -2456,61 +2548,13 @@ export default function Pos({
                           <td className="right cartActionsCell">
                             <div className="cartActions">
                               <button
-                                className="btn cartActionBtn"
-                                disabled={busy}
-                                onClick={() => openLineDiscount(it)}
-                                title="Khuyến mãi dòng"
-                                aria-label="Khuyến mãi dòng"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 640 640"
-                                  className="iconSvg"
-                                  aria-hidden="true"
-                                >
-                                  <path
-                                    d="M96.5 160L96.5 309.5C96.5 326.5 103.2 342.8 115.2 354.8L307.2 546.8C332.2 571.8 372.7 571.8 397.7 546.8L547.2 397.3C572.2 372.3 572.2 331.8 547.2 306.8L355.2 114.8C343.2 102.7 327 96 310 96L160.5 96C125.2 96 96.5 124.7 96.5 160zM208.5 176C226.2 176 240.5 190.3 240.5 208C240.5 225.7 226.2 240 208.5 240C190.8 240 176.5 225.7 176.5 208C176.5 190.3 190.8 176 208.5 176z"
-                                    fill="currentColor"
-                                  />
-                                </svg>
-                              </button>
-                              <button
-                                className="btn cartActionBtn"
+                                type="button"
+                                className="btn cartActionTextBtn"
                                 disabled={busy}
                                 onClick={() => setEditLine(it)}
-                                title="Sửa dòng"
-                                aria-label="Sửa dòng"
+                                title={`Sửa sản phẩm: ${it.name}`}
                               >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 640 640"
-                                  className="iconSvg"
-                                  aria-hidden="true"
-                                >
-                                  <path
-                                    d="M535.6 85.7C513.7 63.8 478.3 63.8 456.4 85.7L432 110.1L529.9 208L554.3 183.6C576.2 161.7 576.2 126.3 554.3 104.4L535.6 85.7zM236.4 305.7C230.3 311.8 225.6 319.3 222.9 327.6L193.3 416.4C190.4 425 192.7 434.5 199.1 441C205.5 447.5 215 449.7 223.7 446.8L312.5 417.2C320.7 414.5 328.2 409.8 334.4 403.7L496 241.9L398.1 144L236.4 305.7zM160 128C107 128 64 171 64 224L64 480C64 533 107 576 160 576L416 576C469 576 512 533 512 480L512 384C512 366.3 497.7 352 480 352C462.3 352 448 366.3 448 384L448 480C448 497.7 433.7 512 416 512L160 512C142.3 512 128 497.7 128 480L128 224C128 206.3 142.3 192 160 192L256 192C273.7 192 288 177.7 288 160C288 142.3 273.7 128 256 128L160 128z"
-                                    fill="currentColor"
-                                  />
-                                </svg>
-                              </button>
-                              <button
-                                className="btn btnDanger cartActionBtn"
-                                disabled={busy}
-                                onClick={() => deleteItem(it.item_id)}
-                                title="Xoá dòng"
-                                aria-label="Xoá dòng"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 640 640"
-                                  className="iconSvg"
-                                  aria-hidden="true"
-                                >
-                                  <path
-                                    d="M232.7 69.9L224 96L128 96C110.3 96 96 110.3 96 128C96 145.7 110.3 160 128 160L512 160C529.7 160 544 145.7 544 128C544 110.3 529.7 96 512 96L416 96L407.3 69.9C402.9 56.8 390.7 48 376.9 48L263.1 48C249.3 48 237.1 56.8 232.7 69.9zM512 208L128 208L149.1 531.1C150.7 556.4 171.7 576 197 576L443 576C468.3 576 489.3 556.4 490.9 531.1L512 208z"
-                                    fill="currentColor"
-                                  />
-                                </svg>
+                                Sửa
                               </button>
                             </div>
                           </td>
@@ -2810,15 +2854,22 @@ export default function Pos({
                   item_id: editLine.item_id,
                   pricing_mode: "normal",
                   qty: next.qty,
-                })
+                }, { refresh: false })
               } else {
                 await updateItem({
                   item_id: editLine.item_id,
                   pricing_mode: editLine.pricing_mode,
                   mode: next.mode,
                   qty: next.mode === "meter" ? next.qty : undefined,
-                })
+                }, { refresh: false })
               }
+              await updateItemDiscount(
+                editLine.item_id,
+                next.discountMode,
+                next.discountValue,
+                { refresh: false },
+              )
+              await refreshReceipt(order.id)
               setEditLine(null)
             } catch (e) {
               showErr(e)
@@ -2944,113 +2995,6 @@ export default function Pos({
           </div>
           <div className="hint" style={{ marginTop: 0 }}>
             Lưu ý: khuyến mãi theo % sẽ tự tính theo tạm tính hiện tại.
-          </div>
-        </Modal>
-      ) : null}
-
-      {lineDiscItem ? (
-        <Modal
-          wide
-          title={`Khuyến mãi sản phẩm: ${lineDiscItem.name}`}
-          onClose={() => setLineDiscItem(null)}
-          footer={
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                justifyContent: "flex-end",
-                flexWrap: "wrap",
-              }}
-            >
-              <button
-                className="btn"
-                onClick={() => setLineDiscItem(null)}
-                disabled={busy}
-              >
-                Huỷ
-              </button>
-              <button
-                className="btn btnPrimary"
-                disabled={busy || !order || order.status !== "draft"}
-                onClick={async () => {
-                  try {
-                    await applyLineDiscount()
-                  } catch (e) {
-                    showErr(e)
-                  }
-                }}
-              >
-                Áp dụng
-              </button>
-            </div>
-          }
-        >
-          <div className="split">
-            <div>
-              <div className="hint" style={{ marginTop: 0 }}>
-                Kiểu khuyến mãi
-              </div>
-              <UiSelect
-                value={lineDiscMode}
-                onChange={(v) => setLineDiscMode(String(v))}
-                options={[
-                  { value: "none", label: "Không" },
-                  { value: "amount", label: "Theo số tiền" },
-                  { value: "percent", label: "Theo %" },
-                ]}
-              />
-            </div>
-            <div>
-              <div className="hint" style={{ marginTop: 0 }}>
-                Giá trị {lineDiscMode === "percent" ? "(%)" : "(đ)"}
-              </div>
-              <input
-                className="input"
-                disabled={lineDiscMode === "none"}
-                value={lineDiscMode === "none" ? "" : lineDiscValue}
-                onChange={(e) =>
-                  setLineDiscValue(clampMoneyInput(e.target.value))
-                }
-                onFocus={selectAllOnFocus}
-                onKeyDown={async (e) => {
-                  if (!isEnterKey(e)) return
-                  e.preventDefault()
-                  try {
-                    await applyLineDiscount()
-                  } catch (err) {
-                    showErr(err)
-                  }
-                }}
-                placeholder={lineDiscMode === "percent" ? "Ví dụ: 10" : "0"}
-              />
-            </div>
-          </div>
-
-          <div className="miniCard">
-            <div className="miniTitle">Xem trước</div>
-            {(() => {
-              const base =
-                asNum(lineDiscItem.qty) * asNum(lineDiscItem.unit_price)
-              const disc =
-                lineDiscMode === "none"
-                  ? 0
-                  : Math.min(
-                      base,
-                      computeDiscountAmount({
-                        mode: lineDiscMode,
-                        valueStr: lineDiscValue,
-                        base,
-                      }) || 0,
-                    )
-              const net = Math.max(0, base - disc)
-              return (
-                <div className="miniMeta">
-                  <span className="pill">Gốc: {fmtVnd(base)} đ</span>
-                  <span className="pill">KM: {fmtVnd(disc)} đ</span>
-                  <span className="pill">Còn: {fmtVnd(net)} đ</span>
-                </div>
-              )
-            })()}
           </div>
         </Modal>
       ) : null}

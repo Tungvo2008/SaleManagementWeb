@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { get, patch, post } from "../api"
 import { loadBarcodeTemplate, normalizeBarcodeTemplate } from "./barcodeTemplate"
 import FieldLabel from "../ui/FieldLabel"
 import { formatMoneyVN } from "../utils/number"
+import { buildPrintAutoCloseScript, openPrintDocument } from "../utils/print"
 import "./receive.css"
 import "../pos/pos.css"
 
@@ -34,7 +35,7 @@ function normalizeSku(value) {
 }
 
 function openPrintLabels({ title, labels, printWindow = null }) {
-  const w = printWindow || window.open("", "_blank", "width=980,height=720")
+  const w = printWindow || openPrintDocument({ title, html: "<!doctype html><title>Loading...</title>", features: "width=980,height=720" })
   if (!w) return
   const cfg = normalizeBarcodeTemplate(loadBarcodeTemplate())
   const isThermal = cfg.printMode === "thermal"
@@ -93,41 +94,7 @@ function openPrintLabels({ title, labels, printWindow = null }) {
         })
         .join("")}
     </div>
-    <script>
-      (function () {
-        var imgs = Array.prototype.slice.call(document.images || []);
-        function doPrint() {
-          try { window.print(); } catch (_) {}
-        }
-        if (!imgs.length) {
-          setTimeout(doPrint, 60);
-          return;
-        }
-        var done = 0;
-        var fired = false;
-        function finish() {
-          done += 1;
-          if (fired) return;
-          if (done >= imgs.length) {
-            fired = true;
-            setTimeout(doPrint, 60);
-          }
-        }
-        imgs.forEach(function (img) {
-          if (img.complete) {
-            finish();
-            return;
-          }
-          img.addEventListener("load", finish, { once: true });
-          img.addEventListener("error", finish, { once: true });
-        });
-        setTimeout(function () {
-          if (fired) return;
-          fired = true;
-          doPrint();
-        }, 2500);
-      })();
-    </script>
+    <script>${buildPrintAutoCloseScript({ waitForImages: true })}</script>
   </div>
 </body>
 </html>`
@@ -1381,6 +1348,37 @@ export default function ReceivePrintPage() {
     return Number.isFinite(n) ? n : NaN
   }, [qty])
 
+  const syncPickedVariant = useCallback(async (variantId) => {
+    if (!variantId) return
+    const fresh = await get(`/api/v1/products/variants/${variantId}`)
+    const normalized = fresh
+      ? {
+          ...fresh,
+          variant_id: fresh.variant_id ?? fresh.id,
+        }
+      : null
+    if (!normalized) return
+
+    setVariants((prev) =>
+      (Array.isArray(prev) ? prev : []).map((item) =>
+        String(item.variant_id) === String(variantId)
+          ? {
+              ...item,
+              ...normalized,
+            }
+          : item
+      )
+    )
+    setPicked((prev) =>
+      prev && String(prev.variant_id) === String(variantId)
+        ? {
+            ...prev,
+            ...normalized,
+          }
+        : prev
+    )
+  }, [])
+
   async function ensureBarcode() {
     if (!picked) return null
     if (picked.barcode) return picked.barcode
@@ -1413,6 +1411,7 @@ export default function ReceivePrintPage() {
           cost_price: costN == null ? null : String(costN),
           note: note.trim() ? note.trim() : null,
         })
+        await syncPickedVariant(picked.variant_id)
 
         if (print) {
           const labels = Array.from({ length: qtyNum }).map(() => ({
@@ -1439,6 +1438,7 @@ export default function ReceivePrintPage() {
           cost_roll_price: rollCostN == null ? null : String(rollCostN),
           note: note.trim() ? note.trim() : null,
         })
+        await syncPickedVariant(picked.variant_id)
 
         const units = Array.isArray(res) ? res : []
         if (print) {
@@ -1602,6 +1602,7 @@ export default function ReceivePrintPage() {
                   <div className="rcvPickedMeta">
                     <span className="pill">SKU: {picked.sku || "—"}</span>
                     {tab === "normal" ? <span className="pill">BC: {picked.barcode || "—"}</span> : <span className="pill">Sẽ tạo barcode riêng cho từng cuộn</span>}
+                    <span className="pill">Tồn hiện tại: {asNum(picked.stock)}</span>
                   </div>
                 </div>
 

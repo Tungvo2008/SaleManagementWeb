@@ -1,9 +1,31 @@
 .posKiotShell {
+  --pos-fs-xs: 11px;
+  --pos-fs-sm: 12px;
+  --pos-fs-md: 13px;
+  --pos-fs-base: 14px;
+  --pos-fs-lg: 15px;
+  --pos-fs-xl: 16px;
+  --pos-fs-2xl: 18px;
   height: 100%;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
   gap: 12px;
   animation: posIn 220ms ease-out both;
+}
+
+.posKiotShell > .posHeader {
+  grid-column: 1 / -1;
+}
+
+.posKiotShell > .posDraftTabs {
+  grid-column: 1;
+  min-height: 0;
+}
+
+.posKiotShell > .posMain2 {
+  grid-column: 2;
+  min-width: 0;
 }
 
 @keyframes posIn {
@@ -54,7 +76,7 @@
 }
 
 .posHeader .pill {
-  font-size: 11px;
+  font-size: var(--pos-fs-xs);
   padding: 4px 8px;
   border-color: rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.16);
@@ -66,7 +88,7 @@
   grid-template-columns: 1fr 44px;
   gap: 8px;
   align-items: center;
-  justify-self: end;
+  justify-self: stretch;
   width: 100%;
   max-width: 420px;
 }
@@ -78,7 +100,7 @@
   border: 1px solid var(--stroke);
   background: rgba(255, 255, 255, 0.75);
   outline: none;
-  font-size: 14px;
+  font-size: var(--pos-fs-md);
 }
 
 .input:focus {
@@ -87,7 +109,7 @@
 }
 
 .inputScan {
-  font-size: 14px;
+  font-size: var(--pos-fs-md);
   padding: 10px 12px;
   border-radius: 12px;
   border-color: rgba(255, 255, 255, 0.55);
@@ -118,6 +140,7 @@
   border-radius: 12px;
   padding: 10px 12px;
   font-weight: 600;
+  font-size: var(--pos-fs-md);
   cursor: pointer;
   box-shadow: 0 1px 0 rgba(18, 20, 23, 0.06);
 }
@@ -144,11 +167,11 @@
 .btnBig {
   padding: 14px 14px;
   border-radius: 14px;
-  font-size: 15px;
+  font-size: var(--pos-fs-lg);
 }
 
 .pill {
-  font-size: 12px;
+  font-size: var(--pos-fs-sm);
   padding: 6px 10px;
   border-radius: 999px;
   border: 1px solid var(--stroke);
@@ -159,6 +182,7 @@
 .posCustomerHead {
   display: flex;
   align-items: center;
+  justify-self: end;
   gap: 8px;
   min-width: 0;
 }
@@ -175,14 +199,14 @@
 }
 
 .posCustomerMiniLabel {
-  font-size: 11px;
+  font-size: var(--pos-fs-xs);
   line-height: 1.1;
   color: rgba(255, 255, 255, 0.78);
 }
 
 .posCustomerMiniValue {
   margin-top: 2px;
-  font-size: 12px;
+  font-size: var(--pos-fs-sm);
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -197,14 +221,14 @@
 
 .posCustomerBtns .btn {
   min-width: 78px;
-  font-size: 13px;
+  font-size: var(--pos-fs-md);
   font-weight: 700;
 }
 
 .posHeaderActions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 6px;
   flex-wrap: wrap;
 }
@@ -233,7 +257,7 @@
 .posHeaderLogoutBtn {
   min-width: 0;
   padding: 8px 10px;
-  font-size: 13px;
+  font-size: var(--pos-fs-md);
 }
 
 .btnIconAction {
@@ -256,8 +280,9 @@
 
 .posDraftTabs {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: 12px;
   padding: 10px 12px;
   border: 1px solid rgba(var(--accent-rgb), 0.28);
@@ -269,8 +294,8 @@
 
 .tabs {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
 .tab {
@@ -280,7 +305,10 @@
   border-radius: 12px;
   padding: 8px 12px;
   font-weight: 700;
+  font-size: var(--pos-fs-base);
   cursor: pointer;
+  width: 100%;
+  text-align: left;
 }
 
 .tabActive {
@@ -297,6 +325,37 @@
   border-color: rgba(255, 255, 255, 0.26);
   background: rgba(255, 255, 255, 0.14);
   color: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  white-space: normal;
+  line-height: 1.45;
+}
+
+@media (max-width: 1100px) {
+  .posKiotShell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
+
+  .posKiotShell > .posDraftTabs,
+  .posKiotShell > .posMain2 {
+    grid-column: 1;
+  }
+
+  .posDraftTabs {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    width: auto;
+    text-align: center;
+  }
 }
 
 .posMain {
@@ -314,14 +373,14 @@
 
 .posMain2 {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: 1.28fr 0.72fr;
   gap: 12px;
   min-height: 0;
 }
 
 @media (max-width: 1600px) {
   .posMain2 {
-    grid-template-columns: 1.22fr 0.78fr;
+    grid-template-columns: 1.32fr 0.68fr;
     gap: 10px;
   }
 }
@@ -333,10 +392,15 @@
 }
 
 .cartCol {
+  order: 2;
   min-height: 0;
   display: grid;
   grid-template-rows: 1fr auto;
   gap: 12px;
+}
+
+.panelCatalog {
+  order: 1;
 }
 
 .checkoutBar {
@@ -396,7 +460,7 @@
 }
 
 .discountPill{
-  font-size: 14px;
+  font-size: var(--pos-fs-base);
   padding: 8px 12px;
   font-weight: 700;
 }
@@ -410,7 +474,7 @@
 .discountActions .btn{
   min-height: 40px;
   min-width: 96px;
-  font-size: 14px;
+  font-size: var(--pos-fs-md);
 }
 
 .invoiceDiscountEditor{
@@ -418,27 +482,27 @@
 }
 
 .invoiceDiscountEditor .hint{
-  font-size: 13px;
+  font-size: var(--pos-fs-md);
   font-weight: 700;
 }
 
 .invoiceDiscountEditor .input{
   min-height: 44px;
-  font-size: 15px;
+  font-size: var(--pos-fs-base);
 }
 
 .invoiceDiscountEditor .uiSelectButton{
   min-height: 44px;
-  font-size: 15px;
+  font-size: var(--pos-fs-base);
 }
 
 .invoiceDiscountPreview .miniMeta .pill{
-  font-size: 13px;
+  font-size: var(--pos-fs-sm);
   padding: 7px 11px;
 }
 
 .checkoutLabel {
-  font-size: 13px;
+  font-size: var(--pos-fs-sm);
   color: var(--muted);
   font-weight: 700;
   margin-bottom: 6px;
@@ -463,24 +527,24 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-size: 16px;
+  font-size: var(--pos-fs-base);
   color: var(--muted);
 }
 
 .checkoutRow b {
   color: var(--ink);
-  font-size: 17px;
+  font-size: var(--pos-fs-xl);
   font-weight: 700;
 }
 
 .checkoutGrand {
   color: var(--ink);
   font-weight: 700;
-  font-size: 18px;
+  font-size: var(--pos-fs-xl);
 }
 
 .checkoutGrand b {
-  font-size: 20px;
+  font-size: var(--pos-fs-2xl);
 }
 
 .payQuick {
@@ -497,7 +561,7 @@
   background: rgba(var(--accent-rgb), 0.08);
   color: #123695;
   padding: 0 12px;
-  font-size: 12px;
+  font-size: var(--pos-fs-sm);
   font-weight: 700;
   cursor: pointer;
 }
@@ -509,7 +573,7 @@
   border: 1px solid rgba(var(--accent-rgb), 0.25);
   background: rgba(var(--accent-rgb), 0.08);
   color: #123695;
-  font-size: 12px;
+  font-size: var(--pos-fs-sm);
 }
 
 .payStatusErr {
@@ -522,7 +586,7 @@
   min-height: 58px;
   padding: 16px 14px;
   border-radius: 16px;
-  font-size: 18px;
+  font-size: var(--pos-fs-2xl);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -610,17 +674,19 @@
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.15;
+  font-size: var(--pos-fs-lg);
 }
 
 .pPrice {
   font-weight: 700;
+  font-size: var(--pos-fs-xl);
 }
 
 .pMeta {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  font-size: 12px;
+  font-size: var(--pos-fs-sm);
   color: var(--muted);
 }
 
@@ -649,6 +715,7 @@
 .panelTitle {
   font-weight: 700;
   letter-spacing: -0.02em;
+  font-size: var(--pos-fs-lg);
 }
 
 .catalogToolbar {
@@ -665,7 +732,7 @@
   background: rgba(255, 255, 255, 0.8);
   color: var(--ink);
   padding: 0 10px;
-  font-size: 12px;
+  font-size: var(--pos-fs-sm);
   font-weight: 700;
 }
 
@@ -688,11 +755,12 @@
   height: 100%;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1fr clamp(120px, 12vw, 170px);
+  grid-template-columns: clamp(96px, 9vw, 128px) 1fr;
   gap: 12px;
 }
 
 .catalogCats{
+  order: 1;
   min-height: 0;
   border: 1px solid rgba(18, 20, 23, 0.10);
   border-radius: 16px;
@@ -709,7 +777,7 @@
   border-radius: 14px;
   padding: 10px 10px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--pos-fs-md);
   cursor: pointer;
   text-align: left;
   white-space: normal;
@@ -738,6 +806,7 @@
 }
 
 .catalogContent{
+  order: 2;
   min-height: 0;
 }
 
@@ -844,24 +913,24 @@
 }
 
 .cartColQty {
-  width: 170px;
+  width: 132px;
 }
 
 .cartColPrice {
-  width: 130px;
+  width: 108px;
 }
 
 .cartColTotal {
-  width: 130px;
+  width: 118px;
 }
 
 .cartColActions {
-  width: 156px;
+  width: 92px;
 }
 
 .table thead th {
   text-align: left;
-  font-size: 12px;
+  font-size: var(--pos-fs-sm);
   color: var(--muted);
   font-weight: 700;
   border-bottom: 1px solid var(--stroke);
@@ -870,9 +939,9 @@
 
 .table tbody td {
   border-bottom: 1px solid rgba(18, 20, 23, 0.10);
-  padding: 10px 0;
-  vertical-align: top;
-  font-size: 13px;
+  padding: 14px 0;
+  vertical-align: middle;
+  font-size: var(--pos-fs-md);
 }
 
 .right {
@@ -886,6 +955,22 @@
 
 .tName {
   font-weight: 700;
+  line-height: 1.3;
+  font-size: var(--pos-fs-lg);
+}
+
+.cartItemEditBtn {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cartItemEditBtn:hover .tName {
+  color: #1d4ed8;
 }
 
 .tMeta {
@@ -893,13 +978,38 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.tMeta .pill {
+  white-space: nowrap;
 }
 
 .qtyBox {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
   justify-content: flex-end;
+  width: 100%;
+}
+
+.qtyBoxStacked {
+  display: grid;
+  grid-template-columns: minmax(74px, auto) 28px;
+  grid-template-areas:
+    "text plus"
+    "text minus";
+  column-gap: 8px;
+  row-gap: 6px;
+  justify-content: flex-end;
+}
+
+.qtyBoxStacked .qtyBtn:first-of-type {
+  grid-area: minus;
+}
+
+.qtyBoxStacked .qtyBtn:last-of-type {
+  grid-area: plus;
 }
 
 .qtyBtn {
@@ -916,6 +1026,12 @@
   min-width: 74px;
   text-align: center;
   font-weight: 700;
+  font-size: var(--pos-fs-base);
+}
+
+.qtyBoxStacked .qtyText {
+  grid-area: text;
+  align-self: center;
 }
 
 .cartActionsCell {
@@ -924,55 +1040,42 @@
 
 .cartActions {
   display: flex;
-  gap: 6px;
   justify-content: flex-end;
-  flex-wrap: nowrap;
 }
 
-.cartActions .btn {
+.cartActionTextBtn {
   min-width: 64px;
-  padding-left: 10px;
-  padding-right: 10px;
-}
-
-.cartActions .btn.cartActionBtn {
-  min-width: 38px;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cartActions .btn.cartActionBtn .iconSvg {
-  width: 16px;
-  height: 16px;
+  padding: 6px 10px;
+  font-size: var(--pos-fs-sm);
 }
 
 @media (max-width: 1600px) {
   .table thead th {
-    font-size: 11px;
+    font-size: var(--pos-fs-xs);
     padding: 8px 0;
   }
   .table tbody td {
-    padding: 8px 0;
-    font-size: 12px;
+    padding: 10px 0;
+    font-size: var(--pos-fs-sm);
   }
   .cartColQty {
-    width: 146px;
+    width: 130px;
   }
   .cartColPrice {
-    width: 110px;
+    width: 108px;
   }
   .cartColTotal {
-    width: 114px;
+    width: 118px;
   }
   .cartColActions {
-    width: 132px;
+    width: 82px;
   }
   .qtyBox {
     gap: 6px;
+  }
+  .qtyBoxStacked {
+    grid-template-columns: minmax(60px, auto) 26px;
+    row-gap: 4px;
   }
   .qtyBtn {
     width: 26px;
@@ -980,19 +1083,12 @@
   }
   .qtyText {
     min-width: 60px;
-    font-size: 12px;
+    font-size: var(--pos-fs-sm);
   }
-  .cartActions {
-    gap: 4px;
-  }
-  .cartActions .btn.cartActionBtn {
-    min-width: 34px;
-    width: 34px;
-    height: 34px;
-  }
-  .cartActions .btn.cartActionBtn .iconSvg {
-    width: 14px;
-    height: 14px;
+  .cartActionTextBtn {
+    min-width: 58px;
+    padding: 6px 8px;
+    font-size: var(--pos-fs-xs);
   }
 }
 
@@ -1021,7 +1117,7 @@
 
 .payLabel {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--pos-fs-sm);
   font-weight: 600;
 }
 
@@ -1046,7 +1142,7 @@
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
-  font-size: 13px;
+  font-size: var(--pos-fs-sm);
   z-index: 9999;
 }
 
@@ -1078,6 +1174,10 @@
   width: min(980px, 100%);
 }
 
+.modalEditLine {
+  width: min(1120px, 100%);
+}
+
 .modalBody {
   padding: 14px 16px;
   display: grid;
@@ -1093,6 +1193,7 @@
 .modalTitle {
   font-weight: 700;
   letter-spacing: -0.02em;
+  font-size: var(--pos-fs-xl);
 }
 
 .split {
@@ -1101,9 +1202,33 @@
   gap: 10px;
 }
 
+.lineEditSplit {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+  gap: 16px;
+}
+
+.lineEditFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lineEditFooterActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 720px) {
   .split {
     grid-template-columns: 1fr;
+  }
+
+  .lineEditSplit {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
@@ -1140,6 +1265,7 @@
 .cardTitle {
   font-weight: 700;
   letter-spacing: -0.02em;
+  font-size: var(--pos-fs-lg);
 }
 
 .receiptHead {

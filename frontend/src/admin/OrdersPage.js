@@ -6,6 +6,7 @@ import ExcelToolsModal from "./ExcelToolsModal"
 import { defaultReceiptTemplate, normalizeReceiptTemplate, loadReceiptTemplate } from "../pos/receiptTemplate"
 import { fmtDateTimeVN } from "../utils/datetime"
 import { formatMoneyVN } from "../utils/number"
+import { buildPrintAutoCloseScript, openPrintDocument } from "../utils/print"
 import "./orders.css"
 
 function fmtMoney(v) {
@@ -229,7 +230,7 @@ function ReceiptModal({ receipt, template, onClose }) {
             className="admBtn admBtnPrimary"
             onClick={() => {
               // Keep window script-writable for consistent printing across browsers.
-              const w = window.open("", "_blank", "width=420,height=700")
+              const w = openPrintDocument({ title: `Receipt ${receipt.order_id}`, html: "<!doctype html><title>Loading...</title>", features: "width=420,height=700" })
               if (!w) return
               const isThermal = (cfg.printLayout || "thermal") === "thermal"
               const paperWidthMm = cfg.paperSize === "58" ? 58 : 80
@@ -306,7 +307,7 @@ function ReceiptModal({ receipt, template, onClose }) {
   ${cfg.footerText ? `<div class="muted">${escapeHtml(cfg.footerText)}</div>` : ""}
   ${cfg.showThankYou ? `<div class="muted">Cam on quy khach!</div>` : ""}
   </div>
-  <script>window.print()</script>
+  <script>${buildPrintAutoCloseScript()}</script>
 </body>
 </html>`
               try {
