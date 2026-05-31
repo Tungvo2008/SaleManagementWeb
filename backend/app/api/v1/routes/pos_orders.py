@@ -35,6 +35,7 @@ from app.schemas.order import (
 from app.schemas.order_item import (
     OrderItemOut,
     OrderItemCreateNormal,
+    OrderItemCreateManual,
     OrderItemCreateRoll,
     OrderItemUpdateNormal,
     OrderItemUpdateRoll,
@@ -50,6 +51,10 @@ VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 UTC_TZ = ZoneInfo("UTC")
 ALLOWED_PRICING_MODES = {"normal", "meter", "roll"}
 ALLOWED_DISCOUNT_MODES = {"amount", "percent"}
+
+
+def _is_manual_item(item: OrderItem) -> bool:
+    return item.variant_id is None and item.stock_unit_id is None and item.pricing_mode == "normal"
 
 def _recalc_order(order: Order) -> None:
     subtotal = order.subtotal if order.subtotal is not None else Decimal("0")
@@ -436,7 +441,41 @@ def add_normal_item(order_id: int, payload: OrderItemCreateNormal, db: Session =
         db.refresh(item)
 
         return item
-    
+
+
+@router.post("/{order_id}/items/manual", response_model=OrderItemOut)
+def add_manual_item(order_id: int, payload: OrderItemCreateManual, db: Session = Depends(get_db)):
+    order = _get_draft_order_or_409(order_id, db)
+
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(422, "Name is required")
+
+    item = OrderItem(
+        order_id=order_id,
+        variant_id=None,
+        stock_unit_id=None,
+        pricing_mode="normal",
+        qty=payload.qty,
+        unit_price=payload.unit_price,
+        discount_mode=None,
+        discount_value=None,
+        discount_total=Decimal("0"),
+        line_total=payload.unit_price * payload.qty,
+        name_snapshot=name,
+        sku_snapshot=None,
+        uom_snapshot=None,
+    )
+    _recalc_item(item)
+
+    order.subtotal += item.line_total
+    _recalc_order(order)
+
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
 
 
 
@@ -631,6 +670,8 @@ def checkout(
     try:
         for item in items:
             if item.pricing_mode == "normal":
+                if _is_manual_item(item):
+                    continue
                 variant = _assert_sellable_variant(db.get(Product, item.variant_id))
                 _assert_variant_active(variant)
                 if variant.track_stock_unit:
@@ -843,13 +884,19 @@ def update_normal_item(order_id: int, item_id: int, payload: OrderItemUpdateNorm
     if item.pricing_mode != "normal":
         raise HTTPException(422, "Incorrect pricing mode")
     
-    variant = _assert_sellable_variant(db.get(Product, item.variant_id))
-    _assert_variant_active(variant)
-    if variant.price is None:
-        raise HTTPException(422, "Missing price")
-    
+    if _is_manual_item(item):
+        unit_price = payload.unit_price if payload.unit_price is not None else item.unit_price
+        if payload.name is not None:
+            item.name_snapshot = payload.name.strip()
+            if not item.name_snapshot:
+                raise HTTPException(422, "Name is required")
+    else:
+        variant = _assert_sellable_variant(db.get(Product, item.variant_id))
+        _assert_variant_active(variant)
+        if variant.price is None:
+            raise HTTPException(422, "Missing price")
+        unit_price = variant.price
 
-    unit_price = variant.price
     old_line_total = item.line_total
     
     item.qty = payload.qty
@@ -972,7 +1019,7 @@ def get_receipt(order_id: int, db: Session = Depends(get_db)):
             sa_text(
                 """
                 SELECT
-                    id, stock_unit_id, pricing_mode, qty, unit_price,
+                    id, variant_id, stock_unit_id, pricing_mode, qty, unit_price,
                     discount_mode, discount_value, discount_total, line_total,
                     name_snapshot, sku_snapshot, uom_snapshot
                 FROM order_items
@@ -985,6 +1032,7 @@ def get_receipt(order_id: int, db: Session = Depends(get_db)):
         order_items = [
             SimpleNamespace(
                 id=row["id"],
+                variant_id=row["variant_id"],
                 stock_unit_id=row["stock_unit_id"],
                 pricing_mode=row["pricing_mode"],
                 qty=_as_decimal(row["qty"]),
@@ -1025,6 +1073,7 @@ def get_receipt(order_id: int, db: Session = Depends(get_db)):
         items.append(
             ReceiptItemOut(
                 item_id=it.id,
+                variant_id=getattr(it, "variant_id", None),
                 name=it.name_snapshot,
                 sku=it.sku_snapshot,
                 pricing_mode=pricing_mode,
@@ -1117,18 +1166,19 @@ def refund_order_items(order_id: int, payload: OrderRefundIn, db: Session = Depe
             inventory_note = f"refund order {order.id} item {item.id}{note_tail}"
 
             if item.pricing_mode == "normal":
-                variant = _assert_sellable_variant(db.get(Product, item.variant_id))
-                if variant.stock is None:
-                    variant.stock = Decimal("0")
-                variant.stock += req_qty
-                db.add(
-                    Inventory(
-                        type="refund",
-                        variant_id=variant.id,
-                        qty=req_qty,
-                        note=inventory_note,
+                if not _is_manual_item(item):
+                    variant = _assert_sellable_variant(db.get(Product, item.variant_id))
+                    if variant.stock is None:
+                        variant.stock = Decimal("0")
+                    variant.stock += req_qty
+                    db.add(
+                        Inventory(
+                            type="refund",
+                            variant_id=variant.id,
+                            qty=req_qty,
+                            note=inventory_note,
+                        )
                     )
-                )
 
             elif item.pricing_mode == "meter":
                 if item.stock_unit_id is None:
@@ -1234,20 +1284,21 @@ def void_order(order_id: int, db: Session = Depends(get_db)):
     try:
         for item in items:
             if item.pricing_mode == "normal":
-                variant = _assert_sellable_variant(db.get(Product, item.variant_id))
-                if variant.track_stock_unit:
-                    raise HTTPException(422, "Incorrect pricing mode")
-                if variant.stock is None:
-                    variant.stock = Decimal("0")
-                variant.stock += item.qty
-                db.add(
-                    Inventory(
-                        type="void",
-                        variant_id=variant.id,
-                        qty=item.qty,
-                        note=f"void order {order.id}",
+                if not _is_manual_item(item):
+                    variant = _assert_sellable_variant(db.get(Product, item.variant_id))
+                    if variant.track_stock_unit:
+                        raise HTTPException(422, "Incorrect pricing mode")
+                    if variant.stock is None:
+                        variant.stock = Decimal("0")
+                    variant.stock += item.qty
+                    db.add(
+                        Inventory(
+                            type="void",
+                            variant_id=variant.id,
+                            qty=item.qty,
+                            note=f"void order {order.id}",
+                        )
                     )
-                )
 
             elif item.pricing_mode == "meter":
                 if item.stock_unit_id is None:

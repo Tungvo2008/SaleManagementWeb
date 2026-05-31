@@ -14,7 +14,7 @@ class OrderItem(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), nullable=False, index=True)
-    variant_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False, index=True)
+    variant_id: Mapped[int | None] = mapped_column(ForeignKey("products.id"), nullable=True, index=True)
     stock_unit_id: Mapped[int | None] = mapped_column(ForeignKey("stock_units.id"), nullable=True, index=True)
 
     pricing_mode: Mapped[str] = mapped_column(String(20), nullable=False)  # normal/meter/roll

@@ -43,6 +43,10 @@ function normalizeSku(value) {
   return String(value || "").trim()
 }
 
+function normalizeBarcode(value) {
+  return String(value || "").trim()
+}
+
 function cleanBarcodeBase(text) {
   return String(text || "SP")
     .toUpperCase()
@@ -178,7 +182,15 @@ function ImageDropzone({ file, disabled, onPick }) {
   )
 }
 
-export default function ProductCreateModal({ busy, categories, locations, suppliers, onClose, onCreated }) {
+export default function ProductCreateModal({
+  busy,
+  categories,
+  locations,
+  suppliers,
+  existingVariants,
+  onClose,
+  onCreated,
+}) {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState(null)
   const [categoryOptions, setCategoryOptions] = useState(() => (Array.isArray(categories) ? categories : []))
@@ -333,6 +345,44 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
     }
   }
 
+  function validateUniqueBarcodes(rows) {
+    const seen = new Map()
+    for (const row of rows) {
+      const barcode = normalizeBarcode(row.barcode).toLowerCase()
+      const label = String(row.name || "Biến thể").trim() || "Biến thể"
+      if (!barcode) continue
+      if (seen.has(barcode)) {
+        throw new Error(`Barcode bị trùng trong form: ${label} và ${seen.get(barcode)}.`)
+      }
+      seen.set(barcode, label)
+    }
+  }
+
+  function validateAgainstExistingVariants(rows) {
+    const skuIndex = new Map()
+    const barcodeIndex = new Map()
+    for (const variant of Array.isArray(existingVariants) ? existingVariants : []) {
+      const sku = normalizeSku(variant?.sku).toLowerCase()
+      const barcode = normalizeBarcode(variant?.barcode).toLowerCase()
+      if (sku && !skuIndex.has(sku)) skuIndex.set(sku, variant)
+      if (barcode && !barcodeIndex.has(barcode)) barcodeIndex.set(barcode, variant)
+    }
+
+    for (const row of rows) {
+      const label = String(row.name || row.sku || "Biến thể").trim() || "Biến thể"
+      const sku = normalizeSku(row.sku).toLowerCase()
+      const barcode = normalizeBarcode(row.barcode).toLowerCase()
+      if (sku && skuIndex.has(sku)) {
+        const matched = skuIndex.get(sku)
+        throw new Error(`SKU đã tồn tại: ${label} trùng với ${matched?.name || matched?.sku || "sản phẩm khác"}.`)
+      }
+      if (barcode && barcodeIndex.has(barcode)) {
+        const matched = barcodeIndex.get(barcode)
+        throw new Error(`Barcode đã tồn tại: ${label} trùng với ${matched?.name || matched?.barcode || "sản phẩm khác"}.`)
+      }
+    }
+  }
+
   async function createVariantUnderParent(row, parent) {
     validateRow(row, String(row.name || "Biến thể"))
     let imageUrl = String(row.image_url || "").trim() || null
@@ -390,7 +440,10 @@ export default function ProductCreateModal({ busy, categories, locations, suppli
     setErr(null)
     validateCommon()
     if (hasVariants && !variantRows.length) throw new Error("Bạn đã bật biến thể nhưng chưa có dòng nào.")
-    validateUniqueSkus(hasVariants ? variantRows : [singleRow])
+    const rowsToValidate = hasVariants ? variantRows : [singleRow]
+    validateUniqueSkus(rowsToValidate)
+    validateUniqueBarcodes(rowsToValidate)
+    validateAgainstExistingVariants(rowsToValidate)
 
     setSaving(true)
     try {

@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 class ReceiptItemOut(BaseModel):
     item_id: int
+    variant_id: int | None = None
     name: str
     sku: str | None
     pricing_mode: Literal["normal", "meter", "roll"]

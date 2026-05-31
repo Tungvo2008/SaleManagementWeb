@@ -6,8 +6,16 @@ class OrderItemCreateNormal(BaseModel):
     variant_id: int
     qty: Decimal = Field(..., gt=0)
 
+
+class OrderItemCreateManual(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    unit_price: Decimal = Field(..., ge=0)
+    qty: Decimal = Field(..., gt=0)
+
 class OrderItemUpdateNormal(BaseModel):
     qty: Decimal = Field(..., gt=0)
+    name: str | None = Field(None, min_length=1, max_length=255)
+    unit_price: Decimal | None = Field(None, ge=0)
 
 
 
@@ -23,7 +31,7 @@ class OrderItemUpdateRoll(BaseModel):
 class OrderItemOut(BaseModel):
     id: int
     order_id: int
-    variant_id: int
+    variant_id: int | None
     stock_unit_id: int | None
     pricing_mode: Literal["normal","meter","roll"]
     qty: Decimal

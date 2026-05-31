@@ -72,6 +72,28 @@ function normalizeSku(value) {
   return String(value || "").trim()
 }
 
+function normalizeBarcode(value) {
+  return String(value || "").trim()
+}
+
+function findDuplicateVariantBySku(rows, sku, excludeId = null) {
+  const key = normalizeSku(sku).toLowerCase()
+  if (!key) return null
+  return (rows || []).find((row) => {
+    if (excludeId != null && String(row?.id) === String(excludeId)) return false
+    return normalizeSku(row?.sku).toLowerCase() === key
+  }) || null
+}
+
+function findDuplicateVariantByBarcode(rows, barcode, excludeId = null) {
+  const key = normalizeBarcode(barcode).toLowerCase()
+  if (!key) return null
+  return (rows || []).find((row) => {
+    if (excludeId != null && String(row?.id) === String(excludeId)) return false
+    return normalizeBarcode(row?.barcode).toLowerCase() === key
+  }) || null
+}
+
 export default function ProductsPage() {
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState(null)
@@ -804,6 +826,7 @@ export default function ProductsPage() {
           categories={categories}
           locations={locations}
           suppliers={suppliers}
+          existingVariants={rows}
           onClose={() => setShowCreateProduct(false)}
           onCreated={async () => {
             setShowCreateProduct(false)
@@ -833,6 +856,7 @@ export default function ProductsPage() {
       {showCreateVariant ? (
         <CreateVariantModal
           parents={parents}
+          existingVariants={rows}
           initialParentId={createVariantParentId}
           busy={busy}
           onClose={() => {
@@ -856,6 +880,7 @@ export default function ProductsPage() {
       {editVariant ? (
         <EditVariantModal
           variant={variantsById.get(String(editVariant.id)) || editVariant}
+          existingVariants={rows}
           busy={busy}
           onClose={() => setEditVariant(null)}
           onSave={async (id, payload) => {
@@ -1003,7 +1028,7 @@ function CreateParentModal({ categories, busy, onClose, onCreate }) {
   )
 }
 
-function CreateVariantModal({ parents, initialParentId, busy, onClose, onCreate }) {
+function CreateVariantModal({ parents, existingVariants, initialParentId, busy, onClose, onCreate }) {
   const [parentId, setParentId] = useState(initialParentId || (parents?.[0]?.id ? String(parents[0].id) : ""))
   const [name, setName] = useState("")
   const [uom, setUom] = useState("pcs")
@@ -1052,6 +1077,16 @@ function CreateVariantModal({ parents, initialParentId, busy, onClose, onCreate 
               }
               if (!normalizeSku(sku)) {
                 setErr("SKU là bắt buộc.")
+                return
+              }
+              const duplicateSku = findDuplicateVariantBySku(existingVariants, sku)
+              if (duplicateSku) {
+                setErr(`SKU đã tồn tại ở biến thể: ${duplicateSku.name || duplicateSku.sku}.`)
+                return
+              }
+              const duplicateBarcode = findDuplicateVariantByBarcode(existingVariants, barcode)
+              if (duplicateBarcode) {
+                setErr(`Barcode đã tồn tại ở biến thể: ${duplicateBarcode.name || duplicateBarcode.barcode}.`)
                 return
               }
               if (!price.trim()) {
@@ -1202,7 +1237,7 @@ function CreateVariantModal({ parents, initialParentId, busy, onClose, onCreate 
   )
 }
 
-function EditVariantModal({ variant, busy, onClose, onSave }) {
+function EditVariantModal({ variant, existingVariants, busy, onClose, onSave }) {
   const [name, setName] = useState(variant.name || "")
   const [uom, setUom] = useState(variant.uom || "")
   const [price, setPrice] = useState(variant.price != null ? String(variant.price) : "")
@@ -1242,6 +1277,16 @@ function EditVariantModal({ variant, busy, onClose, onSave }) {
               }
               if (!normalizeSku(sku)) {
                 setErr("SKU là bắt buộc.")
+                return
+              }
+              const duplicateSku = findDuplicateVariantBySku(existingVariants, sku, variant.id)
+              if (duplicateSku) {
+                setErr(`SKU đã tồn tại ở biến thể: ${duplicateSku.name || duplicateSku.sku}.`)
+                return
+              }
+              const duplicateBarcode = findDuplicateVariantByBarcode(existingVariants, barcode, variant.id)
+              if (duplicateBarcode) {
+                setErr(`Barcode đã tồn tại ở biến thể: ${duplicateBarcode.name || duplicateBarcode.barcode}.`)
                 return
               }
               if (!price.trim()) {

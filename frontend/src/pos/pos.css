@@ -1,11 +1,11 @@
 .posKiotShell {
-  --pos-fs-xs: 11px;
-  --pos-fs-sm: 12px;
-  --pos-fs-md: 13px;
-  --pos-fs-base: 14px;
-  --pos-fs-lg: 15px;
-  --pos-fs-xl: 16px;
-  --pos-fs-2xl: 18px;
+  --pos-fs-xs: clamp(10px, 0.5rem + 0.2vw, 11px);
+  --pos-fs-sm: clamp(11px, 0.55rem + 0.22vw, 12px);
+  --pos-fs-md: clamp(12px, 0.6rem + 0.24vw, 13px);
+  --pos-fs-base: clamp(13px, 0.65rem + 0.26vw, 14px);
+  --pos-fs-lg: clamp(14px, 0.7rem + 0.28vw, 15px);
+  --pos-fs-xl: clamp(15px, 0.75rem + 0.3vw, 16px);
+  --pos-fs-2xl: clamp(16px, 0.85rem + 0.34vw, 18px);
   height: 100%;
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr);
@@ -380,8 +380,145 @@
 
 @media (max-width: 1600px) {
   .posMain2 {
-    grid-template-columns: 1.32fr 0.68fr;
+    grid-template-columns: 1.2fr 0.8fr;
     gap: 10px;
+  }
+}
+
+@media (max-width: 1500px) {
+  .posMain2 {
+    grid-template-columns: minmax(0, 1.06fr) minmax(400px, 0.94fr);
+    gap: 8px;
+  }
+
+  .cartCol {
+    gap: 10px;
+  }
+
+  .panelCart .panelHead,
+  .checkoutBar {
+    padding: 10px 12px;
+  }
+
+  .panelCart .panelBody {
+    padding: 10px 12px;
+  }
+
+  .panelCart .panelTitle {
+    font-size: var(--pos-fs-base);
+  }
+
+  .panelCart .pill {
+    font-size: var(--pos-fs-xs);
+    padding: 5px 9px;
+  }
+
+  .panelCart .table thead th {
+    font-size: var(--pos-fs-xs);
+    padding: 8px 0;
+  }
+
+  .panelCart .table tbody td {
+    padding: 10px 0;
+    font-size: var(--pos-fs-sm);
+  }
+
+  .panelCart .tName {
+    font-size: var(--pos-fs-md);
+    line-height: 1.25;
+  }
+
+  .panelCart .tMeta {
+    gap: 6px;
+  }
+
+  .panelCart .tMeta .pill {
+    font-size: var(--pos-fs-xs);
+    padding: 5px 8px;
+  }
+
+  .panelCart .cartColQty {
+    width: 112px;
+  }
+
+  .panelCart .cartColPrice {
+    width: 94px;
+  }
+
+  .panelCart .cartColTotal {
+    width: 104px;
+  }
+
+  .panelCart .cartColActions {
+    width: 72px;
+  }
+
+  .panelCart .qtyBox {
+    gap: 5px;
+  }
+
+  .panelCart .qtyBoxStacked {
+    grid-template-columns: minmax(56px, auto) 24px;
+    column-gap: 6px;
+    row-gap: 4px;
+  }
+
+  .panelCart .qtyBtn {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+  }
+
+  .panelCart .qtyText {
+    min-width: 56px;
+    font-size: var(--pos-fs-sm);
+  }
+
+  .panelCart .cartActionTextBtn {
+    min-width: 50px;
+    padding: 5px 8px;
+    font-size: var(--pos-fs-xs);
+  }
+
+  .checkoutBar {
+    grid-template-columns: 1fr;
+  }
+
+  .checkoutDiscountBox {
+    padding: 10px;
+  }
+
+  .discountPill {
+    font-size: var(--pos-fs-md);
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .discountActions .btn {
+    min-height: 36px;
+    min-width: 86px;
+    font-size: var(--pos-fs-sm);
+  }
+
+  .checkoutLabel {
+    font-size: var(--pos-fs-xs);
+  }
+
+  .checkoutTotals {
+    padding: 12px 14px;
+  }
+
+  .checkoutRow {
+    font-size: var(--pos-fs-md);
+  }
+
+  .checkoutRow b,
+  .checkoutGrand {
+    font-size: var(--pos-fs-lg);
+  }
+
+  .checkoutGrand b {
+    font-size: var(--pos-fs-xl);
   }
 }
 
@@ -397,6 +534,7 @@
   display: grid;
   grid-template-rows: 1fr auto;
   gap: 12px;
+  container-type: inline-size;
 }
 
 .panelCatalog {
@@ -1047,6 +1185,160 @@
   min-width: 64px;
   padding: 6px 10px;
   font-size: var(--pos-fs-sm);
+}
+
+@container (max-width: 860px) {
+  .panelCart .panelHead {
+    padding: 10px 12px;
+  }
+
+  .panelCart .panelBody {
+    padding: 10px 12px;
+  }
+
+  .panelCart .panelTitle {
+    font-size: var(--pos-fs-base);
+  }
+
+  .panelCart .pill {
+    font-size: var(--pos-fs-xs);
+    padding: 5px 8px;
+  }
+
+  .panelCart .table thead th {
+    font-size: var(--pos-fs-xs);
+    padding: 8px 0;
+  }
+
+  .panelCart .table tbody td {
+    padding: 10px 0;
+    font-size: var(--pos-fs-sm);
+  }
+
+  .panelCart .tName {
+    font-size: var(--pos-fs-base);
+    line-height: 1.25;
+  }
+
+  .panelCart .tMeta {
+    gap: 6px;
+  }
+
+  .panelCart .tMeta .pill {
+    font-size: var(--pos-fs-xs);
+    padding: 4px 7px;
+  }
+
+  .panelCart .cartColQty {
+    width: 106px;
+  }
+
+  .panelCart .cartColPrice {
+    width: 90px;
+  }
+
+  .panelCart .cartColTotal {
+    width: 96px;
+  }
+
+  .panelCart .cartColActions {
+    width: 62px;
+  }
+
+  .panelCart .qtyBox {
+    gap: 5px;
+  }
+
+  .panelCart .qtyBoxStacked {
+    grid-template-columns: minmax(52px, auto) 22px;
+    column-gap: 5px;
+    row-gap: 4px;
+  }
+
+  .panelCart .qtyBtn {
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+  }
+
+  .panelCart .qtyText {
+    min-width: 52px;
+    font-size: var(--pos-fs-sm);
+  }
+
+  .panelCart .cartActionTextBtn {
+    min-width: 46px;
+    padding: 4px 7px;
+    font-size: var(--pos-fs-xs);
+  }
+
+  .checkoutBar {
+    grid-template-columns: 1fr;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .checkoutDiscountBox {
+    padding: 10px;
+  }
+
+  .discSummary {
+    align-items: flex-start;
+  }
+
+  .discountPill {
+    font-size: var(--pos-fs-sm);
+    padding: 7px 10px;
+    line-height: 1.3;
+  }
+
+  .discountActions {
+    gap: 8px;
+  }
+
+  .discountActions .btn {
+    min-height: 34px;
+    min-width: 78px;
+    font-size: var(--pos-fs-sm);
+  }
+
+  .checkoutLabel {
+    margin-bottom: 4px;
+  }
+
+  .checkoutTotals {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .checkoutRow {
+    font-size: var(--pos-fs-md);
+  }
+
+  .checkoutRow b,
+  .checkoutGrand {
+    font-size: var(--pos-fs-lg);
+  }
+
+  .checkoutGrand b {
+    font-size: var(--pos-fs-xl);
+  }
+
+  .btnCheckout {
+    min-height: 50px;
+    font-size: var(--pos-fs-xl);
+  }
+}
+
+@container (max-width: 680px) {
+  .panelCart .cartTable {
+    min-width: 560px;
+  }
+
+  .checkoutDiscountBox,
+  .checkoutTotals {
+    border-radius: 14px;
+  }
 }
 
 @media (max-width: 1600px) {

@@ -73,6 +73,14 @@ function fmtDateTime(v) {
   return fmtDateTimeVN(v, "—")
 }
 
+function hasVariantStock(variant) {
+  return asNum(variant?.stock) > 0
+}
+
+function hasStockUnitStock(stockUnit) {
+  return asNum(stockUnit?.remaining_qty) > 0
+}
+
 function fmtInvoiceDateLine(v) {
   const d = new Date(v)
   if (!Number.isFinite(d.getTime())) return ""
@@ -281,7 +289,11 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
               // Using `noopener,noreferrer` here can make `document.write` fail
               // on some browsers (new window becomes inaccessible), resulting in
               // a blank print popup.
-              const w = openPrintDocument({ title: `Receipt ${receipt.order_id}`, html: "<!doctype html><title>Loading...</title>", features: "width=420,height=700" })
+              const w = openPrintDocument({
+                title: `Receipt ${receipt.order_id}`,
+                html: "<!doctype html><title>Loading...</title>",
+                features: "width=420,height=700",
+              })
               if (!w) return
               const isThermal = (cfg.printLayout || "thermal") === "thermal"
               const paperWidthMm = cfg.paperSize === "58" ? 58 : 80
@@ -525,9 +537,7 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
           </div>
           <div className="receiptMeta">
             <span className="pill">Status: {receipt.status}</span>
-            <span className="pill">
-              {fmtDateTime(receipt.created_at)}
-            </span>
+            <span className="pill">{fmtDateTime(receipt.created_at)}</span>
           </div>
         </div>
 
@@ -588,9 +598,12 @@ function ReceiptModal({ receipt, onClose, onRefund, template }) {
   )
 }
 
-function LineEditModal({ item, onClose, onSave }) {
+function LineEditModal({ item, onClose, onSave, onDelete }) {
+  const isManualLine = item.variant_id == null && item.pricing_mode === "normal"
   const [mode, setMode] = useState(item.pricing_mode)
+  const [name, setName] = useState(item.name || "")
   const [qty, setQty] = useState(String(item.qty))
+  const [unitPrice, setUnitPrice] = useState(String(asNum(item.unit_price)))
   const [discountMode, setDiscountMode] = useState(item.discount_mode || "none")
   const [discountValue, setDiscountValue] = useState(
     item.discount_value != null ? String(item.discount_value) : "0",
@@ -604,19 +617,32 @@ function LineEditModal({ item, onClose, onSave }) {
     if (mode === "roll") {
       return asNum(item.line_total) + asNum(item.discount_total)
     }
+    const price = isManualLine ? asNum(unitPrice) : asNum(item.unit_price)
     const q = Number(qty)
     if (!Number.isFinite(q) || q <= 0) {
       return asNum(item.line_total) + asNum(item.discount_total)
     }
-    return q * asNum(item.unit_price)
+    return q * price
   })()
 
   function submit() {
     setErr("")
+    const trimmedName = name.trim()
     const q = Number(qty)
     if (!Number.isFinite(q) || q <= 0) {
       setErr("Số lượng phải > 0")
       return
+    }
+    if (isManualLine) {
+      if (!trimmedName) {
+        setErr("Tên sản phẩm là bắt buộc")
+        return
+      }
+      const price = unitPrice === "" ? NaN : Number(unitPrice)
+      if (!Number.isFinite(price) || price < 0) {
+        setErr("Giá bán không hợp lệ")
+        return
+      }
     }
     if (discountMode !== "none") {
       const val = discountValue === "" ? 0 : Number(discountValue)
@@ -637,7 +663,13 @@ function LineEditModal({ item, onClose, onSave }) {
         discountValue,
       })
     } else {
-      onSave({ qty: String(q), discountMode, discountValue })
+      onSave({
+        name: isManualLine ? trimmedName : undefined,
+        qty: String(q),
+        unitPrice: isManualLine ? unitPrice : undefined,
+        discountMode,
+        discountValue,
+      })
     }
   }
 
@@ -648,13 +680,18 @@ function LineEditModal({ item, onClose, onSave }) {
       title={`Sửa sản phẩm: ${item.name}`}
       onClose={onClose}
       footer={
-        <div className="lineEditFooterActions">
-          <button className="btn" onClick={onClose}>
-            Huỷ
+        <div className="lineEditFooter">
+          <button className="btn btnDanger" onClick={onDelete}>
+            Xoá sản phẩm
           </button>
-          <button className="btn btnPrimary" onClick={submit}>
-            Lưu
-          </button>
+          <div className="lineEditFooterActions">
+            <button className="btn" onClick={onClose}>
+              Huỷ
+            </button>
+            <button className="btn btnPrimary" onClick={submit}>
+              Lưu
+            </button>
+          </div>
         </div>
       }
     >
@@ -695,21 +732,60 @@ function LineEditModal({ item, onClose, onSave }) {
           </div>
         </div>
       ) : (
-        <div>
-          <div className="hint" style={{ marginTop: 0 }}>
-            Số lượng
+        <div className={`split ${isManualLine ? "lineEditSplit" : ""}`}>
+          {isManualLine ? (
+            <div>
+              <div className="hint" style={{ marginTop: 0 }}>
+                Tên sản phẩm
+              </div>
+              <input
+                className="input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (!isEnterKey(e)) return
+                  e.preventDefault()
+                  submit()
+                }}
+                placeholder="Ví dụ: Công lắp đặt"
+              />
+            </div>
+          ) : null}
+          <div>
+            <div className="hint" style={{ marginTop: 0 }}>
+              Số lượng
+            </div>
+            <input
+              className="input"
+              value={qty}
+              onChange={(e) => setQty(e.target.value)}
+              onFocus={selectAllOnFocus}
+              onKeyDown={(e) => {
+                if (!isEnterKey(e)) return
+                e.preventDefault()
+                submit()
+              }}
+            />
           </div>
-          <input
-            className="input"
-            value={qty}
-            onChange={(e) => setQty(e.target.value)}
-            onFocus={selectAllOnFocus}
-            onKeyDown={(e) => {
-              if (!isEnterKey(e)) return
-              e.preventDefault()
-              submit()
-            }}
-          />
+          {isManualLine ? (
+            <div>
+              <div className="hint" style={{ marginTop: 0 }}>
+                Giá bán (đ)
+              </div>
+              <input
+                className="input"
+                value={unitPrice}
+                onChange={(e) => setUnitPrice(clampMoneyInput(e.target.value))}
+                onFocus={selectAllOnFocus}
+                onKeyDown={(e) => {
+                  if (!isEnterKey(e)) return
+                  e.preventDefault()
+                  submit()
+                }}
+                placeholder="0"
+              />
+            </div>
+          ) : null}
         </div>
       )}
       <div className="miniCard" style={{ marginTop: 12 }}>
@@ -737,7 +813,9 @@ function LineEditModal({ item, onClose, onSave }) {
               className="input"
               disabled={discountMode === "none"}
               value={discountMode === "none" ? "" : discountValue}
-              onChange={(e) => setDiscountValue(clampMoneyInput(e.target.value))}
+              onChange={(e) =>
+                setDiscountValue(clampMoneyInput(e.target.value))
+              }
               onFocus={selectAllOnFocus}
               onKeyDown={(e) => {
                 if (!isEnterKey(e)) return
@@ -777,10 +855,113 @@ function LineEditModal({ item, onClose, onSave }) {
   )
 }
 
+function ManualItemModal({ onClose, onSave }) {
+  const [name, setName] = useState("")
+  const [unitPrice, setUnitPrice] = useState("")
+  const [qty, setQty] = useState("1")
+  const [err, setErr] = useState("")
+
+  function submit() {
+    setErr("")
+    const trimmedName = name.trim()
+    const price = unitPrice === "" ? NaN : Number(unitPrice)
+    const quantity = Number(qty)
+    if (!trimmedName) {
+      setErr("Tên sản phẩm là bắt buộc")
+      return
+    }
+    if (!Number.isFinite(price) || price < 0) {
+      setErr("Giá bán không hợp lệ")
+      return
+    }
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      setErr("Số lượng phải > 0")
+      return
+    }
+    onSave({
+      name: trimmedName,
+      unit_price: String(price),
+      qty: String(quantity),
+    })
+  }
+
+  return (
+    <Modal
+      title="Thêm dòng sản phẩm"
+      onClose={onClose}
+      footer={
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <button className="btn" onClick={onClose}>
+            Huỷ
+          </button>
+          <button className="btn btnPrimary" onClick={submit}>
+            Thêm vào hoá đơn
+          </button>
+        </div>
+      }
+    >
+      <div className="split lineEditSplit">
+        <div>
+          <div className="hint" style={{ marginTop: 0 }}>
+            Tên sản phẩm
+          </div>
+          <input
+            className="input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (!isEnterKey(e)) return
+              e.preventDefault()
+              submit()
+            }}
+            placeholder="Ví dụ: Công lắp đặt"
+          />
+        </div>
+        <div>
+          <div className="hint" style={{ marginTop: 0 }}>
+            Giá bán (đ)
+          </div>
+          <input
+            className="input"
+            value={unitPrice}
+            onChange={(e) => setUnitPrice(clampMoneyInput(e.target.value))}
+            onFocus={selectAllOnFocus}
+            onKeyDown={(e) => {
+              if (!isEnterKey(e)) return
+              e.preventDefault()
+              submit()
+            }}
+            placeholder="0"
+          />
+        </div>
+      </div>
+      <div>
+        <div className="hint" style={{ marginTop: 0 }}>
+          Số lượng
+        </div>
+        <input
+          className="input"
+          value={qty}
+          onChange={(e) => setQty(e.target.value)}
+          onFocus={selectAllOnFocus}
+          onKeyDown={(e) => {
+            if (!isEnterKey(e)) return
+            e.preventDefault()
+            submit()
+          }}
+          placeholder="1"
+        />
+      </div>
+      {err ? <div className="payStatus payStatusErr">{err}</div> : null}
+    </Modal>
+  )
+}
+
 function RollPickerModal({ su, onClose, onAddMeter, onAddRoll }) {
   const [qty, setQty] = useState("")
   const [err, setErr] = useState("")
   const canSellRoll = su.is_full_roll && su.roll_price != null
+  const isOutOfStock = !hasStockUnitStock(su)
 
   useEffect(() => {
     setQty("1")
@@ -789,6 +970,10 @@ function RollPickerModal({ su, onClose, onAddMeter, onAddRoll }) {
 
   function submitMeter() {
     setErr("")
+    if (isOutOfStock) {
+      setErr("Cuộn này đã hết tồn kho")
+      return
+    }
     const q = Number(qty)
     if (!Number.isFinite(q) || q <= 0) {
       setErr("Số mét phải > 0")
@@ -850,10 +1035,15 @@ function RollPickerModal({ su, onClose, onAddMeter, onAddRoll }) {
                 e.preventDefault()
                 submitMeter()
               }}
+              disabled={isOutOfStock}
               placeholder="Số mét"
             />
             <div className="hint">Nhấn Enter để thêm nhanh theo mét.</div>
-            <button className="btn btnPrimary" onClick={submitMeter}>
+            <button
+              className="btn btnPrimary"
+              onClick={submitMeter}
+              disabled={isOutOfStock}
+            >
               Thêm mét
             </button>
           </div>
@@ -869,7 +1059,11 @@ function RollPickerModal({ su, onClose, onAddMeter, onAddRoll }) {
               <div className="hint" style={{ marginTop: 0 }}>
                 Cuộn full: có thể bán nguyên cuộn.
               </div>
-              <button className="btn btnPrimary" onClick={onAddRoll}>
+              <button
+                className="btn btnPrimary"
+                onClick={onAddRoll}
+                disabled={isOutOfStock}
+              >
                 Thêm cuộn
               </button>
             </div>
@@ -880,6 +1074,12 @@ function RollPickerModal({ su, onClose, onAddMeter, onAddRoll }) {
       {!canSellRoll ? (
         <div className="hint" style={{ marginTop: 4 }}>
           Cuộn đã cắt dở hoặc chưa có giá cuộn, nên chỉ bán theo mét.
+        </div>
+      ) : null}
+
+      {isOutOfStock ? (
+        <div className="hint" style={{ marginTop: 4 }}>
+          Cuộn này đã hết tồn kho nên không thể thêm vào hoá đơn.
         </div>
       ) : null}
 
@@ -1406,7 +1606,11 @@ function CashDrawerModal({
               <div className="cardBody" style={{ display: "grid", gap: 10 }}>
                 <div className="split">
                   <div>
-                    <FieldLabel className="hint" style={{ marginTop: 0 }} required>
+                    <FieldLabel
+                      className="hint"
+                      style={{ marginTop: 0 }}
+                      required
+                    >
                       Số tiền rút
                     </FieldLabel>
                     <input
@@ -1451,7 +1655,11 @@ function CashDrawerModal({
             <div className="cardBody" style={{ display: "grid", gap: 10 }}>
               <div className="split">
                 <div>
-                  <FieldLabel className="hint" style={{ marginTop: 0 }} required>
+                  <FieldLabel
+                    className="hint"
+                    style={{ marginTop: 0 }}
+                    required
+                  >
                     Kiểm quỹ thực tế
                   </FieldLabel>
                   <input
@@ -1544,6 +1752,7 @@ export default function Pos({
 
   const [rollModal, setRollModal] = useState(null)
   const [editLine, setEditLine] = useState(null)
+  const [manualItemOpen, setManualItemOpen] = useState(false)
   const [receiptModal, setReceiptModal] = useState(null)
   const [customerModalOpen, setCustomerModalOpen] = useState(false)
   const [customerQ, setCustomerQ] = useState("")
@@ -1591,6 +1800,7 @@ export default function Pos({
   function closeAllModals() {
     setRollModal(null)
     setEditLine(null)
+    setManualItemOpen(false)
     setPayModalOpen(false)
     setReceiptModal(null)
     setCustomerModalOpen(false)
@@ -1991,6 +2201,18 @@ export default function Pos({
     }
   }
 
+  async function addManualItem(payload) {
+    if (!order) return
+    setBusy(true)
+    try {
+      await post(`/api/v1/pos/orders/${order.id}/items/manual`, payload)
+      await refreshReceipt(order.id)
+      await refreshDrafts()
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function addRoll({ barcode, mode, qty }) {
     if (!order) return
     setBusy(true)
@@ -2012,9 +2234,12 @@ export default function Pos({
     setBusy(true)
     try {
       if (item.pricing_mode === "normal") {
+        const payload = { qty: item.qty }
+        if (item.name != null) payload.name = item.name
+        if (item.unit_price != null) payload.unit_price = item.unit_price
         await patch(
           `/api/v1/pos/orders/${order.id}/items/${item.item_id}/normal`,
-          { qty: item.qty },
+          payload,
         )
       } else {
         await patch(
@@ -2041,7 +2266,10 @@ export default function Pos({
         discountMode === "none"
           ? { mode: "none", value: null }
           : { mode: discountMode, value: String(Number(discountValue || 0)) }
-      await patch(`/api/v1/pos/orders/${order.id}/items/${itemId}/discount`, payload)
+      await patch(
+        `/api/v1/pos/orders/${order.id}/items/${itemId}/discount`,
+        payload,
+      )
       if (refresh) await refreshReceipt(order.id)
     } finally {
       setBusy(false)
@@ -2069,11 +2297,19 @@ export default function Pos({
         showErr(new Error("Cuộn này đang nằm trong một đơn nháp khác"))
         return
       }
+      if (!hasStockUnitStock(out.stock_unit)) {
+        showErr(new Error("Cuộn này đã hết tồn kho"))
+        return
+      }
       setRollModal(out.stock_unit)
       return
     }
 
     if (out.exact_variant) {
+      if (!hasVariantStock(out.exact_variant)) {
+        showErr(new Error("Sản phẩm này đã hết tồn kho"))
+        return
+      }
       if (out.exact_variant.track_stock_unit) {
         showInfo("Mặt hàng này quản lý theo cuộn. Hãy scan barcode của cuộn.")
         return
@@ -2383,7 +2619,10 @@ export default function Pos({
           </div>
         </div>
 
-        <button className="btn posHeaderEdgeBtn posHeaderLogoutBtn" onClick={onLogout}>
+        <button
+          className="btn posHeaderEdgeBtn posHeaderLogoutBtn"
+          onClick={onLogout}
+        >
           Đăng xuất
         </button>
       </div>
@@ -2663,7 +2902,16 @@ export default function Pos({
         <div className="panel panelCatalog">
           <div className="panelHead">
             <div className="panelTitle">Hàng hoá</div>
-            <div className="pill">{filteredVariants.length} sp</div>
+            <div className="catalogToolbar">
+              <button
+                className="btn"
+                disabled={busy || !order || order.status !== "draft"}
+                onClick={() => setManualItemOpen(true)}
+              >
+                + Thêm SP chưa Barcode
+              </button>
+              <div className="pill">{filteredVariants.length} sp</div>
+            </div>
           </div>
           <div className="panelBody panelBodyTight">
             <div className="catalogSplit">
@@ -2706,11 +2954,18 @@ export default function Pos({
                       {searchOut.stock_unit.is_reserved ? (
                         <span className="pill">Reserved</span>
                       ) : null}
+                      {!hasStockUnitStock(searchOut.stock_unit) ? (
+                        <span className="pill">Hết hàng</span>
+                      ) : null}
                     </div>
                     <div className="miniActions">
                       <button
                         className="btn btnPrimary"
-                        disabled={busy || searchOut.stock_unit.is_reserved}
+                        disabled={
+                          busy ||
+                          searchOut.stock_unit.is_reserved ||
+                          !hasStockUnitStock(searchOut.stock_unit)
+                        }
                         onClick={() => setRollModal(searchOut.stock_unit)}
                       >
                         Chọn kiểu bán
@@ -2721,59 +2976,71 @@ export default function Pos({
 
                 {filteredVariants.length ? (
                   <div className="productGrid">
-                    {filteredVariants.map((v) => (
-                      <button
-                        key={v.variant_id}
-                        className={`productCard ${v.track_stock_unit ? "productDisabled" : ""}`}
-                        disabled={busy}
-                        onClick={async () => {
-                          try {
-                            if (v.track_stock_unit) {
-                              showInfo(
-                                "Hàng theo cuộn: hãy scan barcode của cuộn để thêm.",
-                              )
-                              return
+                    {filteredVariants.map((v) => {
+                      const isOutOfStock = !hasVariantStock(v)
+                      return (
+                        <button
+                          key={v.variant_id}
+                          className={`productCard ${
+                            v.track_stock_unit || isOutOfStock
+                              ? "productDisabled"
+                              : ""
+                          }`}
+                          disabled={busy || isOutOfStock}
+                          onClick={async () => {
+                            try {
+                              if (isOutOfStock) {
+                                showInfo("Sản phẩm này đã hết tồn kho.")
+                                return
+                              }
+                              if (v.track_stock_unit) {
+                                showInfo(
+                                  "Hàng theo cuộn: hãy scan barcode của cuộn để thêm.",
+                                )
+                                return
+                              }
+                              await addNormal(v.variant_id, 1)
+                            } catch (e) {
+                              showErr(e)
                             }
-                            await addNormal(v.variant_id, 1)
-                          } catch (e) {
-                            showErr(e)
-                          }
-                        }}
-                      >
-                        <div className="pThumb">
-                          <div className="pThumbFallback">
-                            {(v.name || "?").slice(0, 1).toUpperCase()}
+                          }}
+                        >
+                          <div className="pThumb">
+                            <div className="pThumbFallback">
+                              {(v.name || "?").slice(0, 1).toUpperCase()}
+                            </div>
+                            {v.image_url ? (
+                              // eslint-disable-next-line jsx-a11y/alt-text
+                              <img
+                                src={v.image_url}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none"
+                                }}
+                              />
+                            ) : null}
                           </div>
-                          {v.image_url ? (
-                            // eslint-disable-next-line jsx-a11y/alt-text
-                            <img
-                              src={v.image_url}
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none"
-                              }}
-                            />
-                          ) : null}
-                        </div>
-                        <div className="pName">{v.name}</div>
-                        <div className="pPrice">
-                          {v.track_stock_unit
-                            ? `Giá/m: ${fmtVnd(v.price ?? 0)} đ`
-                            : `${fmtVnd(v.price ?? 0)} đ`}
-                        </div>
-                        <div className="pMeta">
-                          <span>
-                            Tồn: {fmtQty(v.stock)} {v.uom || ""}
-                          </span>
-                          {v.parent_category_name ? (
-                            <span>DM: {v.parent_category_name}</span>
-                          ) : null}
-                          {v.barcode ? <span>BC: {v.barcode}</span> : null}
-                          {v.track_stock_unit && v.roll_price != null ? (
-                            <span>Giá cuộn: {fmtVnd(v.roll_price)} đ</span>
-                          ) : null}
-                        </div>
-                      </button>
-                    ))}
+                          <div className="pName">{v.name}</div>
+                          <div className="pPrice">
+                            {v.track_stock_unit
+                              ? `Giá/m: ${fmtVnd(v.price ?? 0)} đ`
+                              : `${fmtVnd(v.price ?? 0)} đ`}
+                          </div>
+                          <div className="pMeta">
+                            <span>
+                              Tồn: {fmtQty(v.stock)} {v.uom || ""}
+                            </span>
+                            {isOutOfStock ? <span>Hết hàng</span> : null}
+                            {v.parent_category_name ? (
+                              <span>DM: {v.parent_category_name}</span>
+                            ) : null}
+                            {v.barcode ? <span>BC: {v.barcode}</span> : null}
+                            {v.track_stock_unit && v.roll_price != null ? (
+                              <span>Giá cuộn: {fmtVnd(v.roll_price)} đ</span>
+                            ) : null}
+                          </div>
+                        </button>
+                      )
+                    })}
                   </div>
                 ) : null}
                 {searchOut && !filteredVariants.length ? (
@@ -2843,25 +3110,56 @@ export default function Pos({
         />
       ) : null}
 
+      {manualItemOpen ? (
+        <ManualItemModal
+          onClose={() => setManualItemOpen(false)}
+          onSave={async (payload) => {
+            try {
+              await addManualItem(payload)
+              setManualItemOpen(false)
+              scanRef.current?.focus()
+            } catch (e) {
+              showErr(e)
+            }
+          }}
+        />
+      ) : null}
+
       {editLine ? (
         <LineEditModal
           item={editLine}
           onClose={() => setEditLine(null)}
+          onDelete={async () => {
+            try {
+              await deleteItem(editLine.item_id)
+              setEditLine(null)
+            } catch (e) {
+              showErr(e)
+            }
+          }}
           onSave={async (next) => {
             try {
               if (editLine.pricing_mode === "normal") {
-                await updateItem({
-                  item_id: editLine.item_id,
-                  pricing_mode: "normal",
-                  qty: next.qty,
-                }, { refresh: false })
+                await updateItem(
+                  {
+                    item_id: editLine.item_id,
+                    pricing_mode: "normal",
+                    name: next.name,
+                    qty: next.qty,
+                    unit_price: next.unitPrice,
+                  },
+                  { refresh: false },
+                )
               } else {
-                await updateItem({
-                  item_id: editLine.item_id,
-                  pricing_mode: editLine.pricing_mode,
-                  mode: next.mode,
-                  qty: next.mode === "meter" ? next.qty : undefined,
-                }, { refresh: false })
+                await updateItem(
+                  {
+                    item_id: editLine.item_id,
+                    pricing_mode: editLine.pricing_mode,
+                    mode: next.mode,
+                    qty: next.mode === "meter" ? next.qty : undefined,
+                  },
+                  { refresh: false },
+                )
               }
               await updateItemDiscount(
                 editLine.item_id,
