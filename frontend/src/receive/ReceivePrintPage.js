@@ -1418,7 +1418,7 @@ export default function ReceivePrintPage() {
             code: bc,
             name: picked.name,
             sku: picked.sku,
-            price: picked.price != null ? fmtMoney(picked.price) : "",
+            price: picked.price != null ? picked.price : "",
           }))
           openPrintLabels({ title: `Tem mã vạch (${picked.name})`, labels, printWindow })
         }
@@ -1446,7 +1446,7 @@ export default function ReceivePrintPage() {
             code: su.barcode,
             name: picked.name,
             sku: picked.sku,
-            price: picked.roll_price != null ? fmtMoney(picked.roll_price) : picked.price != null ? fmtMoney(picked.price) : "",
+            price: picked.roll_price != null ? picked.roll_price : picked.price != null ? picked.price : "",
           }))
           openPrintLabels({ title: `Tem cuộn (${picked.name})`, labels, printWindow })
         }
@@ -1471,7 +1471,7 @@ export default function ReceivePrintPage() {
           code: bc,
           name: picked.name,
           sku: picked.sku,
-          price: picked.price != null ? fmtMoney(picked.price) : "",
+          price: picked.price != null ? picked.price : "",
         }))
         openPrintLabels({ title: `In tem (${picked.name})`, labels, printWindow })
         return
@@ -1491,7 +1491,7 @@ export default function ReceivePrintPage() {
         code: su.barcode,
         name: picked.name,
         sku: picked.sku,
-        price: picked.roll_price != null ? fmtMoney(picked.roll_price) : picked.price != null ? fmtMoney(picked.price) : "",
+        price: picked.roll_price != null ? picked.roll_price : picked.price != null ? picked.price : "",
       }))
       openPrintLabels({ title: `In tem cuộn (${picked.name})`, labels, printWindow })
     } finally {
