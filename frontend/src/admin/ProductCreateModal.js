@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { patch, post } from "../api"
 import Modal from "./Modal"
 import FieldLabel from "../ui/FieldLabel"
-import { formatMoneyVN } from "../utils/number"
-import { buildPrintAutoCloseScript, openPrintDocument } from "../utils/print"
+import { openPrintLabels } from "../utils/barcodeLabels"
 
 function parseAttrValues(text) {
   return String(text || "")
@@ -45,6 +44,17 @@ function normalizeSku(value) {
   return String(value || "").trim()
 }
 
+function slugifySku(value) {
+  const base = String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .replace(/[^a-zA-Z0-9]+/g, "")
+    .trim()
+  return base
+}
+
 function normalizeBarcode(value) {
   return String(value || "").trim()
 }
@@ -60,72 +70,6 @@ function genBarcodeFromText(text) {
   const base = cleanBarcodeBase(text)
   const rnd = Math.random().toString(16).slice(2, 8).toUpperCase()
   return `BC-${base}-${rnd}`
-}
-
-function openPrintLabels({ title, labels, printWindow = null }) {
-  const w = printWindow || openPrintDocument({ title, html: "<!doctype html><title>Loading...</title>", features: "width=980,height=720" })
-  if (!w) return
-  const safeTitle = String(title || "In mã vạch").replaceAll("<", "").replaceAll(">", "")
-  const html = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <title>${safeTitle}</title>
-  <style>
-    body{ font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0; color:#111827; }
-    .wrap{ padding: 6mm; }
-    .top{ display:flex; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 8mm; }
-    .h1{ font-weight: 700; font-size: 16px; }
-    .muted{ color:#6b7280; font-size: 12px; }
-    .grid{ display:grid; grid-template-columns: repeat(4, 50mm); gap: 3mm; justify-content: start; }
-    .lb{ box-sizing: border-box; border: 1px dashed rgba(17,24,39,.25); border-radius: 2mm; padding: 1.8mm; width:50mm; height:30mm; display:grid; grid-template-rows: auto auto 1fr; overflow:hidden; }
-    .name{ font-size: 12px; font-weight: 700; line-height: 1.15; max-height: 28px; overflow:hidden; }
-    .price{ margin-top: 1mm; font-size: 11px; color:#111827; font-weight: 700; }
-    .img{ margin-top: 1mm; display:flex; justify-content:center; align-items:center; height: 14mm; }
-    img{ max-width: 100%; max-height: 12mm; object-fit: contain; }
-    @page{ size: A4 portrait; margin: 0; }
-    @media print{ .top{ display:none; } }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="top">
-      <div class="h1">${safeTitle}</div>
-      <div class="muted">Mỗi tem gồm tên sản phẩm, giá và barcode.</div>
-    </div>
-    <div class="grid">
-      ${labels
-        .map((lb) => {
-          const code = String(lb.code || "")
-          const img = code
-            ? `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(code)}&scale=2&height=10&includetext=true`
-            : ""
-          const name = String(lb.name || "")
-          const price = lb.price != null ? formatMoneyVN(lb.price) : ""
-          return `
-            <div class="lb">
-              <div class="name">${name.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</div>
-              <div class="price">${price ? `${price}đ` : ""}</div>
-              <div class="img">${img ? `<img alt="${code}" src="${img}"/>` : ""}</div>
-            </div>
-          `
-        })
-        .join("")}
-    </div>
-    <script>${buildPrintAutoCloseScript({ waitForImages: true })}</script>
-  </div>
-</body>
-</html>`
-  try {
-    w.document.open()
-    w.document.write(html)
-    w.document.close()
-    w.focus()
-  } catch {
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" })
-    const url = URL.createObjectURL(blob)
-    window.open(url, "_blank")
-  }
 }
 
 function makeVariantRow(patch = {}) {
@@ -458,6 +402,33 @@ export default function ProductCreateModal({
     }
   }
 
+  function fillMissingSkus(rows) {
+    const skuIndex = new Set()
+    for (const variant of Array.isArray(existingVariants) ? existingVariants : []) {
+      const sku = normalizeSku(variant?.sku).toLowerCase()
+      if (sku) skuIndex.add(sku)
+    }
+
+    return rows.map((row, idx) => {
+      const currentSku = normalizeSku(row.sku)
+      if (currentSku) {
+        skuIndex.add(currentSku.toLowerCase())
+        return { ...row, sku: currentSku }
+      }
+
+      const fallbackName = String(row.name || row.attrs?.name || `sanpham${idx + 1}`).trim()
+      const baseSku = slugifySku(fallbackName) || `sanpham${idx + 1}`
+      let nextSku = baseSku
+      let counter = 2
+      while (skuIndex.has(nextSku.toLowerCase())) {
+        nextSku = `${baseSku}${counter}`
+        counter += 1
+      }
+      skuIndex.add(nextSku.toLowerCase())
+      return { ...row, sku: nextSku }
+    })
+  }
+
   function getRowStock(row) {
     const raw = String(row?.stock || "").trim()
     if (!raw) return 0
@@ -590,7 +561,9 @@ export default function ProductCreateModal({
     setErr(null)
     validateCommon()
     if (hasVariants && !variantRows.length) throw new Error("Bạn đã bật biến thể nhưng chưa có dòng nào.")
-    const rowsToValidate = hasVariants ? variantRows : [singleRow]
+    const rowsToValidate = fillMissingSkus(hasVariants ? variantRows : [singleRow])
+    if (hasVariants) setVariantRows(rowsToValidate)
+    else setSingleRow(rowsToValidate[0])
     validateUniqueSkus(rowsToValidate)
     validateUniqueBarcodes(rowsToValidate)
     validateAgainstExistingVariants(rowsToValidate)
@@ -606,11 +579,11 @@ export default function ProductCreateModal({
           image_url: null,
           category_id: categoryId ? Number(categoryId) : null,
         })
-        for (const row of variantRows) {
+        for (const row of rowsToValidate) {
           createdVariants.push(await createVariantUnderParent(row, parent))
         }
       } else {
-        const row = { ...singleRow, name: String(singleRow.name || "").trim() || baseProductName }
+        const row = { ...rowsToValidate[0], name: String(rowsToValidate[0].name || "").trim() || baseProductName }
         createdVariants.push(await createStandaloneVariant(row, baseProductName))
       }
       setPrintPrompt(buildPrintPrompt(createdVariants))
