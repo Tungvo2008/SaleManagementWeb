@@ -1265,6 +1265,7 @@ function CreateProductModal({
 }
 
 export default function ReceivePrintPage() {
+  const SEARCH_PAGE_SIZE = 40
   const [tab, setTab] = useState("normal") // normal | rolls
 
   const [busy, setBusy] = useState(false)
@@ -1273,6 +1274,8 @@ export default function ReceivePrintPage() {
   const [q, setQ] = useState("")
   const [searchBusy, setSearchBusy] = useState(false)
   const [variants, setVariants] = useState([])
+  const [searchLimit, setSearchLimit] = useState(SEARCH_PAGE_SIZE)
+  const [hasMoreResults, setHasMoreResults] = useState(false)
   const [picked, setPicked] = useState(null)
 
   const [qty, setQty] = useState("1")
@@ -1317,14 +1320,19 @@ export default function ReceivePrintPage() {
     const qq = (nextQ ?? q ?? "").trim()
     setSearchBusy(true)
     try {
-      const r = await get(`/api/v1/pos/search/?q=${encodeURIComponent(qq)}&limit=40`)
+      const r = await get(`/api/v1/pos/search/?q=${encodeURIComponent(qq)}&limit=${searchLimit}`)
       const list = Array.isArray(r?.variants) ? r.variants : []
       // Show all variants; when user picks one, UI auto-switches to matching flow.
       setVariants(list)
+      setHasMoreResults(list.length >= searchLimit)
     } finally {
       setSearchBusy(false)
     }
   }
+
+  useEffect(() => {
+    setSearchLimit(SEARCH_PAGE_SIZE)
+  }, [q, tab])
 
   useEffect(() => {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
@@ -1335,7 +1343,7 @@ export default function ReceivePrintPage() {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, tab])
+  }, [q, tab, searchLimit])
 
   useEffect(() => {
     // Do not clear picked on tab change, otherwise click->setTab will clear selection.
@@ -1583,6 +1591,17 @@ export default function ReceivePrintPage() {
                 )
               })}
               {!searchBusy && variants.length === 0 ? <div className="hint">Không có kết quả.</div> : null}
+              {!searchBusy && variants.length > 0 && hasMoreResults ? (
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => setSearchLimit((prev) => prev + SEARCH_PAGE_SIZE)}
+                  disabled={busy}
+                  style={{ marginTop: 8 }}
+                >
+                  Xem thêm
+                </button>
+              ) : null}
             </div>
           </div>
         </div>

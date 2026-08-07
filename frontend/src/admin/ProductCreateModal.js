@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react"
-import { post } from "../api"
+import { patch, post } from "../api"
 import Modal from "./Modal"
 import FieldLabel from "../ui/FieldLabel"
+import { formatMoneyVN } from "../utils/number"
+import { buildPrintAutoCloseScript, openPrintDocument } from "../utils/print"
 
 function parseAttrValues(text) {
   return String(text || "")
@@ -60,6 +62,72 @@ function genBarcodeFromText(text) {
   return `BC-${base}-${rnd}`
 }
 
+function openPrintLabels({ title, labels, printWindow = null }) {
+  const w = printWindow || openPrintDocument({ title, html: "<!doctype html><title>Loading...</title>", features: "width=980,height=720" })
+  if (!w) return
+  const safeTitle = String(title || "In mã vạch").replaceAll("<", "").replaceAll(">", "")
+  const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>${safeTitle}</title>
+  <style>
+    body{ font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; margin: 0; color:#111827; }
+    .wrap{ padding: 6mm; }
+    .top{ display:flex; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 8mm; }
+    .h1{ font-weight: 700; font-size: 16px; }
+    .muted{ color:#6b7280; font-size: 12px; }
+    .grid{ display:grid; grid-template-columns: repeat(4, 50mm); gap: 3mm; justify-content: start; }
+    .lb{ box-sizing: border-box; border: 1px dashed rgba(17,24,39,.25); border-radius: 2mm; padding: 1.8mm; width:50mm; height:30mm; display:grid; grid-template-rows: auto auto 1fr; overflow:hidden; }
+    .name{ font-size: 12px; font-weight: 700; line-height: 1.15; max-height: 28px; overflow:hidden; }
+    .price{ margin-top: 1mm; font-size: 11px; color:#111827; font-weight: 700; }
+    .img{ margin-top: 1mm; display:flex; justify-content:center; align-items:center; height: 14mm; }
+    img{ max-width: 100%; max-height: 12mm; object-fit: contain; }
+    @page{ size: A4 portrait; margin: 0; }
+    @media print{ .top{ display:none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="h1">${safeTitle}</div>
+      <div class="muted">Mỗi tem gồm tên sản phẩm, giá và barcode.</div>
+    </div>
+    <div class="grid">
+      ${labels
+        .map((lb) => {
+          const code = String(lb.code || "")
+          const img = code
+            ? `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(code)}&scale=2&height=10&includetext=true`
+            : ""
+          const name = String(lb.name || "")
+          const price = lb.price != null ? formatMoneyVN(lb.price) : ""
+          return `
+            <div class="lb">
+              <div class="name">${name.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</div>
+              <div class="price">${price ? `${price}đ` : ""}</div>
+              <div class="img">${img ? `<img alt="${code}" src="${img}"/>` : ""}</div>
+            </div>
+          `
+        })
+        .join("")}
+    </div>
+    <script>${buildPrintAutoCloseScript({ waitForImages: true })}</script>
+  </div>
+</body>
+</html>`
+  try {
+    w.document.open()
+    w.document.write(html)
+    w.document.close()
+    w.focus()
+  } catch {
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    window.open(url, "_blank")
+  }
+}
+
 function makeVariantRow(patch = {}) {
   return {
     id: `v_${Math.random().toString(16).slice(2)}`,
@@ -70,6 +138,7 @@ function makeVariantRow(patch = {}) {
     barcode: "",
     uom: "pcs",
     price: "",
+    stock: "",
     image_file: null,
     image_url: "",
     roll_price: "",
@@ -224,6 +293,8 @@ export default function ProductCreateModal({
   const [singleRow, setSingleRow] = useState(() => makeVariantRow({ uom: "pcs" }))
   const [attrDefs, setAttrDefs] = useState(() => [{ id: "a_1", name: "", valuesText: "" }])
   const [variantRows, setVariantRows] = useState([])
+  const [printPrompt, setPrintPrompt] = useState(null)
+  const [printing, setPrinting] = useState(false)
 
   useEffect(() => {
     setCategoryOptions(Array.isArray(categories) ? categories : [])
@@ -327,6 +398,10 @@ export default function ProductCreateModal({
     if (!String(row.price || "").trim()) throw new Error(`${label}: Giá là bắt buộc.`)
     const price = Number(row.price)
     if (!Number.isFinite(price) || price < 0) throw new Error(`${label}: Giá không hợp lệ.`)
+    if (String(row.stock || "").trim()) {
+      const stock = Number(row.stock)
+      if (!Number.isFinite(stock) || stock < 0) throw new Error(`${label}: Tồn không hợp lệ.`)
+    }
 
     if (trackStockUnit && String(row.roll_price || "").trim()) {
       const rp = Number(row.roll_price)
@@ -383,6 +458,20 @@ export default function ProductCreateModal({
     }
   }
 
+  function getRowStock(row) {
+    const raw = String(row?.stock || "").trim()
+    if (!raw) return 0
+    const stock = Number(raw)
+    return Number.isFinite(stock) && stock > 0 ? stock : 0
+  }
+
+  async function ensureVariantBarcode(variant) {
+    if (variant?.barcode) return variant.barcode
+    const bc = genBarcodeFromText(variant?.sku || variant?.name || "SP")
+    const updated = await patch(`/api/v1/products/variants/${variant.id}`, { barcode: bc })
+    return updated?.barcode || bc
+  }
+
   async function createVariantUnderParent(row, parent) {
     validateRow(row, String(row.name || "Biến thể"))
     let imageUrl = String(row.image_url || "").trim() || null
@@ -392,14 +481,14 @@ export default function ProductCreateModal({
     const attrsPayload = row.attrs && typeof row.attrs === "object" ? { ...row.attrs } : {}
     if (trackStockUnit) attrsPayload.meters_per_roll = Number(commonMetersPerRoll)
 
-    await post(`/api/v1/products/parents/${parent.id}/variants`, {
+    return post(`/api/v1/products/parents/${parent.id}/variants`, {
       name: String(row.name || "").trim(),
       description: String(parentDesc || "").trim() ? String(parentDesc || "").trim() : null,
       category_id: null,
       uom: normalizeUom(),
       price: String(Number(row.price)),
       roll_price: trackStockUnit && String(row.roll_price || "").trim() ? String(Number(row.roll_price)) : null,
-      stock: "0",
+      stock: String(getRowStock(row)),
       sku: normalizeSku(row.sku),
       barcode,
       image_url: imageUrl,
@@ -419,14 +508,14 @@ export default function ProductCreateModal({
     attrsPayload._single_product = true
     if (trackStockUnit) attrsPayload.meters_per_roll = Number(commonMetersPerRoll)
 
-    await post("/api/v1/products/variants", {
+    return post("/api/v1/products/variants", {
       name: String(row.name || "").trim() || baseProductName,
       description: String(parentDesc || "").trim() ? String(parentDesc || "").trim() : null,
       category_id: categoryId ? Number(categoryId) : null,
       uom: normalizeUom(),
       price: String(Number(row.price)),
       roll_price: trackStockUnit && String(row.roll_price || "").trim() ? String(Number(row.roll_price)) : null,
-      stock: "0",
+      stock: String(getRowStock(row)),
       sku: normalizeSku(row.sku),
       barcode,
       image_url: imageUrl,
@@ -434,6 +523,66 @@ export default function ProductCreateModal({
       track_stock_unit: !!trackStockUnit,
       is_active: true,
     })
+  }
+
+  function buildPrintPrompt(createdVariants) {
+    const normalRows = []
+    const stockUnitRows = []
+
+    for (const variant of createdVariants) {
+      const stock = Number(variant?.stock || 0)
+      if (!stock || stock <= 0) continue
+      if (variant?.track_stock_unit) {
+        stockUnitRows.push(variant)
+      } else {
+        normalRows.push(variant)
+      }
+    }
+
+    const printableCount = normalRows.reduce((sum, item) => sum + Math.max(0, Math.floor(Number(item.stock || 0))), 0)
+    return {
+      createdVariants,
+      normalRows,
+      stockUnitRows,
+      printableCount,
+    }
+  }
+
+  async function finishCreate() {
+    setPrintPrompt(null)
+    await onCreated?.()
+  }
+
+  async function handlePrintNow() {
+    if (!printPrompt?.normalRows?.length) {
+      await finishCreate()
+      return
+    }
+    setPrinting(true)
+    try {
+      const labels = []
+      for (const variant of printPrompt.normalRows) {
+        const code = await ensureVariantBarcode(variant)
+        const qty = Math.max(0, Math.floor(Number(variant.stock || 0)))
+        for (let i = 0; i < qty; i += 1) {
+          labels.push({
+            code,
+            name: variant.name,
+            sku: variant.sku,
+            price: variant.price,
+          })
+        }
+      }
+      if (labels.length) {
+        openPrintLabels({
+          title: "Tem sản phẩm mới",
+          labels,
+        })
+      }
+      await finishCreate()
+    } finally {
+      setPrinting(false)
+    }
   }
 
   async function save() {
@@ -448,6 +597,7 @@ export default function ProductCreateModal({
     setSaving(true)
     try {
       const baseProductName = getBaseProductName()
+      const createdVariants = []
       if (hasVariants) {
         const parent = await post("/api/v1/products/parents", {
           name: baseProductName,
@@ -455,12 +605,14 @@ export default function ProductCreateModal({
           image_url: null,
           category_id: categoryId ? Number(categoryId) : null,
         })
-        for (const row of variantRows) await createVariantUnderParent(row, parent)
+        for (const row of variantRows) {
+          createdVariants.push(await createVariantUnderParent(row, parent))
+        }
       } else {
         const row = { ...singleRow, name: String(singleRow.name || "").trim() || baseProductName }
-        await createStandaloneVariant(row, baseProductName)
+        createdVariants.push(await createStandaloneVariant(row, baseProductName))
       }
-      onCreated?.()
+      setPrintPrompt(buildPrintPrompt(createdVariants))
     } finally {
       setSaving(false)
     }
@@ -763,6 +915,13 @@ export default function ProductCreateModal({
                     </FieldLabel>
                     <input className="admInput" value={singleRow.price} onChange={(e) => setSingleRow((p) => ({ ...p, price: e.target.value }))} placeholder="VD: 35000" />
                   </div>
+                  <div>
+                    <div className="admLabel">Tồn ban đầu</div>
+                    <input className="admInput" value={singleRow.stock} onChange={(e) => setSingleRow((p) => ({ ...p, stock: e.target.value }))} placeholder="VD: 12" />
+                  </div>
+                </div>
+
+                <div className="prdGrid2" style={{ marginTop: 10 }}>
                   {trackStockUnit ? (
                     <div>
                       <div className="admLabel">Giá cuộn (tuỳ chọn)</div>
@@ -771,6 +930,7 @@ export default function ProductCreateModal({
                   ) : (
                     <div />
                   )}
+                  <div />
                 </div>
 
                 <div className="prdGrid2" style={{ marginTop: 10 }}>
@@ -867,6 +1027,10 @@ export default function ProductCreateModal({
                       </FieldLabel>
                       <input className="admInput" value={row.price} onChange={(e) => setVariantRow(row.id, { price: e.target.value })} placeholder="VD: 35000" />
                     </div>
+                    <div>
+                      <div className="admLabel">Tồn ban đầu</div>
+                      <input className="admInput" value={row.stock || ""} onChange={(e) => setVariantRow(row.id, { stock: e.target.value })} placeholder="VD: 12" />
+                    </div>
                     {trackStockUnit ? (
                       <div>
                         <div className="admLabel">Giá cuộn (tuỳ chọn)</div>
@@ -898,6 +1062,47 @@ export default function ProductCreateModal({
             </div>
           </div>
         </>
+      ) : null}
+
+      {printPrompt ? (
+        <Modal
+          title="Tạo sản phẩm xong"
+          onClose={() => finishCreate()}
+          footer={
+            <>
+              <button className="admBtn" disabled={printing} onClick={() => finishCreate()}>
+                Để sau
+              </button>
+              <button
+                className="admBtn admBtnPrimary"
+                disabled={printing || !printPrompt.printableCount}
+                onClick={() => handlePrintNow().catch((e) => setErr(e?.message || "Không in được tem."))}
+              >
+                {printing ? "Đang in..." : `In tem ngay${printPrompt.printableCount ? ` (${printPrompt.printableCount})` : ""}`}
+              </button>
+            </>
+          }
+        >
+          <div className="prdSection" style={{ margin: 0 }}>
+            <div className="admLabel">
+              Đã tạo {printPrompt.createdVariants.length} sản phẩm/biến thể mới.
+            </div>
+            {printPrompt.printableCount ? (
+              <div className="admLabel" style={{ marginTop: 10 }}>
+                Có {printPrompt.printableCount} tem hàng thường sẵn sàng để in ngay theo số tồn vừa nhập.
+              </div>
+            ) : (
+              <div className="admLabel" style={{ marginTop: 10 }}>
+                Chưa có tem nào sẵn sàng để in ngay. Hãy nhập tồn lớn hơn 0 cho hàng thường nếu muốn in tem ngay sau khi tạo.
+              </div>
+            )}
+            {printPrompt.stockUnitRows.length ? (
+              <div className="admLabel" style={{ marginTop: 10 }}>
+                {printPrompt.stockUnitRows.length} mặt hàng cuộn cần qua màn Nhập hàng để sinh barcode từng cuộn trước khi in tem.
+              </div>
+            ) : null}
+          </div>
+        </Modal>
       ) : null}
     </Modal>
   )
