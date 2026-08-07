@@ -548,14 +548,15 @@ export default function ProductCreateModal({
     }
   }
 
-  async function finishCreate() {
+  async function finishCreate(prompt = printPrompt) {
+    const last = Array.isArray(prompt?.createdVariants) ? prompt.createdVariants[prompt.createdVariants.length - 1] : null
     setPrintPrompt(null)
-    await onCreated?.()
+    await onCreated?.(last || null)
   }
 
   async function handlePrintNow() {
     if (!printPrompt?.normalRows?.length) {
-      await finishCreate()
+      await finishCreate(printPrompt)
       return
     }
     setPrinting(true)
