@@ -4,8 +4,6 @@ import json
 from datetime import date
 from decimal import Decimal
 from typing import Any
-from uuid import uuid4
-
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
@@ -21,11 +19,21 @@ from app.models.product import Product, is_parent_container, is_sellable_product
 from app.models.stock_unit import StockUnit
 from app.models.supplier import Supplier
 from app.services.pricing import compute_moving_average_cost
+from app.services.ean13 import DEFAULT_EAN13_PREFIX, generate_random_ean13, is_valid_ean13, normalize_barcode_digits
 from app.services.xlsxio import XlsxSheet, build_xlsx, parse_xlsx
 from app.services.spreadsheetml import parse_workbook
 
 
 router = APIRouter()
+
+
+def _generate_unique_stock_unit_barcode(db: Session, *, prefix: str = DEFAULT_EAN13_PREFIX) -> str:
+    for _ in range(50):
+        barcode = generate_random_ean13(prefix=prefix)
+        exists = db.scalars(select(StockUnit.id).where(StockUnit.barcode == barcode)).first()
+        if not exists:
+            return barcode
+    raise HTTPException(500, "Không tạo được barcode cuộn EAN-13 duy nhất")
 
 RESOURCE_SHEETS: dict[str, str] = {
     "categories": "categories",
@@ -1117,8 +1125,12 @@ async def _import_workbook_impl(*, wb: dict[str, list[dict[str, str | None]]], d
                     raise HTTPException(422, f"Stock unit uom phải giống variant.uom (variant_id={variant_id})")
 
                 if barcode is None:
-                    prefix = (v.sku or f"VAR{v.id}").replace(" ", "").upper()
-                    barcode = f"{prefix}-ROLL-{uuid4().hex[:10]}"
+                    barcode = _generate_unique_stock_unit_barcode(db, prefix=DEFAULT_EAN13_PREFIX)
+                else:
+                    digits = normalize_barcode_digits(barcode)
+                    if not is_valid_ean13(digits):
+                        raise HTTPException(422, "Barcode phải là EAN-13 hợp lệ")
+                    barcode = digits
 
                 old_stock = v.stock or Decimal("0")
                 if v.stock is None:

@@ -1,3 +1,4 @@
+import { barcodeBcidForValue } from "./ean13"
 import { loadBarcodeTemplate, normalizeBarcodeTemplate } from "../receive/barcodeTemplate"
 import { formatMoneyVN } from "./number"
 import { buildPrintAutoCloseScript, openPrintDocument } from "./print"
@@ -47,8 +48,9 @@ export function openPrintLabels({ title, labels, printWindow = null }) {
       ${labels
         .map((lb) => {
           const code = String(lb.code || "")
+          const bcid = barcodeBcidForValue(code)
           const img = code
-            ? `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(code)}&scale=${cfg.barcodeScale}&height=${cfg.barcodeHeightMm}&includetext=true`
+            ? `https://bwipjs-api.metafloor.com/?bcid=${bcid}&text=${encodeURIComponent(code)}&scale=${cfg.barcodeScale}&height=${cfg.barcodeHeightMm}&includetext=true`
             : ""
           const name = String(lb.name || "")
           const price = lb.price != null ? formatMoneyVN(lb.price) : ""

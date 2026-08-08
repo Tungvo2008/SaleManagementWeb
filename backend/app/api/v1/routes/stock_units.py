@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from uuid import uuid4
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -19,6 +17,7 @@ from app.services.pricing import (
     record_price_change,
     recompute_variant_cost_from_stock_units,
 )
+from app.services.ean13 import DEFAULT_EAN13_PREFIX, generate_random_ean13, is_valid_ean13, normalize_barcode_digits
 from app.schemas.stock_unit import (
     StockUnitCreate,
     StockUnitReceiveRollsCreate,
@@ -27,6 +26,15 @@ from app.schemas.stock_unit import (
 )
 
 router = APIRouter()
+
+
+def _generate_unique_stock_unit_barcode(db: Session, *, prefix: str = DEFAULT_EAN13_PREFIX) -> str:
+    for _ in range(50):
+        barcode = generate_random_ean13(prefix=prefix)
+        exists = db.scalars(select(StockUnit.id).where(StockUnit.barcode == barcode)).first()
+        if not exists:
+            return barcode
+    raise HTTPException(500, "Không tạo được barcode cuộn EAN-13 duy nhất")
 
 
 def _resolve_unit_costs(
@@ -104,6 +112,13 @@ def create_stock_units(payload: StockUnitCreate, db: Session = Depends(get_db)):
         cost_per_m=payload.cost_per_m,
     )
     data = payload.model_dump()
+    if data.get("barcode"):
+        digits = normalize_barcode_digits(data["barcode"])
+        if not is_valid_ean13(digits):
+            raise HTTPException(422, "Barcode phải là EAN-13 hợp lệ")
+        data["barcode"] = digits
+    else:
+        data["barcode"] = _generate_unique_stock_unit_barcode(db, prefix=DEFAULT_EAN13_PREFIX)
     data["cost_roll_price"] = cost_roll_price
     data["cost_per_m"] = cost_per_m
     obj = StockUnit(**data)
@@ -203,7 +218,6 @@ def receive_rolls(payload: StockUnitReceiveRollsCreate, db: Session = Depends(ge
         # defensive; currently always true
         raise HTTPException(422, "Invalid variant uom")
 
-    prefix = (v.sku or f"VAR{v.id}").replace(" ", "").upper()
     cost_roll_price, cost_per_m = _resolve_unit_costs(
         initial_qty=meters_per_roll,
         variant_cost_price=v.cost_price,
@@ -212,7 +226,7 @@ def receive_rolls(payload: StockUnitReceiveRollsCreate, db: Session = Depends(ge
     )
     units: list[StockUnit] = []
     for _ in range(payload.roll_count):
-        barcode = f"{prefix}-ROLL-{uuid4().hex[:10]}"
+        barcode = _generate_unique_stock_unit_barcode(db, prefix=DEFAULT_EAN13_PREFIX)
         units.append(
             StockUnit(
                 variant_id=v.id,
@@ -310,6 +324,17 @@ def update_stock_unit(stock_unit_id: int, payload: StockUnitUpdate, db: Session=
         raise HTTPException(422, "uom cannot be changed")
     if "initial_qty" in data and data["initial_qty"] != stock_unit.initial_qty:
         raise HTTPException(422, "initial_qty cannot be changed")
+    if "barcode" in data:
+        next_barcode = str(data.get("barcode") or "").strip()
+        if not next_barcode:
+            raise HTTPException(422, "barcode is required")
+        digits = normalize_barcode_digits(next_barcode)
+        if not is_valid_ean13(digits):
+            raise HTTPException(422, "Barcode phải là EAN-13 hợp lệ")
+        exists = db.scalars(select(StockUnit.id).where(StockUnit.barcode == digits, StockUnit.id != stock_unit_id)).first()
+        if exists:
+            raise HTTPException(409, "Barcode already exists")
+        data["barcode"] = digits
 
     # Keep roll/per-meter cost fields consistent if only one field is patched.
     if "cost_roll_price" in data or "cost_per_m" in data:

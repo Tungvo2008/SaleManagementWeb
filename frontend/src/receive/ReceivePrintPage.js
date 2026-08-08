@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 import { get, patch, post } from "../api"
 import SharedProductCreateModal from "../admin/ProductCreateModal"
 import FieldLabel from "../ui/FieldLabel"
+import { AUTO_EAN13_SENTINEL } from "../utils/ean13"
 import { formatMoneyVN } from "../utils/number"
 import { openPrintLabels } from "../utils/barcodeLabels"
 import "./receive.css"
@@ -15,19 +16,6 @@ function asNum(v) {
 
 function fmtMoney(v) {
   return formatMoneyVN(v)
-}
-
-function cleanBarcodeBase(text) {
-  return String(text || "SP")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "")
-    .slice(0, 12)
-}
-
-function genBarcodeFromText(text) {
-  const base = cleanBarcodeBase(text)
-  const rnd = Math.random().toString(16).slice(2, 8).toUpperCase()
-  return `BC-${base}-${rnd}`
 }
 
 function AppModal({ title, children, footer, onClose, wide = false, xwide = false, zIndex = 12000 }) {
@@ -451,10 +439,10 @@ export default function ReceivePrintPage() {
   async function ensureBarcode() {
     if (!picked) return null
     if (picked.barcode) return picked.barcode
-    const bc = genBarcodeFromText(picked.sku || picked.name || `VAR${picked.variant_id}`)
-    const updated = await patch(`/api/v1/products/variants/${picked.variant_id}`, { barcode: bc })
-    setPicked((prev) => (prev ? { ...prev, barcode: updated?.barcode || bc } : prev))
-    showInfo(`Đã tạo barcode: ${bc}`)
+    const updated = await patch(`/api/v1/products/variants/${picked.variant_id}`, { barcode: AUTO_EAN13_SENTINEL })
+    const bc = updated?.barcode || null
+    setPicked((prev) => (prev ? { ...prev, barcode: bc } : prev))
+    if (bc) showInfo(`Đã tạo barcode EAN-13: ${bc}`)
     return bc
   }
 

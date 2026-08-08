@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { patch, post } from "../api"
 import Modal from "./Modal"
 import FieldLabel from "../ui/FieldLabel"
+import { AUTO_EAN13_SENTINEL } from "../utils/ean13"
 import { openPrintLabels } from "../utils/barcodeLabels"
 
 function parseAttrValues(text) {
@@ -57,19 +58,6 @@ function slugifySku(value) {
 
 function normalizeBarcode(value) {
   return String(value || "").trim()
-}
-
-function cleanBarcodeBase(text) {
-  return String(text || "SP")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "")
-    .slice(0, 12)
-}
-
-function genBarcodeFromText(text) {
-  const base = cleanBarcodeBase(text)
-  const rnd = Math.random().toString(16).slice(2, 8).toUpperCase()
-  return `BC-${base}-${rnd}`
 }
 
 function makeVariantRow(patch = {}) {
@@ -438,9 +426,8 @@ export default function ProductCreateModal({
 
   async function ensureVariantBarcode(variant) {
     if (variant?.barcode) return variant.barcode
-    const bc = genBarcodeFromText(variant?.sku || variant?.name || "SP")
-    const updated = await patch(`/api/v1/products/variants/${variant.id}`, { barcode: bc })
-    return updated?.barcode || bc
+    const updated = await patch(`/api/v1/products/variants/${variant.id}`, { barcode: AUTO_EAN13_SENTINEL })
+    return updated?.barcode || null
   }
 
   async function createVariantUnderParent(row, parent) {
@@ -448,7 +435,7 @@ export default function ProductCreateModal({
     let imageUrl = String(row.image_url || "").trim() || null
     if (!imageUrl && row.image_file) imageUrl = await uploadImage(row.image_file)
     let barcode = String(row.barcode || "").trim() || null
-    if (!trackStockUnit && !barcode) barcode = genBarcodeFromText(row.sku || row.name || parent.name)
+    if (!trackStockUnit && !barcode) barcode = AUTO_EAN13_SENTINEL
     const attrsPayload = row.attrs && typeof row.attrs === "object" ? { ...row.attrs } : {}
     if (trackStockUnit) attrsPayload.meters_per_roll = Number(commonMetersPerRoll)
 
@@ -474,7 +461,7 @@ export default function ProductCreateModal({
     let imageUrl = String(row.image_url || "").trim() || null
     if (!imageUrl && row.image_file) imageUrl = await uploadImage(row.image_file)
     let barcode = String(row.barcode || "").trim() || null
-    if (!trackStockUnit && !barcode) barcode = genBarcodeFromText(row.sku || row.name || baseProductName)
+    if (!trackStockUnit && !barcode) barcode = AUTO_EAN13_SENTINEL
     const attrsPayload = row.attrs && typeof row.attrs === "object" ? { ...row.attrs } : {}
     attrsPayload._single_product = true
     if (trackStockUnit) attrsPayload.meters_per_roll = Number(commonMetersPerRoll)

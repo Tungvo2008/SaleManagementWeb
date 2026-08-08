@@ -18,6 +18,7 @@ from app.schemas.product import (
     ParentCreate, ParentUpdate, ParentOut, ParentWithVariants,
     VariantCreate, VariantUpdate, VariantOut
 )
+from app.services.ean13 import AUTO_EAN13_SENTINEL, DEFAULT_EAN13_PREFIX, generate_random_ean13, is_valid_ean13, normalize_barcode_digits
 from app.services.pricing import record_price_change
 
 router = APIRouter()
@@ -63,6 +64,42 @@ def _record_variant_price_fields(
         new_value=new_price,
         source=source,
     )
+
+
+def _generate_unique_product_barcode(db: Session, *, exclude_id: int | None = None, prefix: str = DEFAULT_EAN13_PREFIX) -> str:
+    for _ in range(50):
+        barcode = generate_random_ean13(prefix=prefix)
+        q = select(Product.id).where(Product.barcode == barcode)
+        if exclude_id is not None:
+            q = q.where(Product.id != exclude_id)
+        exists = db.scalars(q).first()
+        if not exists:
+            return barcode
+    raise HTTPException(500, "Không tạo được barcode EAN-13 duy nhất")
+
+
+def _resolve_product_barcode(
+    db: Session,
+    *,
+    barcode: str | None,
+    exclude_id: int | None = None,
+    auto_generate: bool,
+) -> str | None:
+    raw = str(barcode or "").strip()
+    if raw == AUTO_EAN13_SENTINEL or (not raw and auto_generate):
+        return _generate_unique_product_barcode(db, exclude_id=exclude_id, prefix=DEFAULT_EAN13_PREFIX)
+    if not raw:
+        return None
+    digits = normalize_barcode_digits(raw)
+    if not is_valid_ean13(digits):
+        raise HTTPException(422, "Barcode phải là EAN-13 hợp lệ")
+    q = select(Product.id).where(Product.barcode == digits)
+    if exclude_id is not None:
+        q = q.where(Product.id != exclude_id)
+    exists = db.scalars(q).first()
+    if exists:
+        raise HTTPException(409, "Barcode already exists")
+    return digits
     record_price_change(
         db,
         variant_id=variant_id,
@@ -162,12 +199,11 @@ def create_variant(parent_id: int, payload: VariantCreate, db: Session = Depends
     exists = db.scalars(select(Product.id).where(Product.sku == sku)).first()
     if exists:
         raise HTTPException(409, "SKU already exists")
-
-    # barcode nếu có phải unique
-    if payload.barcode:
-        exists = db.scalars(select(Product.id).where(Product.barcode == payload.barcode)).first()
-        if exists:
-            raise HTTPException(409, "Barcode already exists")
+    next_barcode = _resolve_product_barcode(
+        db,
+        barcode=payload.barcode,
+        auto_generate=not payload.track_stock_unit,
+    )
 
     child = Product(
         parent_id=parent_id,
@@ -181,7 +217,7 @@ def create_variant(parent_id: int, payload: VariantCreate, db: Session = Depends
         uom=uom,
         stock=payload.stock,
         sku=sku,
-        barcode=payload.barcode,
+        barcode=next_barcode,
         attrs=payload.attrs,
         track_stock_unit=payload.track_stock_unit,
         is_active=payload.is_active,
@@ -217,11 +253,11 @@ def create_standalone_variant(payload: VariantCreate, db: Session = Depends(get_
     exists = db.scalars(select(Product.id).where(Product.sku == sku)).first()
     if exists:
         raise HTTPException(409, "SKU already exists")
-
-    if payload.barcode:
-        exists = db.scalars(select(Product.id).where(Product.barcode == payload.barcode)).first()
-        if exists:
-            raise HTTPException(409, "Barcode already exists")
+    next_barcode = _resolve_product_barcode(
+        db,
+        barcode=payload.barcode,
+        auto_generate=not payload.track_stock_unit,
+    )
 
     obj = Product(
         parent_id=None,
@@ -235,7 +271,7 @@ def create_standalone_variant(payload: VariantCreate, db: Session = Depends(get_
         uom=uom,
         stock=payload.stock,
         sku=sku,
-        barcode=payload.barcode,
+        barcode=next_barcode,
         attrs=payload.attrs,
         track_stock_unit=payload.track_stock_unit,
         is_active=payload.is_active,
@@ -320,13 +356,13 @@ def update_variant(variant_id: int, payload: VariantUpdate, db: Session = Depend
     if exists:
         raise HTTPException(409, "SKU already exists")
 
-    # nếu đổi barcode thì check unique
-    if "barcode" in data and data["barcode"]:
-        exists = db.scalars(
-            select(Product.id).where(Product.barcode == data["barcode"], Product.id != variant_id)
-        ).first()
-        if exists:
-            raise HTTPException(409, "Barcode already exists")
+    if "barcode" in data:
+        data["barcode"] = _resolve_product_barcode(
+            db,
+            barcode=data.get("barcode"),
+            exclude_id=variant_id,
+            auto_generate=bool(v and not v.track_stock_unit),
+        )
 
     for k, v2 in data.items():
         setattr(v, k, v2)
