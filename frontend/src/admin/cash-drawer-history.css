@@ -15,6 +15,12 @@
   font-size: 13px;
 }
 
+.cdhSectionTitle {
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
 .cdhActions {
   display: flex;
   gap: 8px;

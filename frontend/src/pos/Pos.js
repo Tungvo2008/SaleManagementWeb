@@ -1173,6 +1173,59 @@ function CashDrawerModal({
     >
       {err ? <div className="payStatus payStatusErr">{err}</div> : null}
 
+      {canManagerWithdraw ? (
+        <div className="card flatCard">
+          <div className="cardHeader">
+            <div className="cardTitle">
+              Manager rút tiền {session ? `trong ca #${session.id}` : "ngoài ca"}
+            </div>
+          </div>
+          <div className="cardBody" style={{ display: "grid", gap: 10 }}>
+            {!session ? (
+              <div className="hint" style={{ marginTop: 0 }}>
+                Khoản rút sẽ được lưu riêng trong lịch sử vì hiện chưa có ca mở.
+              </div>
+            ) : null}
+            <div className="split">
+              <div>
+                <FieldLabel className="hint" style={{ marginTop: 0 }} required>
+                  Số tiền rút
+                </FieldLabel>
+                <input
+                  className="input"
+                  value={withdrawAmount}
+                  onChange={(e) =>
+                    setWithdrawAmount(clampMoneyInput(e.target.value))
+                  }
+                  onFocus={selectAllOnFocus}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <div className="hint" style={{ marginTop: 0 }}>
+                  Ghi chú
+                </div>
+                <input
+                  className="input"
+                  value={withdrawNote}
+                  onChange={(e) => setWithdrawNote(e.target.value)}
+                  placeholder="Lý do rút..."
+                />
+              </div>
+            </div>
+            <div>
+              <button
+                className="btn btnDanger"
+                disabled={busy}
+                onClick={submitWithdraw}
+              >
+                Rút tiền khỏi thùng
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {!session ? (
         <div className="card flatCard">
           <div className="cardHeader">
@@ -1290,55 +1343,6 @@ function CashDrawerModal({
             </div>
           </div>
 
-          {canManagerWithdraw ? (
-            <div className="card flatCard">
-              <div className="cardHeader">
-                <div className="cardTitle">Manager rút tiền</div>
-              </div>
-              <div className="cardBody" style={{ display: "grid", gap: 10 }}>
-                <div className="split">
-                  <div>
-                    <FieldLabel
-                      className="hint"
-                      style={{ marginTop: 0 }}
-                      required
-                    >
-                      Số tiền rút
-                    </FieldLabel>
-                    <input
-                      className="input"
-                      value={withdrawAmount}
-                      onChange={(e) =>
-                        setWithdrawAmount(clampMoneyInput(e.target.value))
-                      }
-                      onFocus={selectAllOnFocus}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <div className="hint" style={{ marginTop: 0 }}>
-                      Ghi chú
-                    </div>
-                    <input
-                      className="input"
-                      value={withdrawNote}
-                      onChange={(e) => setWithdrawNote(e.target.value)}
-                      placeholder="Lý do rút..."
-                    />
-                  </div>
-                </div>
-                <div>
-                  <button
-                    className="btn btnDanger"
-                    disabled={busy}
-                    onClick={submitWithdraw}
-                  >
-                    Rút tiền khỏi thùng
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
 
           <div className="card flatCard">
             <div className="cardHeader">
@@ -1726,12 +1730,18 @@ export default function Pos({
   async function managerWithdrawCash(payload) {
     setDrawerBusy(true)
     try {
-      const r = await post(
-        "/api/v1/pos/cash-drawer/current/manager-withdraw",
-        payload,
-      )
-      setDrawerSession(r)
-      showInfo("Đã ghi nhận rút tiền khỏi thùng")
+      if (drawerSession?.status === "open") {
+        const session = await post(
+          "/api/v1/pos/cash-drawer/current/manager-withdraw",
+          payload,
+        )
+        setDrawerSession(session)
+        showInfo("Đã ghi nhận rút tiền trong ca")
+      } else {
+        await post("/api/v1/pos/cash-drawer/manager-withdraw", payload)
+        setDrawerSession(null)
+        showInfo("Đã ghi nhận rút tiền ngoài ca")
+      }
     } finally {
       setDrawerBusy(false)
     }

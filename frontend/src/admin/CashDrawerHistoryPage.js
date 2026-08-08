@@ -26,6 +26,7 @@ function entryTypeLabel(v) {
 
 export default function CashDrawerHistoryPage() {
   const [rows, setRows] = useState([])
+  const [standaloneRows, setStandaloneRows] = useState([])
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState(null)
   const [status, setStatus] = useState("")
@@ -52,6 +53,18 @@ export default function CashDrawerHistoryPage() {
     })
   }, [rows, q])
 
+  const filteredStandalone = useMemo(() => {
+    const needle = (q || "").trim().toLowerCase()
+    if (!needle) return standaloneRows
+    return standaloneRows.filter((entry) =>
+      [entry.id, entry.created_by_username, entry.note]
+        .filter(Boolean)
+        .map((value) => String(value).toLowerCase())
+        .join(" · ")
+        .includes(needle),
+    )
+  }, [standaloneRows, q])
+
   async function loadAll() {
     setLoading(true)
     setErr(null)
@@ -67,11 +80,16 @@ export default function CashDrawerHistoryPage() {
         ),
       )
       if (status) params.set("status", status)
-      const data = await get(`/api/v1/pos/cash-drawer/sessions?${params.toString()}`)
+      const [data, standalone] = await Promise.all([
+        get(`/api/v1/pos/cash-drawer/sessions?${params.toString()}`),
+        get(`/api/v1/pos/cash-drawer/standalone-entries?limit=${params.get("limit")}`),
+      ])
       setRows(Array.isArray(data) ? data : [])
+      setStandaloneRows(Array.isArray(standalone) ? standalone : [])
     } catch (e) {
       setErr(e?.message || "Không tải được lịch sử thùng tiền")
       setRows([])
+      setStandaloneRows([])
     } finally {
       setLoading(false)
     }
@@ -104,7 +122,7 @@ export default function CashDrawerHistoryPage() {
             ? "Đang tải..."
             : err
               ? `Lỗi: ${err}`
-              : `${filtered.length}/${rows.length} ca thùng tiền`}
+              : `${filtered.length}/${rows.length} ca · ${filteredStandalone.length} khoản rút ngoài ca`}
         </div>
         <div className="cdhActions">
           <button className="cdhBtn" disabled={loading} onClick={() => loadAll()}>
@@ -275,6 +293,58 @@ export default function CashDrawerHistoryPage() {
                 </button>
               </span>
             ),
+          },
+        ]}
+      />
+
+      <div className="cdhSectionTitle">Manager rút tiền ngoài ca</div>
+      <DataGrid
+        id="cashDrawer.standaloneEntries"
+        rows={filteredStandalone}
+        rowKey={(entry) => entry.id}
+        columns={[
+          {
+            key: "id",
+            title: "Phiếu #",
+            width: 100,
+            minWidth: 90,
+            render: (entry) => <span className="cdhMono">#{entry.id}</span>,
+          },
+          {
+            key: "created_at",
+            title: "Thời gian (VN)",
+            width: 190,
+            minWidth: 170,
+            render: (entry) => (
+              <span className="cdhMono">{fmtDateTimeVN(entry.created_at, "—")}</span>
+            ),
+          },
+          {
+            key: "delta_cash",
+            title: "Số tiền rút",
+            width: 160,
+            minWidth: 140,
+            align: "right",
+            getValue: (entry) => Math.abs(Number(entry.delta_cash || 0)),
+            render: (entry) => (
+              <span className="cdhMono">{fmtMoney(Math.abs(Number(entry.delta_cash || 0)))}</span>
+            ),
+          },
+          {
+            key: "created_by_username",
+            title: "Người rút",
+            width: 150,
+            minWidth: 130,
+            render: (entry) => (
+              <span>{entry.created_by_username || `#${entry.created_by_user_id}`}</span>
+            ),
+          },
+          {
+            key: "note",
+            title: "Ghi chú",
+            fill: true,
+            minWidth: 240,
+            render: (entry) => <span>{entry.note || "—"}</span>,
           },
         ]}
       />

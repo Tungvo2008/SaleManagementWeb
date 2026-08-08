@@ -51,6 +51,21 @@ def _get_entries(db: Session, session_id: int, limit: int = 100) -> list[CashDra
     )
 
 
+def _entry_out(db: Session, entry: CashDrawerEntry) -> CashDrawerEntryOut:
+    created_by = db.get(User, entry.created_by_user_id)
+    return CashDrawerEntryOut(
+        id=entry.id,
+        session_id=entry.session_id,
+        entry_type=entry.entry_type,
+        delta_cash=_to_decimal(entry.delta_cash),
+        note=entry.note,
+        order_id=entry.order_id,
+        created_at=entry.created_at,
+        created_by_user_id=entry.created_by_user_id,
+        created_by_username=None if created_by is None else created_by.username,
+    )
+
+
 def _session_out(db: Session, obj: CashDrawerSession, include_entries: bool, entry_limit: int) -> CashDrawerSessionOut:
     opened_by = db.get(User, obj.opened_by_user_id)
     closed_by = db.get(User, obj.closed_by_user_id) if obj.closed_by_user_id is not None else None
@@ -58,19 +73,7 @@ def _session_out(db: Session, obj: CashDrawerSession, include_entries: bool, ent
     entries_out: list[CashDrawerEntryOut] = []
     if include_entries:
         entries = _get_entries(db, obj.id, limit=entry_limit)
-        entries_out = [
-            CashDrawerEntryOut(
-                id=e.id,
-                session_id=e.session_id,
-                entry_type=e.entry_type,
-                delta_cash=_to_decimal(e.delta_cash),
-                note=e.note,
-                order_id=e.order_id,
-                created_at=e.created_at,
-                created_by_user_id=e.created_by_user_id,
-            )
-            for e in entries
-        ]
+        entries_out = [_entry_out(db, entry) for entry in entries]
 
     return CashDrawerSessionOut(
         id=obj.id,
@@ -195,6 +198,48 @@ def manager_withdraw(
     db.commit()
     db.refresh(obj)
     return _session_out(db, obj, include_entries=True, entry_limit=100)
+
+
+@router.post("/manager-withdraw", response_model=CashDrawerEntryOut)
+def manager_withdraw_without_session(
+    payload: CashDrawerManagerWithdrawIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    if user.role not in {"admin", "manager"}:
+        raise HTTPException(403, "Only manager/admin can withdraw cash")
+    if _get_open_session(db) is not None:
+        raise HTTPException(409, "Cash drawer is open; withdraw from the current session")
+
+    entry = CashDrawerEntry(
+        session_id=None,
+        entry_type="manager_withdraw",
+        delta_cash=payload.amount * Decimal("-1"),
+        note=payload.note,
+        order_id=None,
+        created_by_user_id=user.id,
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return _entry_out(db, entry)
+
+
+@router.get("/standalone-entries", response_model=list[CashDrawerEntryOut])
+def list_standalone_entries(
+    limit: int = Query(200, ge=1, le=500),
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    if user.role not in {"admin", "manager"}:
+        raise HTTPException(403, "Only manager/admin can view standalone cash entries")
+    entries = db.scalars(
+        select(CashDrawerEntry)
+        .where(CashDrawerEntry.session_id.is_(None))
+        .order_by(CashDrawerEntry.id.desc())
+        .limit(limit)
+    ).all()
+    return [_entry_out(db, entry) for entry in entries]
 
 
 @router.post("/current/close", response_model=CashDrawerSessionOut)

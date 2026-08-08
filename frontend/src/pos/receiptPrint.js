@@ -1,7 +1,10 @@
 import { fmtDateTimeVN } from "../utils/datetime"
 import { formatMoneyVN } from "../utils/number"
 import { buildPrintAutoCloseScript, openPrintDocument } from "../utils/print"
-import { defaultReceiptTemplate, normalizeReceiptTemplate } from "./receiptTemplate"
+import {
+  defaultReceiptTemplate,
+  normalizeReceiptTemplate,
+} from "./receiptTemplate"
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -49,11 +52,11 @@ function receiptHeader(receipt, config, { a4 = false } = {}) {
     <header class="receiptHeader ${a4 ? "center" : ""}">
       <div class="storeName">${escapeHtml(config.storeName || "Cửa hàng")}</div>
       ${config.storeAddress ? `<div>Địa chỉ: ${escapeHtml(config.storeAddress)}</div>` : ""}
-      ${config.storePhone ? `<div>ĐT: ${escapeHtml(config.storePhone)}</div>` : ""}
+      ${config.storePhone ? `<div>SĐT: ${escapeHtml(config.storePhone)}</div>` : ""}
       ${config.headerNote ? `<div class="headerNote">${escapeHtml(config.headerNote)}</div>` : ""}
       <div class="invoiceTitle">HÓA ĐƠN BÁN HÀNG</div>
       <div>Số HĐ: ${escapeHtml(invoiceNumber(receipt))}</div>
-      <div>Thời gian xuất hóa đơn: ${escapeHtml(fmtDateTimeVN(receipt.created_at))}</div>
+      <div>Ngày xuất hóa đơn: ${escapeHtml(fmtDateTimeVN(receipt.created_at))}</div>
       <div class="customer">Khách hàng: ${escapeHtml(customer)}</div>
       ${receipt.customer_phone ? `<div class="customerPhone">SĐT khách hàng: ${escapeHtml(receipt.customer_phone)}</div>` : ""}
     </header>`
@@ -167,7 +170,11 @@ ${receiptBody(receipt, config)}
 </main>${autoPrint ? `<script>${buildPrintAutoCloseScript()}</script>` : ""}</body></html>`
 }
 
-export function buildReceiptPrintHtml(receipt, template, { autoPrint = true } = {}) {
+export function buildReceiptPrintHtml(
+  receipt,
+  template,
+  { autoPrint = true } = {},
+) {
   const config = normalizeReceiptTemplate(template || defaultReceiptTemplate)
   return config.printLayout === "a4"
     ? a4Html(receipt, config, autoPrint)
@@ -189,7 +196,9 @@ export function openReceiptPrint(receipt, template) {
     popup.document.close()
     popup.focus()
   } catch {
-    const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }))
+    const url = URL.createObjectURL(
+      new Blob([html], { type: "text/html;charset=utf-8" }),
+    )
     window.open(url, "_blank")
   }
   return true

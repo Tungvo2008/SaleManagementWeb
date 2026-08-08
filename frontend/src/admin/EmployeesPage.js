@@ -168,14 +168,19 @@ function EmployeeModal({ title, busy, initial, isEdit = false, onClose, onSave }
             disabled={busy}
             onClick={() => {
               setErr(null)
-              if (!username.trim()) return setErr("Username là bắt buộc.")
-              if (!isEdit && password.length < 6) return setErr("Mật khẩu tối thiểu 6 ký tự.")
+              const normalizedUsername = username.trim()
+              if (!normalizedUsername) return setErr("Username là bắt buộc.")
+              if (normalizedUsername.length < 3) return setErr("Username tối thiểu 3 ký tự.")
+              if (normalizedUsername.length > 64) return setErr("Username tối đa 64 ký tự.")
+              if (!isEdit && !password) return setErr("Mật khẩu là bắt buộc.")
+              if (password && password.length < 6) return setErr("Mật khẩu mới tối thiểu 6 ký tự.")
+              if (password.length > 200) return setErr("Mật khẩu tối đa 200 ký tự.")
               const payload = {
-                username: username.trim(),
+                username: normalizedUsername,
                 role,
                 is_active: isActive,
               }
-              if (password.trim()) payload.password = password
+              if (password) payload.password = password
               onSave(payload).catch((e) => setErr(e?.message || "Không lưu được nhân viên"))
             }}
           >

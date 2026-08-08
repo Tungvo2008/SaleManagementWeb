@@ -23,13 +23,14 @@ class CashDrawerManagerWithdrawIn(BaseModel):
 
 class CashDrawerEntryOut(BaseModel):
     id: int
-    session_id: int
+    session_id: int | None
     entry_type: str
     delta_cash: Decimal
     note: str | None = None
     order_id: int | None = None
     created_at: datetime
     created_by_user_id: int
+    created_by_username: str | None = None
 
     class Config:
         from_attributes = True

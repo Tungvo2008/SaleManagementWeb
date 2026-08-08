@@ -18,6 +18,39 @@ async function parseBody(res) {
   }
 }
 
+function validationIssueMessage(issue) {
+  const field = Array.isArray(issue?.loc)
+    ? issue.loc.filter((part) => part !== "body").join(".")
+    : ""
+  const type = String(issue?.type || "")
+  const context = issue?.ctx || {}
+  let message = String(issue?.msg || "Dữ liệu không hợp lệ")
+
+  if (type === "string_too_short" && context.min_length != null) {
+    message = `tối thiểu ${context.min_length} ký tự`
+  } else if (type === "string_too_long" && context.max_length != null) {
+    message = `tối đa ${context.max_length} ký tự`
+  } else if (type === "missing") {
+    message = "là bắt buộc"
+  }
+
+  return field ? `${field}: ${message}` : message
+}
+
+function apiErrorMessage(data, status) {
+  if (data && typeof data === "object") {
+    const detail = data.detail ?? data.message
+    if (typeof detail === "string") return detail
+    if (Array.isArray(detail)) return detail.map(validationIssueMessage).join(". ")
+    if (detail && typeof detail === "object" && typeof detail.message === "string") {
+      return detail.message
+    }
+    if (typeof data.message === "string") return data.message
+  }
+  if (typeof data === "string") return data
+  return `HTTP ${status}`
+}
+
 async function refreshAuthOnce() {
   if (!refreshPromise) {
     refreshPromise = fetch(`${API_BASE}/api/v1/auth/refresh`, {
@@ -27,9 +60,7 @@ async function refreshAuthOnce() {
       .then(async (res) => {
         const data = await parseBody(res)
         if (!res.ok) {
-          const err = new Error(
-            (data && typeof data === "object" && (data.detail || data.message)) || `HTTP ${res.status}`
-          )
+          const err = new Error(apiErrorMessage(data, res.status))
           err.status = res.status
           throw err
         }
@@ -94,15 +125,7 @@ export async function api(path, { method = "GET", body, headers, _retried = fals
       redirectToLogin()
     }
 
-    let msg = null
-    if (data && typeof data === "object") {
-      const d = data.detail ?? data.message
-      if (typeof d === "string") msg = d
-      else if (d && typeof d === "object" && typeof d.message === "string") msg = d.message
-      else if (typeof data.message === "string") msg = data.message
-    }
-    if (!msg && typeof data === "string") msg = data
-    if (!msg) msg = `HTTP ${res.status}`
+    const msg = apiErrorMessage(data, res.status)
     const err = new Error(msg)
     err.status = res.status
     err.data = data
