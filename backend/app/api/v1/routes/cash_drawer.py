@@ -12,18 +12,25 @@ from app.api.v1.routes.auth import current_user
 from app.db.deps import get_db
 from app.models.cash_drawer_entry import CashDrawerEntry
 from app.models.cash_drawer_session import CashDrawerSession
+from app.models.cash_drawer_security import CashDrawerSecurity
 from app.models.user import User
+from app.core.security import hash_password, verify_password
 from app.schemas.cash_drawer import (
     CashDrawerCloseIn,
     CashDrawerEntryOut,
     CashDrawerManagerWithdrawIn,
     CashDrawerOpenIn,
     CashDrawerSessionOut,
+    CashDrawerVisibilityPasswordIn,
+    CashDrawerVisibilityPasswordStatusOut,
+    CashDrawerVisibilityPasswordVerifyIn,
+    CashDrawerVisibilityPasswordVerifyOut,
 )
 
 
 router = APIRouter(prefix="/cash-drawer")
 UTC_TZ = ZoneInfo("UTC")
+SECURITY_ROW_ID = 1
 
 
 def _to_decimal(v) -> Decimal:
@@ -38,6 +45,59 @@ def _get_open_session(db: Session) -> CashDrawerSession | None:
         .where(CashDrawerSession.status == "open")
         .order_by(CashDrawerSession.id.desc())
     ).first()
+
+
+@router.get(
+    "/visibility-password/status",
+    response_model=CashDrawerVisibilityPasswordStatusOut,
+)
+def visibility_password_status(db: Session = Depends(get_db)):
+    return CashDrawerVisibilityPasswordStatusOut(
+        configured=db.get(CashDrawerSecurity, SECURITY_ROW_ID) is not None
+    )
+
+
+@router.patch(
+    "/visibility-password",
+    response_model=CashDrawerVisibilityPasswordStatusOut,
+)
+def set_visibility_password(
+    payload: CashDrawerVisibilityPasswordIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    if user.role != "admin":
+        raise HTTPException(403, "Chỉ admin được đặt hoặc đổi mật khẩu xem tiền")
+
+    security = db.get(CashDrawerSecurity, SECURITY_ROW_ID)
+    if security is None:
+        security = CashDrawerSecurity(
+            id=SECURITY_ROW_ID,
+            visibility_password_hash=hash_password(payload.password),
+            updated_by_user_id=user.id,
+        )
+        db.add(security)
+    else:
+        security.visibility_password_hash = hash_password(payload.password)
+        security.updated_by_user_id = user.id
+    db.commit()
+    return CashDrawerVisibilityPasswordStatusOut(configured=True)
+
+
+@router.post(
+    "/visibility-password/verify",
+    response_model=CashDrawerVisibilityPasswordVerifyOut,
+)
+def verify_visibility_password(
+    payload: CashDrawerVisibilityPasswordVerifyIn,
+    db: Session = Depends(get_db),
+):
+    security = db.get(CashDrawerSecurity, SECURITY_ROW_ID)
+    if security is None:
+        raise HTTPException(409, "Admin chưa thiết lập mật khẩu xem tiền")
+    if not verify_password(payload.password, security.visibility_password_hash):
+        raise HTTPException(403, "Mật khẩu xem tiền không đúng")
+    return CashDrawerVisibilityPasswordVerifyOut(verified=True)
 
 
 def _get_entries(db: Session, session_id: int, limit: int = 100) -> list[CashDrawerEntry]:

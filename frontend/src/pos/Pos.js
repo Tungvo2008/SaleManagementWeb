@@ -1092,6 +1092,8 @@ function CashDrawerModal({
   onOpenSession,
   onCloseSession,
   onManagerWithdraw,
+  onVerifyVisibilityPassword,
+  onSetVisibilityPassword,
 }) {
   const [openingCash, setOpeningCash] = useState("")
   const [openNote, setOpenNote] = useState("")
@@ -1101,6 +1103,12 @@ function CashDrawerModal({
   const [withdrawNote, setWithdrawNote] = useState("")
   const [err, setErr] = useState("")
   const [showDrawerInfo, setShowDrawerInfo] = useState(false)
+  const [passwordPromptOpen, setPasswordPromptOpen] = useState(false)
+  const [visibilityPassword, setVisibilityPassword] = useState("")
+  const [passwordBusy, setPasswordBusy] = useState(false)
+  const [passwordSettingsOpen, setPasswordSettingsOpen] = useState(false)
+  const [newVisibilityPassword, setNewVisibilityPassword] = useState("")
+  const [confirmVisibilityPassword, setConfirmVisibilityPassword] = useState("")
 
   const canManagerWithdraw = userRole === "admin" || userRole === "manager"
 
@@ -1148,6 +1156,57 @@ function CashDrawerModal({
     }
   }
 
+  function toggleDrawerInfo() {
+    if (showDrawerInfo) {
+      setShowDrawerInfo(false)
+      setVisibilityPassword("")
+      return
+    }
+    setErr("")
+    setPasswordPromptOpen(true)
+  }
+
+  async function submitVisibilityPassword(e) {
+    e?.preventDefault()
+    setErr("")
+    setPasswordBusy(true)
+    try {
+      await onVerifyVisibilityPassword({ password: visibilityPassword })
+      setShowDrawerInfo(true)
+      setPasswordPromptOpen(false)
+      setVisibilityPassword("")
+    } catch (error) {
+      setErr(error?.message || "Không xác minh được mật khẩu xem tiền")
+    } finally {
+      setPasswordBusy(false)
+    }
+  }
+
+  async function submitNewVisibilityPassword(e) {
+    e?.preventDefault()
+    setErr("")
+    if (newVisibilityPassword.length < 6) {
+      setErr("Mật khẩu xem tiền phải có ít nhất 6 ký tự")
+      return
+    }
+    if (newVisibilityPassword !== confirmVisibilityPassword) {
+      setErr("Mật khẩu nhập lại chưa khớp")
+      return
+    }
+    setPasswordBusy(true)
+    try {
+      await onSetVisibilityPassword({ password: newVisibilityPassword })
+      setNewVisibilityPassword("")
+      setConfirmVisibilityPassword("")
+      setPasswordSettingsOpen(false)
+      setShowDrawerInfo(false)
+    } catch (error) {
+      setErr(error?.message || "Không đổi được mật khẩu xem tiền")
+    } finally {
+      setPasswordBusy(false)
+    }
+  }
+
   return (
     <Modal
       wide
@@ -1172,6 +1231,95 @@ function CashDrawerModal({
       }
     >
       {err ? <div className="payStatus payStatusErr">{err}</div> : null}
+
+      {passwordPromptOpen ? (
+        <form className="card flatCard" onSubmit={submitVisibilityPassword}>
+          <div className="cardHeader">
+            <div className="cardTitle">Nhập mật khẩu để xem số tiền</div>
+          </div>
+          <div className="cardBody" style={{ display: "grid", gap: 10 }}>
+            <input
+              className="input"
+              type="password"
+              autoFocus
+              autoComplete="off"
+              value={visibilityPassword}
+              onChange={(e) => setVisibilityPassword(e.target.value)}
+              placeholder="Mật khẩu xem tiền"
+            />
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                className="btn btnPrimary"
+                type="submit"
+                disabled={passwordBusy || !visibilityPassword}
+              >
+                Xác nhận
+              </button>
+              <button
+                className="btn"
+                type="button"
+                disabled={passwordBusy}
+                onClick={() => {
+                  setPasswordPromptOpen(false)
+                  setVisibilityPassword("")
+                }}
+              >
+                Huỷ
+              </button>
+            </div>
+          </div>
+        </form>
+      ) : null}
+
+      {userRole === "admin" ? (
+        <div className="card flatCard">
+          <div className="cardHeader">
+            <div className="cardTitle">Bảo mật số tiền</div>
+            <button
+              className="btn"
+              type="button"
+              onClick={() => setPasswordSettingsOpen((v) => !v)}
+            >
+              {passwordSettingsOpen ? "Đóng" : "Đặt / đổi mật khẩu"}
+            </button>
+          </div>
+          {passwordSettingsOpen ? (
+            <form
+              className="cardBody"
+              style={{ display: "grid", gap: 10 }}
+              onSubmit={submitNewVisibilityPassword}
+            >
+              <div className="split">
+                <input
+                  className="input"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newVisibilityPassword}
+                  onChange={(e) => setNewVisibilityPassword(e.target.value)}
+                  placeholder="Mật khẩu mới (ít nhất 6 ký tự)"
+                />
+                <input
+                  className="input"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmVisibilityPassword}
+                  onChange={(e) => setConfirmVisibilityPassword(e.target.value)}
+                  placeholder="Nhập lại mật khẩu mới"
+                />
+              </div>
+              <div>
+                <button
+                  className="btn btnPrimary"
+                  type="submit"
+                  disabled={passwordBusy}
+                >
+                  Lưu mật khẩu
+                </button>
+              </div>
+            </form>
+          ) : null}
+        </div>
+      ) : null}
 
       {canManagerWithdraw ? (
         <div className="card flatCard">
@@ -1285,7 +1433,7 @@ function CashDrawerModal({
                 className="btn btnIconAction"
                 style={{ width: 38, height: 38 }}
                 type="button"
-                onClick={() => setShowDrawerInfo((v) => !v)}
+                onClick={toggleDrawerInfo}
                 title={showDrawerInfo ? "Ẩn thông tin ca" : "Hiện thông tin ca"}
                 aria-label={
                   showDrawerInfo ? "Ẩn thông tin ca" : "Hiện thông tin ca"
@@ -1745,6 +1893,22 @@ export default function Pos({
     } finally {
       setDrawerBusy(false)
     }
+  }
+
+  async function verifyCashDrawerVisibilityPassword(payload) {
+    return post(
+      "/api/v1/pos/cash-drawer/visibility-password/verify",
+      payload,
+    )
+  }
+
+  async function setCashDrawerVisibilityPassword(payload) {
+    const result = await patch(
+      "/api/v1/pos/cash-drawer/visibility-password",
+      payload,
+    )
+    showInfo("Đã cập nhật mật khẩu xem tiền")
+    return result
   }
 
   async function openOrderHistory() {
@@ -3202,6 +3366,8 @@ export default function Pos({
           onOpenSession={openCashDrawerSession}
           onCloseSession={closeCashDrawerSession}
           onManagerWithdraw={managerWithdrawCash}
+          onVerifyVisibilityPassword={verifyCashDrawerVisibilityPassword}
+          onSetVisibilityPassword={setCashDrawerVisibilityPassword}
         />
       ) : null}
 

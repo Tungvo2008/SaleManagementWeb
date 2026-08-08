@@ -21,6 +21,22 @@ class CashDrawerManagerWithdrawIn(BaseModel):
     note: str | None = None
 
 
+class CashDrawerVisibilityPasswordIn(BaseModel):
+    password: str = Field(..., min_length=6, max_length=200)
+
+
+class CashDrawerVisibilityPasswordVerifyIn(BaseModel):
+    password: str = Field(..., min_length=1, max_length=200)
+
+
+class CashDrawerVisibilityPasswordStatusOut(BaseModel):
+    configured: bool
+
+
+class CashDrawerVisibilityPasswordVerifyOut(BaseModel):
+    verified: bool
+
+
 class CashDrawerEntryOut(BaseModel):
     id: int
     session_id: int | None

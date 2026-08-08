@@ -13,3 +13,4 @@ from app.models.price_history import PriceHistory
 from app.models.audit_log import AuditLog
 from app.models.cash_drawer_session import CashDrawerSession
 from app.models.cash_drawer_entry import CashDrawerEntry
+from app.models.cash_drawer_security import CashDrawerSecurity
