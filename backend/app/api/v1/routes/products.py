@@ -6,6 +6,7 @@ from app.api.v1.routes.auth import require_admin
 from app.db.deps import get_db
 from app.models.category import Category
 from app.models.price_history import PriceHistory
+from app.models.stock_unit import StockUnit
 from app.models.product import (
     Product,
     is_parent_container,
@@ -72,8 +73,9 @@ def _generate_unique_product_barcode(db: Session, *, exclude_id: int | None = No
         q = select(Product.id).where(Product.barcode == barcode)
         if exclude_id is not None:
             q = q.where(Product.id != exclude_id)
-        exists = db.scalars(q).first()
-        if not exists:
+        product_exists = db.scalars(q).first()
+        stock_unit_exists = db.scalars(select(StockUnit.id).where(StockUnit.barcode == barcode)).first()
+        if not product_exists and not stock_unit_exists:
             return barcode
     raise HTTPException(500, "Không tạo được barcode EAN-13 duy nhất")
 
@@ -96,8 +98,9 @@ def _resolve_product_barcode(
     q = select(Product.id).where(Product.barcode == digits)
     if exclude_id is not None:
         q = q.where(Product.id != exclude_id)
-    exists = db.scalars(q).first()
-    if exists:
+    product_exists = db.scalars(q).first()
+    stock_unit_exists = db.scalars(select(StockUnit.id).where(StockUnit.barcode == digits)).first()
+    if product_exists or stock_unit_exists:
         raise HTTPException(409, "Barcode already exists")
     return digits
     record_price_change(

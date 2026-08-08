@@ -31,8 +31,9 @@ router = APIRouter()
 def _generate_unique_stock_unit_barcode(db: Session, *, prefix: str = DEFAULT_EAN13_PREFIX) -> str:
     for _ in range(50):
         barcode = generate_random_ean13(prefix=prefix)
-        exists = db.scalars(select(StockUnit.id).where(StockUnit.barcode == barcode)).first()
-        if not exists:
+        stock_unit_exists = db.scalars(select(StockUnit.id).where(StockUnit.barcode == barcode)).first()
+        product_exists = db.scalars(select(Product.id).where(Product.barcode == barcode)).first()
+        if not stock_unit_exists and not product_exists:
             return barcode
     raise HTTPException(500, "Không tạo được barcode cuộn EAN-13 duy nhất")
 
@@ -331,8 +332,9 @@ def update_stock_unit(stock_unit_id: int, payload: StockUnitUpdate, db: Session=
         digits = normalize_barcode_digits(next_barcode)
         if not is_valid_ean13(digits):
             raise HTTPException(422, "Barcode phải là EAN-13 hợp lệ")
-        exists = db.scalars(select(StockUnit.id).where(StockUnit.barcode == digits, StockUnit.id != stock_unit_id)).first()
-        if exists:
+        stock_unit_exists = db.scalars(select(StockUnit.id).where(StockUnit.barcode == digits, StockUnit.id != stock_unit_id)).first()
+        product_exists = db.scalars(select(Product.id).where(Product.barcode == digits)).first()
+        if stock_unit_exists or product_exists:
             raise HTTPException(409, "Barcode already exists")
         data["barcode"] = digits
 
