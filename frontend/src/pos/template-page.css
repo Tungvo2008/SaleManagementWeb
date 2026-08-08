@@ -132,6 +132,15 @@
   place-items: start center;
 }
 
+.receiptPreviewFrame {
+  width: 100%;
+  max-width: 100%;
+  height: 680px;
+  border: 1px dashed rgba(18, 20, 23, 0.2);
+  border-radius: 12px;
+  background: #fff;
+}
+
 .previewPaper {
   border: 1px dashed rgba(18, 20, 23, 0.2);
   border-radius: 12px;
@@ -202,4 +211,3 @@
 .pvGrand {
   font-weight: 700;
 }
-

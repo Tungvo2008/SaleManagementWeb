@@ -1,13 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { defaultReceiptTemplate } from "./receiptTemplate"
-import { fmtDateTimeVN } from "../utils/datetime"
-import { formatMoneyVN } from "../utils/number"
+import { buildReceiptPrintHtml } from "./receiptPrint"
 import "./template-page.css"
 import UiSelect from "../ui/Select"
-
-function fmtVnd(n) {
-  return formatMoneyVN(n, { empty: "-" }) || "-"
-}
 
 const sampleReceipt = {
   order_id: 1001,
@@ -48,7 +43,14 @@ export default function ReceiptTemplatePage({ template, onSave, onBack }) {
     setForm(template)
   }, [template])
 
-  const previewPaperWidth = useMemo(() => (form.paperSize === "58" ? 300 : 380), [form.paperSize])
+  const previewPaperWidth = useMemo(() => {
+    if (form.printLayout === "a4") return 760
+    return form.paperSize === "58" ? 300 : 380
+  }, [form.paperSize, form.printLayout])
+  const previewHtml = useMemo(
+    () => buildReceiptPrintHtml(sampleReceipt, form, { autoPrint: false }),
+    [form],
+  )
 
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -166,52 +168,12 @@ export default function ReceiptTemplatePage({ template, onSave, onBack }) {
         <div className="tplPanel tplPreview">
           <div className="tplPanelHead">Xem truoc</div>
           <div className="tplPanelBody">
-            <div className="previewPaper" style={{ width: previewPaperWidth }}>
-              <div className="pvCenter pvStore">{form.storeName || "Cua Hang"}</div>
-              {form.storeAddress ? <div className="pvCenter">{form.storeAddress}</div> : null}
-              {form.storePhone ? <div className="pvCenter">SDT: {form.storePhone}</div> : null}
-              {form.headerNote ? <div className="pvCenter pvMuted">{form.headerNote}</div> : null}
-              <div className="pvDivider" />
-              <div className="pvMuted">Hoa don #{sampleReceipt.order_id}</div>
-              <div className="pvMuted">{fmtDateTimeVN(sampleReceipt.created_at)}</div>
-
-              <table className="pvTable">
-                <thead>
-                  <tr>
-                    <th>Hang</th>
-                    <th className="pvRight">SL</th>
-                    <th className="pvRight">Don gia</th>
-                    <th className="pvRight">TT</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sampleReceipt.items.map((it) => (
-                    <tr key={it.item_id}>
-                      <td>
-                        <div className="pvName">{it.name}</div>
-                        <div className="pvMeta">
-                          {form.showPricingMode ? <span>{it.pricing_mode}</span> : null}
-                          {form.showSku ? <span>SKU: {it.sku}</span> : null}
-                          {form.showBarcode ? <span>BC: {it.barcode}</span> : null}
-                        </div>
-                      </td>
-                      <td className="pvRight">{it.qty} {it.uom}</td>
-                      <td className="pvRight">{fmtVnd(it.unit_price)}</td>
-                      <td className="pvRight">{fmtVnd(it.line_total)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div className="pvTotals">
-                <div><span>Tam tinh</span><b>{fmtVnd(sampleReceipt.subtotal)}</b></div>
-                <div><span>Giam gia</span><b>{fmtVnd(sampleReceipt.discount_total)}</b></div>
-                <div className="pvGrand"><span>Tong</span><b>{fmtVnd(sampleReceipt.grand_total)}</b></div>
-              </div>
-
-              {form.footerText ? <div className="pvCenter pvMuted">{form.footerText}</div> : null}
-              {form.showThankYou ? <div className="pvCenter">Cam on quy khach!</div> : null}
-            </div>
+            <iframe
+              className="receiptPreviewFrame"
+              style={{ width: previewPaperWidth }}
+              srcDoc={previewHtml}
+              title="Xem trước hóa đơn"
+            />
           </div>
         </div>
       </div>

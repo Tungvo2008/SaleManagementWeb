@@ -4,9 +4,9 @@ import Modal from "./Modal"
 import DataGrid from "./DataGrid"
 import ExcelToolsModal from "./ExcelToolsModal"
 import { defaultReceiptTemplate, normalizeReceiptTemplate, loadReceiptTemplate } from "../pos/receiptTemplate"
+import { openReceiptPrint } from "../pos/receiptPrint"
 import { fmtDateTimeVN } from "../utils/datetime"
 import { formatMoneyVN } from "../utils/number"
-import { buildPrintAutoCloseScript, openPrintDocument } from "../utils/print"
 import "./orders.css"
 
 function fmtMoney(v) {
@@ -20,15 +20,6 @@ function todayYMD() {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date())
-}
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;")
 }
 
 export default function OrdersPage() {
@@ -228,99 +219,7 @@ function ReceiptModal({ receipt, template, onClose }) {
           </button>
           <button
             className="admBtn admBtnPrimary"
-            onClick={() => {
-              // Keep window script-writable for consistent printing across browsers.
-              const w = openPrintDocument({ title: `Receipt ${receipt.order_id}`, html: "<!doctype html><title>Loading...</title>", features: "width=420,height=700" })
-              if (!w) return
-              const isThermal = (cfg.printLayout || "thermal") === "thermal"
-              const paperWidthMm = cfg.paperSize === "58" ? 58 : 80
-              const html = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <title>Receipt ${receipt.order_id}</title>
-  <style>
-    @page { size: ${isThermal ? "auto" : "A4"}; margin: ${isThermal ? "0" : "10mm"}; }
-    body { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; margin: ${isThermal ? "0" : "16px"}; color: #121417; }
-    .wrap { width: ${isThermal ? `${paperWidthMm}mm` : "760px"}; padding: ${isThermal ? "2mm" : "0"}; }
-    h1 { font-size: 18px; margin: 0 0 8px; }
-    .muted { color: #5d6066; font-size: 12px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { border-bottom: 1px solid rgba(18,20,23,0.12); padding: 8px 0; font-size: 13px; vertical-align: top; }
-    th { text-align: left; font-size: 12px; color: #5d6066; font-weight: 700; }
-    .right { text-align: right; }
-    .totals { margin-top: 12px; display: grid; gap: 6px; }
-    .row { display: flex; justify-content: space-between; font-size: 13px; }
-    .grand { font-weight: 700; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-  <h1>${escapeHtml(cfg.storeName || "Cua Hang")} - Hoa don #${receipt.order_id}</h1>
-  ${cfg.storeAddress ? `<div class="muted">${escapeHtml(cfg.storeAddress)}</div>` : ""}
-  ${cfg.storePhone ? `<div class="muted">SDT: ${escapeHtml(cfg.storePhone)}</div>` : ""}
-  ${receipt.customer_name ? `<div class="muted">Khach: ${escapeHtml(receipt.customer_name)}${receipt.customer_phone ? ` - ${escapeHtml(receipt.customer_phone)}` : ""}</div>` : ""}
-  ${cfg.headerNote ? `<div class="muted">${escapeHtml(cfg.headerNote)}</div>` : ""}
-  <div class="muted">${fmtDateTimeVN(receipt.created_at)}</div>
-  <table>
-    <thead>
-      <tr>
-        <th>Hàng</th>
-        <th class="right">SL</th>
-        <th class="right">Đơn giá</th>
-        <th class="right">TT</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${receipt.items
-        .map(
-          (it) => `
-        <tr>
-          <td>
-            <div style="font-weight:700">${escapeHtml(it.name)}</div>
-            <div class="muted">${
-              [
-                cfg.showPricingMode ? it.pricing_mode : null,
-                Number(it.discount_total || 0) > 0 ? `KM:${fmtMoney(it.discount_total)}đ` : null,
-                cfg.showBarcode && it.barcode ? it.barcode : null,
-                cfg.showSku && it.sku ? it.sku : null,
-              ]
-                .filter(Boolean)
-                .map(escapeHtml)
-                .join(" · ")
-            }</div>
-          </td>
-          <td class="right">${it.qty}${it.uom ? " " + it.uom : ""}</td>
-          <td class="right">${fmtMoney(it.unit_price)}đ</td>
-          <td class="right">${fmtMoney(it.line_total)}đ</td>
-        </tr>
-      `
-        )
-        .join("")}
-    </tbody>
-  </table>
-  <div class="totals">
-    <div class="row"><span>Tạm tính</span><span>${fmtMoney(receipt.subtotal)}đ</span></div>
-    <div class="row"><span>Khuyến mãi</span><span>${fmtMoney(receipt.discount_total)}đ</span></div>
-    <div class="row grand"><span>Tổng</span><span>${fmtMoney(receipt.grand_total)}đ</span></div>
-  </div>
-  ${cfg.footerText ? `<div class="muted">${escapeHtml(cfg.footerText)}</div>` : ""}
-  ${cfg.showThankYou ? `<div class="muted">Cam on quy khach!</div>` : ""}
-  </div>
-  <script>${buildPrintAutoCloseScript()}</script>
-</body>
-</html>`
-              try {
-                w.document.open()
-                w.document.write(html)
-                w.document.close()
-                w.focus()
-              } catch {
-                const blob = new Blob([html], { type: "text/html;charset=utf-8" })
-                const url = URL.createObjectURL(blob)
-                window.open(url, "_blank")
-              }
-            }}
+            onClick={() => openReceiptPrint(receipt, cfg)}
           >
             In hoá đơn
           </button>
