@@ -1,14 +1,25 @@
 import { barcodeBcidForValue } from "./ean13"
-import { loadBarcodeTemplate, normalizeBarcodeTemplate } from "../receive/barcodeTemplate"
+import {
+  loadBarcodeTemplate,
+  normalizeBarcodeTemplate,
+} from "../receive/barcodeTemplate"
 import { formatMoneyVN } from "./number"
 import { buildPrintAutoCloseScript, openPrintDocument } from "./print"
 
 export function openPrintLabels({ title, labels, printWindow = null }) {
-  const w = printWindow || openPrintDocument({ title, html: "<!doctype html><title>Loading...</title>", features: "width=980,height=720" })
+  const w =
+    printWindow ||
+    openPrintDocument({
+      title,
+      html: "<!doctype html><title>Loading...</title>",
+      features: "width=980,height=720",
+    })
   if (!w) return
   const cfg = normalizeBarcodeTemplate(loadBarcodeTemplate())
 
-  const safeTitle = String(title || cfg.title || "In mã vạch").replaceAll("<", "").replaceAll(">", "")
+  const safeTitle = String(title || cfg.title || "In mã vạch")
+    .replaceAll("<", "")
+    .replaceAll(">", "")
   const html = `<!doctype html>
 <html>
 <head>
@@ -54,7 +65,7 @@ export function openPrintLabels({ title, labels, printWindow = null }) {
           return `
             <div class="lb">
               <div class="name">${name.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</div>
-              <div class="price">${price ? `${price}đ` : ""}</div>
+              <div class="price">Giá: ${price ? `${price}đ` : ""}</div>
               <div class="img">${img ? `<img alt="${code}" src="${img}"/>` : `<div class="code">${code}</div>`}</div>
             </div>
           `
