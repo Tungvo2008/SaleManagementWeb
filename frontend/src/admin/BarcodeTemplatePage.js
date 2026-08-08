@@ -37,7 +37,7 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
       <div className="bctTop">
         <div>
           <div className="bctTitle">Mẫu tem mã vạch</div>
-          <div className="bctSub">Cấu hình kích thước tem, số cột và nội dung hiển thị khi in tem.</div>
+          <div className="bctSub">Mỗi tem được xuất thành một trang đúng kích thước rộng × cao của tem cuộn.</div>
         </div>
         <div className="bctTopActions">
           <button className="bctBtn" onClick={() => applyPreset("label_25x50")}>
@@ -68,32 +68,6 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
             <label>
               <span>Tên tiêu đề in</span>
               <input value={form.title || ""} onChange={(e) => setField("title", e.target.value)} />
-            </label>
-            <label>
-              <span>Chế độ in</span>
-              <select value={cfg.printMode} onChange={(e) => setField("printMode", e.target.value)}>
-                <option value="sheet">In theo tờ (A4)</option>
-                <option value="thermal">In theo tem cuộn (nhiệt)</option>
-              </select>
-            </label>
-            <label>
-              <span>Khổ giấy</span>
-              <select value={cfg.paperSize} onChange={(e) => setField("paperSize", e.target.value)}>
-                <option value="a4">A4 dọc</option>
-                <option value="a4_landscape">A4 ngang</option>
-              </select>
-            </label>
-            <label>
-              <span>Margin trang (mm)</span>
-              <input type="number" value={cfg.pageMarginMm} onChange={(e) => setField("pageMarginMm", e.target.value)} />
-            </label>
-            <label>
-              <span>Số cột</span>
-              <input type="number" value={cfg.columns} onChange={(e) => setField("columns", e.target.value)} />
-            </label>
-            <label>
-              <span>Khoảng cách tem (mm)</span>
-              <input type="number" value={cfg.gapMm} onChange={(e) => setField("gapMm", e.target.value)} />
             </label>
             <label>
               <span>Rộng tem (mm)</span>
@@ -127,7 +101,7 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
           <div className="bctPanelHead">Xem trước</div>
           <div className="bctPanelBody">
             <div className="bctPreviewPage">
-              <div className="bctPreviewGrid" style={{ gap: `${cfg.gapMm}mm`, gridTemplateColumns: `repeat(${cfg.columns}, ${cfg.labelWidthMm}mm)` }}>
+              <div className="bctPreviewGrid" style={{ gap: "3mm", gridTemplateColumns: `repeat(auto-fit, ${cfg.labelWidthMm}mm)` }}>
                 {sampleLabels.map((lb, idx) => (
                   <div key={idx} className="bctLabel" style={{ width: `${cfg.labelWidthMm}mm`, height: `${cfg.labelHeightMm}mm` }}>
                     <div className="bctName">{lb.name}</div>
@@ -138,11 +112,9 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
               </div>
             </div>
             <div className="bctHint">Preview chỉ để canh bố cục. In thật sẽ dùng barcode ảnh.</div>
-            {cfg.printMode === "thermal" ? (
-              <div className="bctHint">
-                Chế độ nhiệt: mỗi tem sẽ là 1 trang đúng kích thước `{cfg.labelWidthMm}x{cfg.labelHeightMm}mm`.
-              </div>
-            ) : null}
+            <div className="bctHint">
+              Khi in: mỗi tem là 1 trang `{cfg.labelWidthMm} × {cfg.labelHeightMm}mm`, không qua khổ A4.
+            </div>
           </div>
         </div>
       </div>

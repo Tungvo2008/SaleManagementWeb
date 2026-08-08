@@ -48,13 +48,14 @@ function receiptHeader(receipt, config, { a4 = false } = {}) {
   return `
     <header class="receiptHeader ${a4 ? "center" : ""}">
       <div class="storeName">${escapeHtml(config.storeName || "Cửa hàng")}</div>
-      ${config.storeAddress ? `<div>${escapeHtml(config.storeAddress)}</div>` : ""}
+      ${config.storeAddress ? `<div>Địa chỉ: ${escapeHtml(config.storeAddress)}</div>` : ""}
       ${config.storePhone ? `<div>ĐT: ${escapeHtml(config.storePhone)}</div>` : ""}
       ${config.headerNote ? `<div class="headerNote">${escapeHtml(config.headerNote)}</div>` : ""}
       <div class="invoiceTitle">HÓA ĐƠN BÁN HÀNG</div>
       <div>Số HĐ: ${escapeHtml(invoiceNumber(receipt))}</div>
-      <div>${escapeHtml(fmtDateTimeVN(receipt.created_at))}</div>
-      <div class="customer">Khách hàng: ${escapeHtml(customer)}${receipt.customer_phone ? ` · ${escapeHtml(receipt.customer_phone)}` : ""}</div>
+      <div>Thời gian xuất hóa đơn: ${escapeHtml(fmtDateTimeVN(receipt.created_at))}</div>
+      <div class="customer">Khách hàng: ${escapeHtml(customer)}</div>
+      ${receipt.customer_phone ? `<div class="customerPhone">SĐT khách hàng: ${escapeHtml(receipt.customer_phone)}</div>` : ""}
     </header>`
 }
 
@@ -109,6 +110,7 @@ function thermalHtml(receipt, config, autoPrint) {
   .headerNote { margin-top: 2px; }
   .invoiceTitle { margin-top: 7px; font-size: 14px; font-weight: 700; }
   .customer { margin-top: 4px; text-align: left; }
+  .customerPhone { text-align: left; }
   table { width: 100%; border-collapse: collapse; margin-top: 7px; table-layout: fixed; }
   th { padding: 5px 0; border-bottom: 1px solid #555; font-size: 10px; text-align: left; }
   th:nth-child(2) { width: 18%; text-align: center; }
@@ -143,6 +145,7 @@ function a4Html(receipt, config, autoPrint) {
   .headerNote { margin-top: 3px; }
   .invoiceTitle { margin-top: 14px; font-size: 22px; font-weight: 700; }
   .customer { margin-top: 12px; text-align: left; }
+  .customerPhone { text-align: left; }
   table { width: 100%; border-collapse: collapse; margin-top: 12px; table-layout: fixed; }
   th { padding: 8px 5px; border-bottom: 1.5px solid #222; text-align: left; }
   th:nth-child(2) { width: 15%; text-align: center; }
