@@ -1871,13 +1871,13 @@ export default function Pos({
 
       if (String(order?.id) === String(orderId)) {
         localStorage.removeItem(LS_ORDER_ID)
-        const next = nextDrafts[0]
-        if (next) {
-          localStorage.setItem(LS_ORDER_ID, String(next.id))
-          await loadOrder(next.id)
-        } else {
-          await createDraftOrder()
-        }
+        setOrder(null)
+        setReceipt(null)
+        setNote("")
+        setPaidAmount("")
+        setPaymentMethod("cash")
+        setMixCashAmount("")
+        setMixBankAmount("")
       }
       showInfo(`Đã xoá đơn nháp #${orderId}.`)
     } catch (e) {
@@ -2395,7 +2395,7 @@ export default function Pos({
               Đơn hiện tại: <b>#{order.id}</b> · {order.status}
             </>
           ) : (
-            "Đang tải…"
+            "Chưa chọn đơn"
           )}
         </div>
       </div>
