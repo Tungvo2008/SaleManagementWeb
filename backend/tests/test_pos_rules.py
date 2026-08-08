@@ -14,10 +14,13 @@ from app.api.v1.routes.pos_orders import (
     cancel_draft,
     checkout,
     create_order,
+    delete_draft_order,
 )
 from app.db.base import Base
 from app.models.category import Category
 from app.models.product import Product
+from app.models.order import Order
+from app.models.order_item import OrderItem
 from app.schemas.order import OrderCheckoutIn, OrderCreate
 from app.schemas.order_item import OrderItemCreateNormal
 
@@ -140,6 +143,29 @@ class PosRulesTests(unittest.TestCase):
         finally:
             db.close()
 
+    def test_delete_draft_removes_order_and_items(self) -> None:
+        db = self._db()
+        try:
+            variant = self._create_normal_variant(db)
+            order = create_order(OrderCreate(note=None), db=db)
+            order_id = order.id
+            add_normal_item(
+                order_id,
+                OrderItemCreateNormal(variant_id=variant.id, qty=Decimal("1")),
+                db=db,
+            )
+
+            response = delete_draft_order(order_id, db=db)
+
+            self.assertEqual(response.status_code, 204)
+            self.assertIsNone(db.get(Order, order_id))
+            self.assertEqual(
+                db.query(OrderItem).filter(OrderItem.order_id == order_id).count(),
+                0,
+            )
+        finally:
+            db.close()
+
     def test_checkout_empty_draft_returns_422(self) -> None:
         db = self._db()
         try:
@@ -187,4 +213,3 @@ class PosRulesTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

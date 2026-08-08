@@ -298,6 +298,49 @@
   gap: 8px;
 }
 
+.tabWrap {
+  position: relative;
+  width: 100%;
+}
+
+.tabWrap .tab {
+  padding-right: 38px;
+}
+
+.tabClose {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tabClose:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.tabCloseActive {
+  color: #1d4ed8;
+}
+
+.tabCloseActive:hover {
+  background: rgba(29, 78, 216, 0.1);
+}
+
+.tabClose:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .tab {
   border: 1px solid rgba(255, 255, 255, 0.30);
   background: rgba(255, 255, 255, 0.14);
@@ -350,6 +393,10 @@
   .tabs {
     flex-direction: row;
     flex-wrap: wrap;
+  }
+
+  .tabWrap {
+    width: auto;
   }
 
   .tab {

@@ -1860,18 +1860,26 @@ export default function Pos({
     scanRef.current?.focus()
   }
 
-  async function cancelDraft() {
-    if (!order) return
-    if (!cartItems.length) {
-      showInfo("Đơn đang trống, không cần huỷ.")
-      return
-    }
+  async function deleteDraftOrder(orderId) {
+    if (!orderId) return
     setBusy(true)
     try {
-      await post(`/api/v1/pos/orders/${order.id}/cancel`, {})
-      showInfo("Đã huỷ đơn nháp.")
-      localStorage.removeItem(LS_ORDER_ID)
-      await createDraftOrder()
+      await del(`/api/v1/pos/orders/${orderId}`)
+      const remaining = await get(`/api/v1/pos/orders/?status=draft`)
+      const nextDrafts = Array.isArray(remaining) ? remaining : []
+      setDrafts(nextDrafts)
+
+      if (String(order?.id) === String(orderId)) {
+        localStorage.removeItem(LS_ORDER_ID)
+        const next = nextDrafts[0]
+        if (next) {
+          localStorage.setItem(LS_ORDER_ID, String(next.id))
+          await loadOrder(next.id)
+        } else {
+          await createDraftOrder()
+        }
+      }
+      showInfo(`Đã xoá đơn nháp #${orderId}.`)
     } catch (e) {
       showErr(e)
     } finally {
@@ -2245,13 +2253,6 @@ export default function Pos({
           >
             Bill cũ / Refund
           </button>
-          <button
-            className="btn"
-            disabled={busy || !order || order.status !== "draft"}
-            onClick={cancelDraft}
-          >
-            Huỷ đơn
-          </button>
         </div>
 
         <div className="posScan">
@@ -2359,15 +2360,26 @@ export default function Pos({
       <div className="posDraftTabs">
         <div className="tabs">
           {drafts.slice(0, 6).map((d) => (
-            <button
-              key={d.id}
-              className={`tab ${String(order?.id) === String(d.id) ? "tabActive" : ""}`}
-              onClick={() => switchDraft(d.id)}
-              disabled={busy}
-              title={`Hóa đơn ${d.id}`}
-            >
-              Hóa đơn {d.id}
-            </button>
+            <div className="tabWrap" key={d.id}>
+              <button
+                className={`tab ${String(order?.id) === String(d.id) ? "tabActive" : ""}`}
+                onClick={() => switchDraft(d.id)}
+                disabled={busy}
+                title={`Hóa đơn ${d.id}`}
+              >
+                Hóa đơn {d.id}
+              </button>
+              <button
+                type="button"
+                className={`tabClose ${String(order?.id) === String(d.id) ? "tabCloseActive" : ""}`}
+                disabled={busy}
+                onClick={() => deleteDraftOrder(d.id)}
+                title={`Xoá đơn nháp #${d.id}`}
+                aria-label={`Xoá đơn nháp #${d.id}`}
+              >
+                ×
+              </button>
+            </div>
           ))}
           <button
             className="tab tabNew"

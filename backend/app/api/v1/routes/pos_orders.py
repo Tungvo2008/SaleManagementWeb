@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 from collections import defaultdict
 from types import SimpleNamespace
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select, or_, cast, String, text as sa_text
 from sqlalchemy.orm import Session
 
@@ -243,6 +243,18 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
 @router.get("/{order_id}", response_model=OrderOut)
 def get_order(order_id: int, db: Session = Depends(get_db)):
     return _get_order_or_404(order_id, db)
+
+
+@router.delete("/{order_id}", status_code=204)
+def delete_draft_order(order_id: int, db: Session = Depends(get_db)):
+    order = _get_draft_order_or_409(order_id, db)
+    db.delete(order)
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return Response(status_code=204)
 
 
 @router.get("/", response_model=list[OrderOut])
