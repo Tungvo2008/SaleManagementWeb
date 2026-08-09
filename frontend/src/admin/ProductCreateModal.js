@@ -4,6 +4,7 @@ import Modal from "./Modal"
 import FieldLabel from "../ui/FieldLabel"
 import { AUTO_EAN13_SENTINEL } from "../utils/ean13"
 import { openPrintLabels } from "../utils/barcodeLabels"
+import { skuFromName } from "../utils/sku"
 
 function parseAttrValues(text) {
   return String(text || "")
@@ -43,17 +44,6 @@ function cartesian(defs) {
 
 function normalizeSku(value) {
   return String(value || "").trim()
-}
-
-function slugifySku(value) {
-  const base = String(value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .replace(/[^a-zA-Z0-9]+/g, "")
-    .trim()
-  return base
 }
 
 function normalizeBarcode(value) {
@@ -405,7 +395,7 @@ export default function ProductCreateModal({
       }
 
       const fallbackName = String(row.name || row.attrs?.name || `sanpham${idx + 1}`).trim()
-      const baseSku = slugifySku(fallbackName) || `sanpham${idx + 1}`
+      const baseSku = skuFromName(fallbackName) || `sanpham${idx + 1}`
       let nextSku = baseSku
       let counter = 2
       while (skuIndex.has(nextSku.toLowerCase())) {
@@ -683,7 +673,22 @@ export default function ProductCreateModal({
                 {hasVariants ? (
                   <input className="admInput" value={parentName} onChange={(e) => setParentName(e.target.value)} placeholder="VD: Lưới nylon 1m2" />
                 ) : (
-                  <input className="admInput" value={singleRow.name} onChange={(e) => setSingleRow((p) => ({ ...p, name: e.target.value }))} placeholder="VD: Lưới nylon xanh 1m2" />
+                  <input
+                    className="admInput"
+                    value={singleRow.name}
+                    onChange={(e) =>
+                      setSingleRow((p) => {
+                        const nextName = e.target.value
+                        const keepManualSku = p.sku && p.sku !== skuFromName(p.name)
+                        return {
+                          ...p,
+                          name: nextName,
+                          sku: keepManualSku ? p.sku : skuFromName(nextName),
+                        }
+                      })
+                    }
+                    placeholder="VD: Lưới nylon xanh 1m2"
+                  />
                 )}
               </div>
               <div>
@@ -853,10 +858,8 @@ export default function ProductCreateModal({
               <div className="prdSingleCard">
                 <div className="prdGrid2">
                   <div>
-                    <FieldLabel className="admLabel" required>
-                      SKU
-                    </FieldLabel>
-                    <input className="admInput" value={singleRow.sku} onChange={(e) => setSingleRow((p) => ({ ...p, sku: e.target.value }))} placeholder="..." />
+                    <div className="admLabel">SKU (tự tạo từ tên nếu để trống)</div>
+                    <input className="admInput" value={singleRow.sku} onChange={(e) => setSingleRow((p) => ({ ...p, sku: e.target.value }))} placeholder="Tự tạo từ tên sản phẩm" />
                   </div>
                   <div>
                     <div className="admLabel">Barcode</div>
@@ -967,13 +970,23 @@ export default function ProductCreateModal({
                       <FieldLabel className="admLabel" required>
                         Tên biến thể
                       </FieldLabel>
-                      <input className="admInput" value={row.name} onChange={(e) => setVariantRow(row.id, { name: e.target.value })} placeholder="Tên biến thể" />
+                      <input
+                        className="admInput"
+                        value={row.name}
+                        onChange={(e) => {
+                          const nextName = e.target.value
+                          const keepManualSku = row.sku && row.sku !== skuFromName(row.name)
+                          setVariantRow(row.id, {
+                            name: nextName,
+                            sku: keepManualSku ? row.sku : skuFromName(nextName),
+                          })
+                        }}
+                        placeholder="Tên biến thể"
+                      />
                     </div>
                     <div>
-                      <FieldLabel className="admLabel" required>
-                        SKU
-                      </FieldLabel>
-                      <input className="admInput" value={row.sku} onChange={(e) => setVariantRow(row.id, { sku: e.target.value })} placeholder="..." />
+                      <div className="admLabel">SKU (tự tạo từ tên nếu để trống)</div>
+                      <input className="admInput" value={row.sku} onChange={(e) => setVariantRow(row.id, { sku: e.target.value })} placeholder="Tự tạo từ tên biến thể" />
                     </div>
                     <div>
                       <div className="admLabel">Barcode</div>

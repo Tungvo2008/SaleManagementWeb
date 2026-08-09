@@ -21,6 +21,7 @@ from app.schemas.product import (
 )
 from app.services.ean13 import AUTO_EAN13_SENTINEL, DEFAULT_EAN13_PREFIX, generate_random_ean13, is_valid_ean13, normalize_barcode_digits
 from app.services.pricing import record_price_change
+from app.services.sku import resolve_unique_sku
 
 router = APIRouter()
 
@@ -33,16 +34,13 @@ def _assert_category_exists(db: Session, category_id: int | None) -> None:
         raise HTTPException(404, "Category not found")
 
 
-def _require_variant_fields(*, sku, uom, price) -> tuple[str, str]:
-    next_sku = str(sku or "").strip()
+def _require_variant_fields(*, uom, price) -> str:
     next_uom = str(uom or "").strip()
-    if not next_sku:
-        raise HTTPException(422, "SKU is required")
     if not next_uom:
         raise HTTPException(422, "uom is required")
     if price is None:
         raise HTTPException(422, "price is required")
-    return next_sku, next_uom
+    return next_uom
 
 
 def _record_variant_price_fields(
@@ -197,7 +195,8 @@ def create_variant(parent_id: int, payload: VariantCreate, db: Session = Depends
     if not is_parent_container(parent):
         raise HTTPException(404, "Parent product not found")
 
-    sku, uom = _require_variant_fields(sku=payload.sku, uom=payload.uom, price=payload.price)
+    uom = _require_variant_fields(uom=payload.uom, price=payload.price)
+    sku = resolve_unique_sku(db, name=payload.name, requested_sku=payload.sku)
 
     exists = db.scalars(select(Product.id).where(Product.sku == sku)).first()
     if exists:
@@ -251,7 +250,8 @@ def create_standalone_variant(payload: VariantCreate, db: Session = Depends(get_
     """
     _assert_category_exists(db, payload.category_id)
 
-    sku, uom = _require_variant_fields(sku=payload.sku, uom=payload.uom, price=payload.price)
+    uom = _require_variant_fields(uom=payload.uom, price=payload.price)
+    sku = resolve_unique_sku(db, name=payload.name, requested_sku=payload.sku)
 
     exists = db.scalars(select(Product.id).where(Product.sku == sku)).first()
     if exists:
@@ -346,10 +346,15 @@ def update_variant(variant_id: int, payload: VariantUpdate, db: Session = Depend
     else:
         _assert_category_exists(db, data.get("category_id"))
 
-    next_sku, next_uom = _require_variant_fields(
-        sku=data.get("sku", v.sku),
+    next_uom = _require_variant_fields(
         uom=data.get("uom", v.uom),
         price=data.get("price", v.price),
+    )
+    next_sku = resolve_unique_sku(
+        db,
+        name=data.get("name", v.name),
+        requested_sku=data.get("sku", v.sku),
+        exclude_id=variant_id,
     )
     data["sku"] = next_sku
     data["uom"] = next_uom

@@ -5,6 +5,7 @@ import ProductCreateModal from "./ProductCreateModal"
 import ExcelToolsModal from "./ExcelToolsModal"
 import FieldLabel from "../ui/FieldLabel"
 import { formatMoneyVN } from "../utils/number"
+import { skuFromName } from "../utils/sku"
 import "./products.css"
 
 const PRODUCT_GRID_STORAGE_KEY = "adm.products.tree.v1"
@@ -114,6 +115,7 @@ export default function ProductsPage() {
   const [createVariantParentId, setCreateVariantParentId] = useState("")
   const [editVariant, setEditVariant] = useState(null)
   const [deleteVariant, setDeleteVariant] = useState(null)
+  const [deleteParent, setDeleteParent] = useState(null)
   const [showExcel, setShowExcel] = useState(false)
   const [showColumns, setShowColumns] = useState(false)
   const [gridCfg, setGridCfg] = useState(() => loadProductGridCfg())
@@ -612,6 +614,13 @@ export default function ProductsPage() {
             >
               + Biến thể
             </button>
+            <button
+              className="prodMiniBtn prodMiniDanger"
+              disabled={busy}
+              onClick={() => setDeleteParent(group)}
+            >
+              Xoá nhóm
+            </button>
           </div>
         )
       }
@@ -920,6 +929,38 @@ export default function ProductsPage() {
         />
       ) : null}
 
+      {deleteParent ? (
+        <ConfirmDeleteModal
+          title="Xoá nhóm sản phẩm"
+          body={
+            <>
+              Bạn chắc chắn muốn xoá nhóm <b>{deleteParent.parent.name}</b> (ID{" "}
+              <span className="admMono">{deleteParent.parent.id}</span>)?
+              {deleteParent.variants.length > 0 ? (
+                <div style={{ marginTop: 10 }}>
+                  Thao tác này cũng sẽ xoá <b>{deleteParent.variants.length} biến thể</b> thuộc nhóm.
+                </div>
+              ) : null}
+            </>
+          }
+          busy={busy}
+          onClose={() => setDeleteParent(null)}
+          onConfirm={async () => {
+            setBusy(true)
+            setErr(null)
+            try {
+              await del(`/api/v1/products/parents/${deleteParent.parent.id}`)
+              setDeleteParent(null)
+              await loadAll()
+            } catch (e) {
+              setErr(e?.message || "Không xoá được nhóm sản phẩm")
+            } finally {
+              setBusy(false)
+            }
+          }}
+        />
+      ) : null}
+
       {showExcel ? (
         <ExcelToolsModal
           title="Excel · Sản phẩm"
@@ -1075,11 +1116,8 @@ function CreateVariantModal({ parents, existingVariants, initialParentId, busy, 
                 setErr("Đơn vị là bắt buộc.")
                 return
               }
-              if (!normalizeSku(sku)) {
-                setErr("SKU là bắt buộc.")
-                return
-              }
-              const duplicateSku = findDuplicateVariantBySku(existingVariants, sku)
+              const nextSku = normalizeSku(sku) || skuFromName(name)
+              const duplicateSku = findDuplicateVariantBySku(existingVariants, nextSku)
               if (duplicateSku) {
                 setErr(`SKU đã tồn tại ở biến thể: ${duplicateSku.name || duplicateSku.sku}.`)
                 return
@@ -1124,7 +1162,7 @@ function CreateVariantModal({ parents, existingVariants, initialParentId, busy, 
                 cost_price: cp == null ? null : String(cp),
                 roll_price: rollPrice.trim() ? String(Number(rollPrice)) : null,
                 stock: String(s),
-                sku: normalizeSku(sku),
+                sku: nextSku || null,
                 barcode: barcode.trim() ? barcode.trim() : null,
                 image_url: imageUrl.trim() ? imageUrl.trim() : null,
                 attrs,
@@ -1167,7 +1205,18 @@ function CreateVariantModal({ parents, existingVariants, initialParentId, busy, 
         <FieldLabel className="admLabel" required>
           Tên biến thể
         </FieldLabel>
-        <input className="admInput" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: Lưới Nylon - Đen (cuộn 50m)" />
+        <input
+          className="admInput"
+          value={name}
+          onChange={(e) => {
+            const nextName = e.target.value
+            setSku((current) =>
+              !current || current === skuFromName(name) ? skuFromName(nextName) : current
+            )
+            setName(nextName)
+          }}
+          placeholder="Ví dụ: Lưới Nylon - Đen (cuộn 50m)"
+        />
       </div>
 
       <div className="admGrid2">
@@ -1204,10 +1253,8 @@ function CreateVariantModal({ parents, existingVariants, initialParentId, busy, 
 
       <div className="admGrid2">
         <div className="admField">
-          <FieldLabel className="admLabel" required>
-            SKU
-          </FieldLabel>
-          <input className="admInput" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="..." />
+          <div className="admLabel">SKU (tự tạo từ tên nếu để trống)</div>
+          <input className="admInput" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Tự tạo từ tên sản phẩm" />
         </div>
         <div className="admField">
           <div className="admLabel">Barcode</div>
