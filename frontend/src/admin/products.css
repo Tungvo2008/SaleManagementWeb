@@ -55,6 +55,41 @@
 }
 .prodActionBtn.prodActionPrimary:active{ filter: brightness(0.98); }
 
+.prodBulkBar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:10px 12px;
+  border:1px solid rgba(47,107,255,.28);
+  border-radius:12px;
+  background:rgba(47,107,255,.07);
+  font-size:13px;
+}
+
+.prodBulkActions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.prodBulkDanger{
+  border-color:rgba(180,35,24,.45);
+  background:rgba(180,35,24,.10);
+  color:#7f1d1d;
+}
+
+.prodRowCheckbox{
+  width:17px;
+  height:17px;
+  margin:0;
+  accent-color:#2f6bff;
+  cursor:pointer;
+}
+
 .prodMono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 .prodName{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .prodRight{ text-align:right; }
@@ -261,7 +296,7 @@
   display:flex;
   justify-content: flex-end;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .prodEmpty{

@@ -316,7 +316,6 @@ export default function ProductCreateModal({
 
   function validateRow(row, label = "Biến thể") {
     if (!String(row.name || "").trim()) throw new Error(`${label}: Tên biến thể là bắt buộc.`)
-    if (!normalizeSku(row.sku)) throw new Error(`${label}: SKU là bắt buộc.`)
     if (!String(row.price || "").trim()) throw new Error(`${label}: Giá là bắt buộc.`)
     const price = Number(row.price)
     if (!Number.isFinite(price) || price < 0) throw new Error(`${label}: Giá không hợp lệ.`)

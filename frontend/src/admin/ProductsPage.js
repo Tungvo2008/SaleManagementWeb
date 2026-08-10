@@ -9,6 +9,7 @@ import { skuFromName } from "../utils/sku"
 import "./products.css"
 
 const PRODUCT_GRID_STORAGE_KEY = "adm.products.tree.v1"
+const SELECT_COLUMN = { key: "select", title: "", width: "42px", sortable: false, filterable: false }
 
 const PRODUCT_COLUMNS = [
   { key: "name", title: "Sản phẩm", width: "minmax(240px, 2fr)" },
@@ -20,7 +21,7 @@ const PRODUCT_COLUMNS = [
   { key: "roll_price", title: "Giá cuộn", width: "110px", align: "right" },
   { key: "cost_price", title: "Giá nhập", width: "110px", align: "right" },
   { key: "status", title: "Trạng thái", width: "110px" },
-  { key: "actions", title: "Thao tác", width: "170px", align: "right", sortable: false, filterable: false },
+  { key: "actions", title: "Thao tác", width: "220px", align: "right", sortable: false, filterable: false },
 ]
 
 const PRODUCT_DEFAULT_GRID_CFG = {
@@ -116,6 +117,8 @@ export default function ProductsPage() {
   const [editVariant, setEditVariant] = useState(null)
   const [deleteVariant, setDeleteVariant] = useState(null)
   const [deleteParent, setDeleteParent] = useState(null)
+  const [selectedRows, setSelectedRows] = useState(() => new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [showExcel, setShowExcel] = useState(false)
   const [showColumns, setShowColumns] = useState(false)
   const [gridCfg, setGridCfg] = useState(() => loadProductGridCfg())
@@ -143,7 +146,7 @@ export default function ProductsPage() {
 
   const visibleCols = useMemo(() => {
     const allowed = new Set(gridCfg.visibleKeys || PRODUCT_DEFAULT_GRID_CFG.visibleKeys)
-    return PRODUCT_COLUMNS.filter((c) => allowed.has(c.key))
+    return [SELECT_COLUMN, ...PRODUCT_COLUMNS.filter((c) => allowed.has(c.key))]
   }, [gridCfg.visibleKeys])
 
   const gridTemplateColumns = useMemo(
@@ -431,6 +434,59 @@ export default function ProductsPage() {
 
   const visibleVariantsCount = useMemo(() => tree.reduce((acc, g) => acc + g.variants.length, 0), [tree])
 
+  const selectableRowKeys = useMemo(() => {
+    const keys = []
+    for (const group of tree) {
+      if (isStandaloneGroup(group)) {
+        if (group.variants[0]) keys.push(`variant:${group.variants[0].id}`)
+        continue
+      }
+      if (!group.synthetic) keys.push(`parent:${group.parent.id}`)
+      for (const variant of group.variants) keys.push(`variant:${variant.id}`)
+    }
+    return keys
+  }, [tree])
+
+  const selectedParentIds = useMemo(() => {
+    return new Set(
+      Array.from(selectedRows)
+        .filter((key) => key.startsWith("parent:"))
+        .map((key) => Number(key.slice("parent:".length)))
+    )
+  }, [selectedRows])
+
+  const selectedVariantIds = useMemo(() => {
+    return Array.from(selectedRows)
+      .filter((key) => key.startsWith("variant:"))
+      .map((key) => Number(key.slice("variant:".length)))
+      .filter((id) => {
+        const variant = variantsById.get(String(id))
+        return variant && !selectedParentIds.has(Number(variant.parent_id))
+      })
+  }, [selectedParentIds, selectedRows, variantsById])
+
+  const allVisibleSelected =
+    selectableRowKeys.length > 0 && selectableRowKeys.every((key) => selectedRows.has(key))
+  const someVisibleSelected = selectableRowKeys.some((key) => selectedRows.has(key))
+
+  function toggleSelectedRow(key) {
+    setSelectedRows((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function toggleAllVisibleRows() {
+    setSelectedRows((prev) => {
+      const next = new Set(prev)
+      if (allVisibleSelected) selectableRowKeys.forEach((key) => next.delete(key))
+      else selectableRowKeys.forEach((key) => next.add(key))
+      return next
+    })
+  }
+
   const exportVariants = useMemo(() => {
     const out = []
     for (const group of tree) {
@@ -518,6 +574,20 @@ export default function ProductsPage() {
   }
 
   function renderTreeCell({ col, group, variant, kind }) {
+    if (col.key === "select") {
+      const isParent = kind === "parent"
+      if (isParent && group.synthetic) return <span />
+      const key = isParent ? `parent:${group.parent.id}` : `variant:${variant.id}`
+      return (
+        <input
+          type="checkbox"
+          className="prodRowCheckbox"
+          checked={selectedRows.has(key)}
+          onChange={() => toggleSelectedRow(key)}
+          aria-label={isParent ? `Chọn nhóm ${group.parent.name}` : `Chọn sản phẩm ${variant.name}`}
+        />
+      )
+    }
     if (col.key === "name") {
       if (kind === "parent") {
         const key = String(group.parent.id)
@@ -696,6 +766,27 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      {selectedRows.size > 0 ? (
+        <div className="prodBulkBar">
+          <div>
+            Đã chọn <b>{selectedRows.size}</b> dòng
+            {selectedParentIds.size > 0 ? ` · ${selectedParentIds.size} nhóm` : ""}
+            {selectedVariantIds.length > 0 ? ` · ${selectedVariantIds.length} biến thể riêng` : ""}
+          </div>
+          <div className="prodBulkActions">
+            <button className="prodActionBtn" disabled={busy} onClick={toggleAllVisibleRows}>
+              {allVisibleSelected ? "Bỏ chọn kết quả" : "Chọn tất cả kết quả"}
+            </button>
+            <button className="prodActionBtn" disabled={busy} onClick={() => setSelectedRows(new Set())}>
+              Bỏ chọn
+            </button>
+            <button className="prodActionBtn prodBulkDanger" disabled={busy} onClick={() => setBulkDeleteOpen(true)}>
+              Xoá đã chọn
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="prodTree">
         <div className="prodTreeHead" style={{ gridTemplateColumns }}>
           {visibleCols.map((col) => (
@@ -705,7 +796,18 @@ export default function ProductsPage() {
                 col.sortable === false ? "" : "prodHeadCellSortable"
               }`}
             >
-              {col.sortable === false ? (
+              {col.key === "select" ? (
+                <input
+                  type="checkbox"
+                  className="prodRowCheckbox"
+                  checked={allVisibleSelected}
+                  ref={(node) => {
+                    if (node) node.indeterminate = someVisibleSelected && !allVisibleSelected
+                  }}
+                  onChange={toggleAllVisibleRows}
+                  aria-label="Chọn tất cả kết quả đang hiển thị"
+                />
+              ) : col.sortable === false ? (
                 <div className="prodHeadTitle">{col.title}</div>
               ) : (
                 <button
@@ -954,6 +1056,46 @@ export default function ProductsPage() {
               await loadAll()
             } catch (e) {
               setErr(e?.message || "Không xoá được nhóm sản phẩm")
+            } finally {
+              setBusy(false)
+            }
+          }}
+        />
+      ) : null}
+
+      {bulkDeleteOpen ? (
+        <ConfirmDeleteModal
+          title="Xoá hàng loạt"
+          body={
+            <>
+              Bạn sắp xoá <b>{selectedParentIds.size} nhóm sản phẩm</b> và{" "}
+              <b>{selectedVariantIds.length} biến thể riêng</b>.
+              {selectedParentIds.size > 0 ? (
+                <div style={{ marginTop: 10 }}>
+                  Các biến thể nằm trong nhóm được chọn cũng sẽ bị xoá theo.
+                </div>
+              ) : null}
+            </>
+          }
+          busy={busy}
+          onClose={() => setBulkDeleteOpen(false)}
+          onConfirm={async () => {
+            setBusy(true)
+            setErr(null)
+            try {
+              for (const parentId of selectedParentIds) {
+                await del(`/api/v1/products/parents/${parentId}`)
+              }
+              for (const variantId of selectedVariantIds) {
+                await del(`/api/v1/products/variants/${variantId}`)
+              }
+              setBulkDeleteOpen(false)
+              setSelectedRows(new Set())
+              await loadAll()
+            } catch (e) {
+              setBulkDeleteOpen(false)
+              setErr(e?.message || "Không xoá được các sản phẩm đã chọn")
+              await loadAll().catch(() => {})
             } finally {
               setBusy(false)
             }
@@ -1322,11 +1464,8 @@ function EditVariantModal({ variant, existingVariants, busy, onClose, onSave }) 
                 setErr("Đơn vị là bắt buộc.")
                 return
               }
-              if (!normalizeSku(sku)) {
-                setErr("SKU là bắt buộc.")
-                return
-              }
-              const duplicateSku = findDuplicateVariantBySku(existingVariants, sku, variant.id)
+              const nextSku = normalizeSku(sku) || skuFromName(name)
+              const duplicateSku = findDuplicateVariantBySku(existingVariants, nextSku, variant.id)
               if (duplicateSku) {
                 setErr(`SKU đã tồn tại ở biến thể: ${duplicateSku.name || duplicateSku.sku}.`)
                 return
@@ -1354,7 +1493,7 @@ function EditVariantModal({ variant, existingVariants, busy, onClose, onSave }) 
                 cost_price: costPrice.trim() ? String(Number(costPrice)) : null,
                 roll_price: rollPrice.trim() ? String(Number(rollPrice)) : null,
                 stock: stock.trim() ? String(Number(stock)) : null,
-                sku: normalizeSku(sku),
+                sku: nextSku || null,
                 barcode: barcode.trim() ? barcode.trim() : null,
                 image_url: imageUrl.trim() ? imageUrl.trim() : null,
                 track_stock_unit: !!track,
@@ -1424,10 +1563,8 @@ function EditVariantModal({ variant, existingVariants, busy, onClose, onSave }) 
       </div>
       <div className="admGrid2">
         <div className="admField">
-          <FieldLabel className="admLabel" required>
-            SKU
-          </FieldLabel>
-          <input className="admInput" value={sku} onChange={(e) => setSku(e.target.value)} />
+          <div className="admLabel">SKU (tự tạo từ tên nếu để trống)</div>
+          <input className="admInput" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Tự tạo từ tên sản phẩm" />
         </div>
         <div className="admField">
           <div className="admLabel">Barcode</div>
