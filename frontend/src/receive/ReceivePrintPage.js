@@ -320,7 +320,9 @@ export default function ReceivePrintPage() {
   const [variants, setVariants] = useState([])
   const [searchLimit, setSearchLimit] = useState(SEARCH_PAGE_SIZE)
   const [hasMoreResults, setHasMoreResults] = useState(false)
+  const [labelFilter, setLabelFilter] = useState("all")
   const [picked, setPicked] = useState(null)
+  const [labelBusy, setLabelBusy] = useState(false)
 
   const [qty, setQty] = useState("1")
   const [normalCostPrice, setNormalCostPrice] = useState("")
@@ -369,7 +371,10 @@ export default function ReceivePrintPage() {
     const qq = (nextQ ?? q ?? "").trim()
     setSearchBusy(true)
     try {
-      const r = await get(`/api/v1/pos/search/?q=${encodeURIComponent(qq)}&limit=${searchLimit}`)
+      const params = new URLSearchParams({ q: qq, limit: String(searchLimit) })
+      if (labelFilter === "printed") params.set("label_printed", "true")
+      if (labelFilter === "unprinted") params.set("label_printed", "false")
+      const r = await get(`/api/v1/pos/search/?${params.toString()}`)
       const list = Array.isArray(r?.variants) ? r.variants : []
       // Show all variants; when user picks one, UI auto-switches to matching flow.
       setVariants(list)
@@ -381,7 +386,7 @@ export default function ReceivePrintPage() {
 
   useEffect(() => {
     setSearchLimit(SEARCH_PAGE_SIZE)
-  }, [q, tab])
+  }, [q, tab, labelFilter])
 
   useEffect(() => {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
@@ -392,7 +397,7 @@ export default function ReceivePrintPage() {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, tab, searchLimit])
+  }, [q, tab, searchLimit, labelFilter])
 
   useEffect(() => {
     // Do not clear picked on tab change, otherwise click->setTab will clear selection.
@@ -435,6 +440,35 @@ export default function ReceivePrintPage() {
         : prev
     )
   }, [])
+
+  async function setPickedLabelPrinted(nextValue) {
+    if (!picked) return
+    setLabelBusy(true)
+    try {
+      const updated = await patch(`/api/v1/products/variants/${picked.variant_id}`, {
+        label_printed: nextValue,
+      })
+      const normalized = { ...updated, variant_id: updated.variant_id ?? updated.id }
+      setPicked((prev) => (prev ? { ...prev, ...normalized } : prev))
+      setVariants((prev) =>
+        (Array.isArray(prev) ? prev : []).map((item) =>
+          String(item.variant_id) === String(picked.variant_id)
+            ? { ...item, ...normalized }
+            : item
+        )
+      )
+      showInfo(nextValue ? "Đã đánh dấu sản phẩm đã in tem" : "Đã chuyển về trạng thái chưa in tem")
+      if (
+        (labelFilter === "printed" && !nextValue) ||
+        (labelFilter === "unprinted" && nextValue)
+      ) {
+        setPicked(null)
+        await doSearch(q)
+      }
+    } finally {
+      setLabelBusy(false)
+    }
+  }
 
   async function ensureBarcode() {
     if (!picked) return null
@@ -596,6 +630,23 @@ export default function ReceivePrintPage() {
               onChange={(e) => setQ(e.target.value)}
               placeholder="Gõ tên/SKU/barcode để tìm..."
             />
+            <div className="rcvLabelFilters" aria-label="Lọc trạng thái in tem">
+              {[
+                ["all", "Tất cả"],
+                ["printed", "Đã in tem"],
+                ["unprinted", "Chưa in tem"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`rcvLabelFilterBtn ${labelFilter === value ? "rcvLabelFilterBtnActive" : ""}`}
+                  onClick={() => setLabelFilter(value)}
+                  disabled={busy || searchBusy}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <div className="hint">Gõ sẽ tự tìm. Bấm vào 1 dòng để chọn.</div>
 
             <div className="rcvResults">
@@ -624,6 +675,14 @@ export default function ReceivePrintPage() {
                     </div>
                     <div className="rcvRowSub">
                       <span className="pill">{v.sku || `#${v.variant_id}`}</span>
+                      {v.label_printed ? (
+                        <span className="rcvPrintedTag">
+                          <span className="rcvPrintedTagCheck">✓</span>
+                          Đã in tem
+                        </span>
+                      ) : (
+                        <span className="rcvUnprintedTag">Chưa in tem</span>
+                      )}
                       {tab === "rolls" ? (
                         <>
                           <span className="pill">Giá m: {fmtMoney(v.price)}đ</span>
@@ -666,7 +725,21 @@ export default function ReceivePrintPage() {
             ) : (
               <>
                 <div className="rcvPicked">
-                  <div className="rcvPickedName">{picked.name}</div>
+                  <div className="rcvPickedTop">
+                    <div className="rcvPickedName">{picked.name}</div>
+                    <label className={`rcvPrintedToggle ${picked.label_printed ? "rcvPrintedToggleOn" : ""}`}>
+                      <input
+                        type="checkbox"
+                        checked={!!picked.label_printed}
+                        disabled={busy || labelBusy}
+                        onChange={(e) => setPickedLabelPrinted(e.target.checked).catch(showErr)}
+                      />
+                      <span className="rcvPrintedToggleBox" aria-hidden="true">
+                        <span>✓</span>
+                      </span>
+                      <span>{labelBusy ? "Đang lưu..." : "Đã in tem"}</span>
+                    </label>
+                  </div>
                   <div className="rcvPickedMeta">
                     <span className="pill">SKU: {picked.sku || "—"}</span>
                     {tab === "normal" ? <span className="pill">BC: {picked.barcode || "—"}</span> : <span className="pill">Sẽ tạo barcode riêng cho từng cuộn</span>}

@@ -42,6 +42,8 @@ class Product(Base):
     # Keep a DB-level default too (matches migrations and prevents INSERT errors
     # from non-ORM paths).
     track_stock_unit: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="0")
+    # Manual operational marker; printing itself does not change this value.
+    label_printed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="0")
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 

@@ -132,6 +132,34 @@
   min-height: 0;
 }
 
+.rcvLabelFilters{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  padding:4px;
+  width:max-content;
+  max-width:100%;
+  border:1px solid var(--stroke);
+  border-radius:12px;
+  background:rgba(15,23,42,.035);
+}
+
+.rcvLabelFilterBtn{
+  border:0;
+  border-radius:9px;
+  padding:7px 11px;
+  background:transparent;
+  color:var(--muted);
+  font-weight:700;
+  cursor:pointer;
+}
+
+.rcvLabelFilterBtnActive{
+  background:#fff;
+  color:#175cd3;
+  box-shadow:0 2px 8px rgba(15,23,42,.10), inset 0 0 0 1px rgba(var(--accent-rgb),.22);
+}
+
 .rcvRow{
   border: 1px solid var(--stroke);
   background: rgba(255,255,255,.82);
@@ -165,6 +193,40 @@
   flex-wrap: wrap;
 }
 
+.rcvPrintedTag,
+.rcvUnprintedTag{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  border-radius:999px;
+  padding:4px 9px;
+  font-size:12px;
+  font-weight:700;
+}
+
+.rcvPrintedTag{
+  color:#067647;
+  border:1px solid rgba(6,118,71,.24);
+  background:#ecfdf3;
+}
+
+.rcvPrintedTagCheck{
+  display:grid;
+  place-items:center;
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  color:#fff;
+  background:#12b76a;
+  font-size:10px;
+}
+
+.rcvUnprintedTag{
+  color:#667085;
+  border:1px solid rgba(102,112,133,.20);
+  background:#f9fafb;
+}
+
 .rcvPicked{
   border: 1px solid rgba(var(--accent-rgb), .18);
   background: rgba(var(--accent-rgb), .08);
@@ -174,6 +236,59 @@
 .rcvPickedName{
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+.rcvPickedTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.rcvPrintedToggle{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid rgba(102,112,133,.24);
+  border-radius:12px;
+  padding:7px 10px;
+  background:rgba(255,255,255,.76);
+  color:#475467;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  user-select:none;
+}
+
+.rcvPrintedToggle input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.rcvPrintedToggleBox{
+  width:22px;
+  height:22px;
+  display:grid;
+  place-items:center;
+  border:2px solid #98a2b3;
+  border-radius:7px;
+  background:#fff;
+  color:transparent;
+  transition:150ms ease;
+}
+
+.rcvPrintedToggleOn{
+  border-color:rgba(6,118,71,.28);
+  background:#ecfdf3;
+  color:#067647;
+}
+
+.rcvPrintedToggleOn .rcvPrintedToggleBox{
+  border-color:#12b76a;
+  background:#12b76a;
+  color:#fff;
+  box-shadow:0 0 0 3px rgba(18,183,106,.12);
 }
 .rcvPickedMeta{
   margin-top: 8px;

@@ -222,6 +222,7 @@ def create_variant(parent_id: int, payload: VariantCreate, db: Session = Depends
         barcode=next_barcode,
         attrs=payload.attrs,
         track_stock_unit=payload.track_stock_unit,
+        label_printed=payload.label_printed,
         is_active=payload.is_active,
     )
     db.add(child)
@@ -277,6 +278,7 @@ def create_standalone_variant(payload: VariantCreate, db: Session = Depends(get_
         barcode=next_barcode,
         attrs=payload.attrs,
         track_stock_unit=payload.track_stock_unit,
+        label_printed=payload.label_printed,
         is_active=payload.is_active,
     )
     db.add(obj)

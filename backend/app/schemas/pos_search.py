@@ -19,6 +19,7 @@ class PosSearchVariantOut(BaseModel):
     price: Decimal | None
     roll_price: Decimal | None
     track_stock_unit: bool
+    label_printed: bool = False
     stock: Decimal
     rolls_total: int = 0
     rolls_full: int = 0

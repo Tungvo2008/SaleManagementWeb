@@ -59,6 +59,26 @@ class PosSearchTests(unittest.TestCase):
 
             self.assertEqual([row.variant_id for row in result.variants], [variant.id])
             self.assertEqual(result.variants[0].parent_name, "CÀ MÈN GIỮ NHIỆT")
+            self.assertFalse(result.variants[0].label_printed)
+
+            variant.label_printed = True
+            db.commit()
+            printed = search(
+                q="",
+                limit=40,
+                category_id=None,
+                label_printed=True,
+                db=db,
+            )
+            unprinted = search(
+                q="",
+                limit=40,
+                category_id=None,
+                label_printed=False,
+                db=db,
+            )
+            self.assertEqual([row.variant_id for row in printed.variants], [variant.id])
+            self.assertEqual(unprinted.variants, [])
         finally:
             db.close()
 

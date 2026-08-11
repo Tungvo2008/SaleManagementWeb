@@ -43,6 +43,7 @@ def search(
     q: str = "",
     limit: int = 200,
     category_id: int | None = None,
+    label_printed: bool | None = None,
     db: Session = Depends(get_db),
 ):
     """
@@ -121,6 +122,8 @@ def search(
     ]
     if category_id is not None:
         filters.append(category_expr == category_id)
+    if label_printed is not None:
+        filters.append(Product.label_printed.is_(label_printed))
     if q_search:
         filters.append(
             or_(
@@ -147,6 +150,7 @@ def search(
             Product.price.label("price"),
             Product.roll_price.label("roll_price"),
             Product.track_stock_unit.label("track_stock_unit"),
+            Product.label_printed.label("label_printed"),
             func.coalesce(Product.stock, 0).label("stock"),
             rolls_total.label("rolls_total"),
             rolls_full.label("rolls_full"),
@@ -171,6 +175,7 @@ def search(
             Product.price,
             Product.roll_price,
             Product.track_stock_unit,
+            Product.label_printed,
             Product.stock,
         )
     )
@@ -204,6 +209,7 @@ def search(
             price=_d(r["price"]) if r["price"] is not None else None,
             roll_price=_d(r["roll_price"]) if r["roll_price"] is not None else None,
             track_stock_unit=bool(r["track_stock_unit"]),
+            label_printed=bool(r["label_printed"]),
             stock=_d(r["stock"]),
             rolls_total=int(r["rolls_total"]),
             rolls_full=int(r["rolls_full"]),

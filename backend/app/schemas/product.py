@@ -30,6 +30,7 @@ class VariantCreate(BaseModel):
     image_url: str | None = Field(None, max_length=500)
     attrs: dict | None = None
     track_stock_unit: bool = False
+    label_printed: bool = False
     is_active: bool = True
 
 class VariantUpdate(BaseModel):
@@ -46,6 +47,7 @@ class VariantUpdate(BaseModel):
     image_url: str | None = Field(None, max_length=500)
     attrs: dict | None = None
     track_stock_unit: bool | None = None
+    label_printed: bool | None = None
     is_active: bool | None = None
 
 # ---------- Outputs ----------
@@ -65,6 +67,7 @@ class VariantOut(BaseModel):
     image_url: str | None = None
     attrs: dict | None = None
     track_stock_unit: bool
+    label_printed: bool = False
     is_active: bool
 
     class Config:
