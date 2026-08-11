@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { del, get, patch, post } from "../api"
 import Modal from "./Modal"
 import ProductCreateModal from "./ProductCreateModal"
@@ -26,6 +26,7 @@ const PRODUCT_COLUMNS = [
 
 const PRODUCT_DEFAULT_GRID_CFG = {
   visibleKeys: PRODUCT_COLUMNS.map((c) => c.key),
+  pinnedKeys: [],
   sortKey: null,
   sortDir: null,
   filters: {},
@@ -38,6 +39,7 @@ function loadProductGridCfg() {
     const parsed = JSON.parse(raw)
     return {
       visibleKeys: Array.isArray(parsed?.visibleKeys) ? parsed.visibleKeys : PRODUCT_DEFAULT_GRID_CFG.visibleKeys,
+      pinnedKeys: Array.isArray(parsed?.pinnedKeys) ? parsed.pinnedKeys : [],
       sortKey: parsed?.sortKey || null,
       sortDir: parsed?.sortDir || null,
       filters: parsed && typeof parsed.filters === "object" && parsed.filters ? parsed.filters : {},
@@ -45,6 +47,20 @@ function loadProductGridCfg() {
   } catch {
     return PRODUCT_DEFAULT_GRID_CFG
   }
+}
+
+function PinIcon({ active = false }) {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <path
+        d="M9 3h6l-1 6 3 3v2h-4v7l-2-2v-5H7v-2l3-3-1-6z"
+        fill={active ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
 }
 
 function saveProductGridCfg(cfg) {
@@ -122,6 +138,13 @@ export default function ProductsPage() {
   const [showExcel, setShowExcel] = useState(false)
   const [showColumns, setShowColumns] = useState(false)
   const [gridCfg, setGridCfg] = useState(() => loadProductGridCfg())
+  const topScrollRef = useRef(null)
+  const headRef = useRef(null)
+  const filtersRef = useRef(null)
+  const bodyRef = useRef(null)
+  const headerCellRefs = useRef(new Map())
+  const [scrollContentWidth, setScrollContentWidth] = useState(0)
+  const [pinnedOffsets, setPinnedOffsets] = useState({ select: 12 })
 
   const variantsById = useMemo(() => {
     const m = new Map()
@@ -153,6 +176,58 @@ export default function ProductsPage() {
     () => visibleCols.map((c) => c.width).join(" "),
     [visibleCols]
   )
+
+  const pinnedKeys = useMemo(
+    () => new Set(["select", ...(gridCfg.pinnedKeys || [])]),
+    [gridCfg.pinnedKeys]
+  )
+
+  const refreshGridMeasurements = useCallback(() => {
+    const body = bodyRef.current
+    if (body) setScrollContentWidth(body.scrollWidth)
+
+    let left = 12
+    const nextOffsets = {}
+    for (const col of visibleCols) {
+      if (!pinnedKeys.has(col.key)) continue
+      nextOffsets[col.key] = left
+      const cell = headerCellRefs.current.get(col.key)
+      left += (cell?.getBoundingClientRect().width || 0) + 10
+    }
+    setPinnedOffsets(nextOffsets)
+  }, [pinnedKeys, visibleCols])
+
+  useEffect(() => {
+    refreshGridMeasurements()
+    const onResize = () => refreshGridMeasurements()
+    window.addEventListener("resize", onResize)
+    return () => window.removeEventListener("resize", onResize)
+  }, [gridTemplateColumns, refreshGridMeasurements, rows.length])
+
+  function syncHorizontalScroll(source) {
+    const left = source.currentTarget.scrollLeft
+    for (const ref of [topScrollRef, headRef, filtersRef, bodyRef]) {
+      if (ref.current && ref.current !== source.currentTarget) ref.current.scrollLeft = left
+    }
+  }
+
+  function togglePinnedColumn(key) {
+    if (key === "select") return
+    updateGridCfg((prev) => {
+      const next = new Set(prev.pinnedKeys || [])
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return { ...prev, pinnedKeys: Array.from(next) }
+    })
+  }
+
+  function pinnedCellProps(col, kind = "body") {
+    if (!pinnedKeys.has(col.key)) return {}
+    return {
+      className: `prodPinnedCell prodPinnedCell${kind === "head" ? "Head" : kind === "filter" ? "Filter" : "Body"}`,
+      style: { left: pinnedOffsets[col.key] ?? 12 },
+    }
+  }
 
   async function loadAll() {
     setLoading(true)
@@ -788,13 +863,31 @@ export default function ProductsPage() {
       ) : null}
 
       <div className="prodTree">
-        <div className="prodTreeHead" style={{ gridTemplateColumns }}>
+        <div
+          className="prodTreeScrollTop"
+          ref={topScrollRef}
+          onScroll={syncHorizontalScroll}
+          aria-label="Thanh cuộn ngang của bảng sản phẩm"
+        >
+          <div className="prodTreeScrollTopInner" style={{ width: scrollContentWidth }} />
+        </div>
+
+        <div
+          className="prodTreeHead"
+          style={{ gridTemplateColumns }}
+          ref={headRef}
+        >
           {visibleCols.map((col) => (
             <div
               key={col.key}
+              ref={(node) => {
+                if (node) headerCellRefs.current.set(col.key, node)
+                else headerCellRefs.current.delete(col.key)
+              }}
               className={`prodHeadCell ${col.align === "right" ? "prodRight" : ""} ${
                 col.sortable === false ? "" : "prodHeadCellSortable"
-              }`}
+              } ${pinnedCellProps(col, "head").className || ""}`}
+              style={pinnedCellProps(col, "head").style}
             >
               {col.key === "select" ? (
                 <input
@@ -807,32 +900,49 @@ export default function ProductsPage() {
                   onChange={toggleAllVisibleRows}
                   aria-label="Chọn tất cả kết quả đang hiển thị"
                 />
-              ) : col.sortable === false ? (
-                <div className="prodHeadTitle">{col.title}</div>
               ) : (
-                <button
-                  type="button"
-                  className="prodSortBtn"
-                  onClick={() => toggleSort(col.key)}
-                  title="Bấm để sắp xếp"
-                >
-                  <span className="prodHeadTitle">{col.title}</span>
-                  <span className={`prodSortIcon ${gridCfg.sortKey === col.key ? "prodSortIconOn" : ""}`}>
-                    {gridCfg.sortKey === col.key && gridCfg.sortDir === "asc"
-                      ? "↑"
-                      : gridCfg.sortKey === col.key && gridCfg.sortDir === "desc"
-                        ? "↓"
-                        : "↕"}
-                  </span>
-                </button>
+                <div className="prodHeadControls">
+                  {col.sortable === false ? (
+                    <div className="prodHeadTitle">{col.title}</div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="prodSortBtn"
+                      onClick={() => toggleSort(col.key)}
+                      title="Bấm để sắp xếp"
+                    >
+                      <span className="prodHeadTitle">{col.title}</span>
+                      <span className={`prodSortIcon ${gridCfg.sortKey === col.key ? "prodSortIconOn" : ""}`}>
+                        {gridCfg.sortKey === col.key && gridCfg.sortDir === "asc"
+                          ? "↑"
+                          : gridCfg.sortKey === col.key && gridCfg.sortDir === "desc"
+                            ? "↓"
+                            : "↕"}
+                      </span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={`prodPinBtn ${pinnedKeys.has(col.key) ? "prodPinBtnActive" : ""}`}
+                    onClick={() => togglePinnedColumn(col.key)}
+                    title={pinnedKeys.has(col.key) ? `Bỏ ghim cột ${col.title}` : `Ghim cột ${col.title}`}
+                    aria-label={pinnedKeys.has(col.key) ? `Bỏ ghim cột ${col.title}` : `Ghim cột ${col.title}`}
+                  >
+                    <PinIcon active={pinnedKeys.has(col.key)} />
+                  </button>
+                </div>
               )}
             </div>
           ))}
         </div>
 
-        <div className="prodTreeFilters" style={{ gridTemplateColumns }}>
+        <div className="prodTreeFilters" style={{ gridTemplateColumns }} ref={filtersRef}>
           {visibleCols.map((col) => (
-            <div key={`filter-${col.key}`} className={`prodFilterCell ${col.align === "right" ? "prodRight" : ""}`}>
+            <div
+              key={`filter-${col.key}`}
+              className={`prodFilterCell ${col.align === "right" ? "prodRight" : ""} ${pinnedCellProps(col, "filter").className || ""}`}
+              style={pinnedCellProps(col, "filter").style}
+            >
               {col.filterable === false ? (
                 <div className="prodFilterBlank" />
               ) : (
@@ -847,7 +957,7 @@ export default function ProductsPage() {
           ))}
         </div>
 
-        <div className="prodTreeBody">
+        <div className="prodTreeBody" ref={bodyRef} onScroll={syncHorizontalScroll}>
           {tree.map((group) => {
             const key = String(group.parent.id)
             const hasChildren = group.variants.length > 0
@@ -860,7 +970,11 @@ export default function ProductsPage() {
                 <div className="prodTreeGroup" key={`standalone-${v.id}`}>
                   <div className="prodTreeRow prodTreeVariant prodTreeStandalone" style={{ gridTemplateColumns }}>
                     {visibleCols.map((col) => (
-                      <div key={`standalone-${v.id}-${col.key}`} className={col.align === "right" ? "prodRight" : ""}>
+                      <div
+                        key={`standalone-${v.id}-${col.key}`}
+                        className={`${col.align === "right" ? "prodRight" : ""} ${pinnedCellProps(col).className || ""}`}
+                        style={pinnedCellProps(col).style}
+                      >
                         {renderTreeCell({ col, group, variant: v, kind: "single" })}
                       </div>
                     ))}
@@ -876,7 +990,11 @@ export default function ProductsPage() {
                   style={{ gridTemplateColumns }}
                 >
                   {visibleCols.map((col) => (
-                    <div key={`parent-${key}-${col.key}`} className={col.align === "right" ? "prodRight" : ""}>
+                    <div
+                      key={`parent-${key}-${col.key}`}
+                      className={`${col.align === "right" ? "prodRight" : ""} ${pinnedCellProps(col).className || ""}`}
+                      style={pinnedCellProps(col).style}
+                    >
                       {renderTreeCell({ col, group, kind: "parent" })}
                     </div>
                   ))}
@@ -886,7 +1004,11 @@ export default function ProductsPage() {
                   ? group.variants.map((v) => (
                       <div className="prodTreeRow prodTreeVariant" key={`variant-${v.id}`} style={{ gridTemplateColumns }}>
                         {visibleCols.map((col) => (
-                          <div key={`variant-${v.id}-${col.key}`} className={col.align === "right" ? "prodRight" : ""}>
+                          <div
+                            key={`variant-${v.id}-${col.key}`}
+                            className={`${col.align === "right" ? "prodRight" : ""} ${pinnedCellProps(col).className || ""}`}
+                            style={pinnedCellProps(col).style}
+                          >
                             {renderTreeCell({ col, group, variant: v, kind: "variant" })}
                           </div>
                         ))}

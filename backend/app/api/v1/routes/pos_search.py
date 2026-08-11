@@ -17,6 +17,7 @@ from app.schemas.pos_search import (
     PosSearchStockUnitOut,
     PosSearchVariantOut,
 )
+from app.services.search_text import normalize_search_text
 
 
 router = APIRouter(prefix="/search")
@@ -24,6 +25,17 @@ router = APIRouter(prefix="/search")
 
 def _d(v: object) -> Decimal:
     return Decimal(str(v))
+
+
+def _search_value(db: Session, column):
+    """Use accent-insensitive matching on SQLite without changing stored data."""
+    bind = db.get_bind()
+    if bind.dialect.name == "sqlite":
+        raw_connection = db.connection().connection
+        driver_connection = getattr(raw_connection, "driver_connection", raw_connection)
+        driver_connection.create_function("normalize_search_text", 1, normalize_search_text)
+        return func.normalize_search_text(func.coalesce(column, ""))
+    return func.lower(func.coalesce(column, ""))
 
 
 @router.get("/", response_model=PosSearchOut)
@@ -78,15 +90,18 @@ def search(
     ParentCategory = aliased(Category)
 
     q_lower = q.lower()
-    name_l = func.lower(Product.name)
-    sku_l = func.lower(func.coalesce(Product.sku, ""))
-    barcode_l = func.lower(func.coalesce(Product.barcode, ""))
+    q_search = normalize_search_text(q) if db.get_bind().dialect.name == "sqlite" else q_lower
+    name_l = _search_value(db, Product.name)
+    parent_name_l = _search_value(db, Parent.name)
+    category_name_l = _search_value(db, ParentCategory.name)
+    sku_l = _search_value(db, Product.sku)
+    barcode_l = _search_value(db, Product.barcode)
 
     # If user is scanning normal goods, we want exact matches first.
     exact_rank = case(
-        (barcode_l == q_lower, 3),
-        (sku_l == q_lower, 2),
-        (name_l == q_lower, 1),
+        (barcode_l == q_search, 3),
+        (sku_l == q_search, 2),
+        (name_l == q_search, 1),
         else_=0,
     )
 
@@ -106,12 +121,14 @@ def search(
     ]
     if category_id is not None:
         filters.append(category_expr == category_id)
-    if q_lower:
+    if q_search:
         filters.append(
             or_(
-                name_l.like(f"%{q_lower}%"),
-                sku_l.like(f"%{q_lower}%"),
-                barcode_l.like(f"%{q_lower}%"),
+                name_l.like(f"%{q_search}%"),
+                parent_name_l.like(f"%{q_search}%"),
+                category_name_l.like(f"%{q_search}%"),
+                sku_l.like(f"%{q_search}%"),
+                barcode_l.like(f"%{q_search}%"),
             )
         )
 
@@ -157,7 +174,7 @@ def search(
             Product.stock,
         )
     )
-    if q_lower:
+    if q_search:
         qv = qv.order_by(
             exact_rank.desc(),
             is_partial.desc(),

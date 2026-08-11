@@ -118,6 +118,19 @@
   background: #ffffff;
 }
 
+.prodTreeScrollTop{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  height:18px;
+  border-bottom:1px solid var(--adm-line);
+  background:#f8fbff;
+}
+
+.prodTreeScrollTopInner{
+  height:1px;
+}
+
 .prodTreeHead,
 .prodTreeRow{
   display:grid;
@@ -134,10 +147,18 @@
   background: #f8fbff;
   font-weight: 700;
   text-transform: uppercase;
+  overflow:hidden;
 }
 
 .prodHeadCell{
   min-width: 0;
+}
+
+.prodHeadControls{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  min-width:0;
 }
 
 .prodHeadCellSortable{
@@ -162,6 +183,31 @@
   font: inherit;
   cursor: pointer;
   padding: 0;
+}
+
+.prodPinBtn{
+  width:24px;
+  height:24px;
+  flex:0 0 24px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(15,23,42,.14);
+  border-radius:8px;
+  background:#fff;
+  color:var(--adm-muted);
+  padding:0;
+  cursor:pointer;
+}
+
+.prodPinBtn:hover{
+  border-color:rgba(47,107,255,.42);
+  color:#1d4ed8;
+}
+
+.prodPinBtnActive{
+  border-color:rgba(47,107,255,.52);
+  background:rgba(47,107,255,.12);
+  color:#1d4ed8;
 }
 
 .prodSortIcon{
@@ -189,6 +235,7 @@
   padding: 8px 12px;
   border-bottom: 1px solid rgba(15,23,42,.08);
   background: #f8fbff;
+  overflow:hidden;
 }
 
 .prodFilterCell{
@@ -218,7 +265,8 @@
 
 .prodTreeBody{
   max-height: calc(100vh - 260px);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .prodTreeGroup + .prodTreeGroup{
@@ -227,10 +275,31 @@
 
 .prodTreeRow{
   padding: 9px 12px;
+  background:#ffffff;
 }
 
 .prodTreeParent{
   background: rgba(47,107,255,.10);
+}
+
+.prodPinnedCell{
+  position:sticky;
+  z-index:4;
+  background:inherit;
+}
+
+.prodPinnedCellHead{
+  z-index:12;
+  background:#f8fbff;
+}
+
+.prodPinnedCellFilter{
+  z-index:11;
+  background:#f8fbff;
+}
+
+.prodPinnedCellBody{
+  box-shadow:7px 0 8px -9px rgba(15,23,42,.65);
 }
 
 .prodTreeParentSynthetic{
