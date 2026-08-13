@@ -27,6 +27,7 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
   const previewHeight = isDouble ? cfg.doubleLabelHeightMm : cfg.labelHeightMm
   const previewGap = isDouble ? cfg.doubleLabelGapMm : 0
   const previewPageWidth = isDouble ? previewWidth * 2 + previewGap : previewWidth
+  const compactPreview = previewHeight <= 18 || previewWidth <= 28
 
   function setField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -135,7 +136,11 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
               <div className="bctPreviewRoll" style={{ width: `${previewPageWidth}mm` }}>
                 <div className="bctPreviewGrid" style={{ gap: `${previewGap}mm`, gridTemplateColumns: `repeat(${isDouble ? 2 : 1}, ${previewWidth}mm)` }}>
                 {sampleLabels.slice(0, isDouble ? 2 : 1).map((lb, idx) => (
-                  <div key={idx} className="bctLabel" style={{ width: `${previewWidth}mm`, height: `${previewHeight}mm` }}>
+                  <div
+                    key={idx}
+                    className={`bctLabel ${compactPreview ? "bctLabelCompact" : ""}`}
+                    style={{ width: `${previewWidth}mm`, height: `${previewHeight}mm` }}
+                  >
                     <div className="bctName">{lb.name}</div>
                     <div className="bctPrice">{formatMoneyVN(lb.price)}đ</div>
                     <div className="bctCode">[{lb.code}]</div>
@@ -146,6 +151,9 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
               </div>
             </div>
             <div className="bctHint">Preview chỉ để canh bố cục. In thật sẽ dùng barcode ảnh.</div>
+            {compactPreview ? (
+              <div className="bctCompactNotice">Đang dùng bố cục compact để giữ đủ Tên + Giá + Barcode trên tem nhỏ.</div>
+            ) : null}
             <div className="bctHint">
               Khi in: {isDouble ? "mỗi cặp tem" : "mỗi tem"} là 1 trang `{previewPageWidth} × {previewHeight}mm`, không qua khổ A4.
             </div>

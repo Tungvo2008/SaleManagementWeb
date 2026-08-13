@@ -172,6 +172,26 @@
   display: grid;
   grid-template-rows: auto auto 1fr;
 }
+.bctLabelCompact {
+  padding: .55mm;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+.bctLabelCompact .bctName {
+  min-height: 2.2mm;
+  font-size: 7px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.bctLabelCompact .bctPrice {
+  margin-top: .2mm;
+  font-size: 7px;
+}
+.bctLabelCompact .bctCode {
+  margin-top: .4mm;
+  font-size: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+}
 .bctName {
   font-size: 9px;
   font-weight: 700;
@@ -196,6 +216,16 @@
   margin-top: 8px;
   color: #6b7280;
   font-size: 12px;
+}
+.bctCompactNotice {
+  margin-top:8px;
+  padding:8px 10px;
+  border:1px solid rgba(53,106,230,.22);
+  border-radius:9px;
+  background:#eff4ff;
+  color:#1d4ed8;
+  font-size:12px;
+  font-weight:700;
 }
 @media (max-width: 1400px) {
   .bctGrid {
