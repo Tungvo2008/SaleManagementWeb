@@ -774,22 +774,6 @@ export default function ReceivePrintPage() {
                       Số lượng
                     </div>
                     <input className="input" value={qty} onChange={(e) => setQty(e.target.value)} placeholder="Ví dụ: 5" />
-                    <label className={`rcvDoubleLabelOption ${doubleLabelPrint ? "rcvDoubleLabelOptionOn" : ""}`}>
-                      <input
-                        type="checkbox"
-                        checked={doubleLabelPrint}
-                        onChange={(e) => setDoubleLabelPrint(e.target.checked)}
-                        disabled={busy}
-                      />
-                      <span className="rcvDoubleLabelIcon" aria-hidden="true">
-                        <span />
-                        <span />
-                      </span>
-                      <span>
-                        <b>In tem đôi</b>
-                        <small>2 tem trên cùng một hàng</small>
-                      </span>
-                    </label>
                     <div className="hint">
                       {tab === "normal"
                         ? "Hàng thường: nhập số lượng tăng tồn và in đúng số tem barcode. Hoặc chỉ in tem mà không nhập."
@@ -857,6 +841,26 @@ export default function ReceivePrintPage() {
                       </>
                     ) : null}
                   </div>
+                </div>
+
+                <div className="rcvPrintLayoutBar">
+                  <div className="rcvPrintLayoutTitle">Kiểu xếp tem khi in</div>
+                  <label className={`rcvDoubleLabelOption ${doubleLabelPrint ? "rcvDoubleLabelOptionOn" : ""}`}>
+                    <input
+                      type="checkbox"
+                      checked={doubleLabelPrint}
+                      onChange={(e) => setDoubleLabelPrint(e.target.checked)}
+                      disabled={busy}
+                    />
+                    <span className="rcvDoubleLabelIcon" aria-hidden="true">
+                      <span />
+                      <span />
+                    </span>
+                    <span>
+                      <b>{doubleLabelPrint ? "Đang in tem đôi" : "Bật in tem đôi"}</b>
+                      <small>2 tem trên cùng một hàng</small>
+                    </span>
+                  </label>
                 </div>
 
                 <div className="rcvActions">

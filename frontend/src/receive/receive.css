@@ -292,7 +292,6 @@
 }
 
 .rcvDoubleLabelOption{
-  margin-top:10px;
   display:flex;
   align-items:center;
   gap:10px;
@@ -304,6 +303,25 @@
   cursor:pointer;
   user-select:none;
   transition:150ms ease;
+}
+
+.rcvPrintLayoutBar{
+  margin-top:12px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:9px 10px;
+  border:1px solid rgba(var(--accent-rgb),.18);
+  border-radius:14px;
+  background:rgba(var(--accent-rgb),.045);
+}
+
+.rcvPrintLayoutTitle{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
 }
 
 .rcvDoubleLabelOption input{
