@@ -23,6 +23,49 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+.bctModeTabs {
+  display:flex;
+  gap:8px;
+  padding:5px;
+  width:max-content;
+  max-width:100%;
+  border:1px solid #dbe2ef;
+  border-radius:14px;
+  background:#f4f7fb;
+}
+.bctModeTab {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border:0;
+  border-radius:10px;
+  padding:9px 13px;
+  background:transparent;
+  color:#64748b;
+  font-weight:700;
+  cursor:pointer;
+}
+.bctModeTabActive {
+  background:#fff;
+  color:#1d4ed8;
+  box-shadow:0 2px 9px rgba(15,23,42,.10), inset 0 0 0 1px rgba(53,106,230,.20);
+}
+.bctModeIcon {
+  width:30px;
+  height:20px;
+  display:grid;
+  gap:2px;
+  padding:2px;
+  border:1px solid currentColor;
+  border-radius:5px;
+}
+.bctModeIconSingle { grid-template-columns:1fr; }
+.bctModeIconDouble { grid-template-columns:1fr 1fr; }
+.bctModeIcon i {
+  border:1px dashed currentColor;
+  border-radius:2px;
+  opacity:.75;
+}
 .bctBtn {
   border: 1px solid #c9d2e3;
   background: #fff;
@@ -104,6 +147,22 @@
 .bctPreviewGrid {
   display: grid;
   justify-content: start;
+}
+.bctPreviewRoll {
+  position:relative;
+  padding-bottom:22px;
+}
+.bctRollWidth {
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  border-top:1px solid #94a3b8;
+  padding-top:4px;
+  text-align:center;
+  color:#64748b;
+  font-size:10px;
+  font-weight:700;
 }
 .bctLabel {
   border: 1px dashed #aeb9cb;

@@ -15,12 +15,18 @@ const sampleLabels = [
 
 export default function BarcodeTemplatePage({ template, onSave, onReset }) {
   const [form, setForm] = useState(template || defaultBarcodeTemplate)
+  const [templateMode, setTemplateMode] = useState("single")
 
   useEffect(() => {
     setForm(template || defaultBarcodeTemplate)
   }, [template])
 
   const cfg = useMemo(() => normalizeBarcodeTemplate(form), [form])
+  const isDouble = templateMode === "double"
+  const previewWidth = isDouble ? cfg.doubleLabelWidthMm : cfg.labelWidthMm
+  const previewHeight = isDouble ? cfg.doubleLabelHeightMm : cfg.labelHeightMm
+  const previewGap = isDouble ? cfg.doubleLabelGapMm : 0
+  const previewPageWidth = isDouble ? previewWidth * 2 + previewGap : previewWidth
 
   function setField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -61,29 +67,54 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
         </div>
       </div>
 
+      <div className="bctModeTabs">
+        <button
+          type="button"
+          className={`bctModeTab ${!isDouble ? "bctModeTabActive" : ""}`}
+          onClick={() => setTemplateMode("single")}
+        >
+          <span className="bctModeIcon bctModeIconSingle"><i /></span>
+          Mẫu tem đơn
+        </button>
+        <button
+          type="button"
+          className={`bctModeTab ${isDouble ? "bctModeTabActive" : ""}`}
+          onClick={() => setTemplateMode("double")}
+        >
+          <span className="bctModeIcon bctModeIconDouble"><i /><i /></span>
+          Mẫu tem đôi
+        </button>
+      </div>
+
       <div className="bctGrid">
         <div className="bctPanel">
-          <div className="bctPanelHead">Thông số in</div>
+          <div className="bctPanelHead">Thông số {isDouble ? "tem đôi" : "tem đơn"}</div>
           <div className="bctPanelBody bctForm">
             <label>
               <span>Tên tiêu đề in</span>
               <input value={form.title || ""} onChange={(e) => setField("title", e.target.value)} />
             </label>
             <label>
-              <span>Rộng tem (mm)</span>
-              <input type="number" value={cfg.labelWidthMm} onChange={(e) => setField("labelWidthMm", e.target.value)} />
+              <span>Rộng mỗi tem (mm)</span>
+              <input type="number" value={previewWidth} onChange={(e) => setField(isDouble ? "doubleLabelWidthMm" : "labelWidthMm", e.target.value)} />
             </label>
             <label>
-              <span>Cao tem (mm)</span>
-              <input type="number" value={cfg.labelHeightMm} onChange={(e) => setField("labelHeightMm", e.target.value)} />
+              <span>Cao mỗi tem (mm)</span>
+              <input type="number" value={previewHeight} onChange={(e) => setField(isDouble ? "doubleLabelHeightMm" : "labelHeightMm", e.target.value)} />
             </label>
+            {isDouble ? (
+              <label>
+                <span>Khoảng cách 2 tem (mm)</span>
+                <input type="number" value={cfg.doubleLabelGapMm} onChange={(e) => setField("doubleLabelGapMm", e.target.value)} />
+              </label>
+            ) : null}
             <label>
               <span>Cao barcode (mm)</span>
-              <input type="number" value={cfg.barcodeHeightMm} onChange={(e) => setField("barcodeHeightMm", e.target.value)} />
+              <input type="number" value={isDouble ? cfg.doubleBarcodeHeightMm : cfg.barcodeHeightMm} onChange={(e) => setField(isDouble ? "doubleBarcodeHeightMm" : "barcodeHeightMm", e.target.value)} />
             </label>
             <label>
               <span>Barcode scale</span>
-              <input type="number" value={cfg.barcodeScale} onChange={(e) => setField("barcodeScale", e.target.value)} />
+              <input type="number" value={isDouble ? cfg.doubleBarcodeScale : cfg.barcodeScale} onChange={(e) => setField(isDouble ? "doubleBarcodeScale" : "barcodeScale", e.target.value)} />
             </label>
           </div>
         </div>
@@ -101,19 +132,22 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
           <div className="bctPanelHead">Xem trước</div>
           <div className="bctPanelBody">
             <div className="bctPreviewPage">
-              <div className="bctPreviewGrid" style={{ gap: "3mm", gridTemplateColumns: `repeat(auto-fit, ${cfg.labelWidthMm}mm)` }}>
-                {sampleLabels.map((lb, idx) => (
-                  <div key={idx} className="bctLabel" style={{ width: `${cfg.labelWidthMm}mm`, height: `${cfg.labelHeightMm}mm` }}>
+              <div className="bctPreviewRoll" style={{ width: `${previewPageWidth}mm` }}>
+                <div className="bctPreviewGrid" style={{ gap: `${previewGap}mm`, gridTemplateColumns: `repeat(${isDouble ? 2 : 1}, ${previewWidth}mm)` }}>
+                {sampleLabels.slice(0, isDouble ? 2 : 1).map((lb, idx) => (
+                  <div key={idx} className="bctLabel" style={{ width: `${previewWidth}mm`, height: `${previewHeight}mm` }}>
                     <div className="bctName">{lb.name}</div>
                     <div className="bctPrice">{formatMoneyVN(lb.price)}đ</div>
                     <div className="bctCode">[{lb.code}]</div>
                   </div>
                 ))}
+                </div>
+                <div className="bctRollWidth">Khổ in: {previewPageWidth} × {previewHeight}mm</div>
               </div>
             </div>
             <div className="bctHint">Preview chỉ để canh bố cục. In thật sẽ dùng barcode ảnh.</div>
             <div className="bctHint">
-              Khi in: mỗi tem là 1 trang `{cfg.labelWidthMm} × {cfg.labelHeightMm}mm`, không qua khổ A4.
+              Khi in: {isDouble ? "mỗi cặp tem" : "mỗi tem"} là 1 trang `{previewPageWidth} × {previewHeight}mm`, không qua khổ A4.
             </div>
           </div>
         </div>
