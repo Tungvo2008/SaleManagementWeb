@@ -290,6 +290,72 @@
   color:#fff;
   box-shadow:0 0 0 3px rgba(18,183,106,.12);
 }
+
+.rcvDoubleLabelOption{
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 11px;
+  border:1px solid rgba(102,112,133,.22);
+  border-radius:12px;
+  background:rgba(255,255,255,.72);
+  color:#475467;
+  cursor:pointer;
+  user-select:none;
+  transition:150ms ease;
+}
+
+.rcvDoubleLabelOption input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.rcvDoubleLabelOption > span:last-child{
+  display:grid;
+  gap:2px;
+}
+
+.rcvDoubleLabelOption small{
+  color:#667085;
+  font-size:11px;
+}
+
+.rcvDoubleLabelIcon{
+  width:40px;
+  height:25px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:3px;
+  padding:3px;
+  border:1px solid #98a2b3;
+  border-radius:7px;
+  background:#fff;
+}
+
+.rcvDoubleLabelIcon span{
+  border:1px dashed #98a2b3;
+  border-radius:3px;
+  background:#f2f4f7;
+}
+
+.rcvDoubleLabelOptionOn{
+  border-color:rgba(var(--accent-rgb),.42);
+  background:rgba(var(--accent-rgb),.08);
+  color:#175cd3;
+  box-shadow:0 0 0 3px rgba(var(--accent-rgb),.08);
+}
+
+.rcvDoubleLabelOptionOn .rcvDoubleLabelIcon{
+  border-color:#2f6bff;
+  background:#eff4ff;
+}
+
+.rcvDoubleLabelOptionOn .rcvDoubleLabelIcon span{
+  border-color:#2f6bff;
+  background:#dbe7ff;
+}
 .rcvPickedMeta{
   margin-top: 8px;
   display:flex;

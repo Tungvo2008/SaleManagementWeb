@@ -323,6 +323,7 @@ export default function ReceivePrintPage() {
   const [labelFilter, setLabelFilter] = useState("all")
   const [picked, setPicked] = useState(null)
   const [labelBusy, setLabelBusy] = useState(false)
+  const [doubleLabelPrint, setDoubleLabelPrint] = useState(false)
 
   const [qty, setQty] = useState("1")
   const [normalCostPrice, setNormalCostPrice] = useState("")
@@ -511,7 +512,12 @@ export default function ReceivePrintPage() {
             sku: picked.sku,
             price: picked.price != null ? picked.price : "",
           }))
-          openPrintLabels({ title: `Tem mã vạch (${picked.name})`, labels, printWindow })
+          openPrintLabels({
+            title: `Tem mã vạch (${picked.name})`,
+            labels,
+            printWindow,
+            columns: doubleLabelPrint ? 2 : 1,
+          })
         }
 
         showInfo("Đã nhập hàng.")
@@ -539,7 +545,12 @@ export default function ReceivePrintPage() {
             sku: picked.sku,
             price: picked.roll_price != null ? picked.roll_price : picked.price != null ? picked.price : "",
           }))
-          openPrintLabels({ title: `Tem cuộn (${picked.name})`, labels, printWindow })
+          openPrintLabels({
+            title: `Tem cuộn (${picked.name})`,
+            labels,
+            printWindow,
+            columns: doubleLabelPrint ? 2 : 1,
+          })
         }
 
         showInfo(`Đã nhập ${units.length} cuộn.`)
@@ -564,7 +575,12 @@ export default function ReceivePrintPage() {
           sku: picked.sku,
           price: picked.price != null ? picked.price : "",
         }))
-        openPrintLabels({ title: `In tem (${picked.name})`, labels, printWindow })
+        openPrintLabels({
+          title: `In tem (${picked.name})`,
+          labels,
+          printWindow,
+          columns: doubleLabelPrint ? 2 : 1,
+        })
         return
       }
 
@@ -584,7 +600,12 @@ export default function ReceivePrintPage() {
         sku: picked.sku,
         price: picked.roll_price != null ? picked.roll_price : picked.price != null ? picked.price : "",
       }))
-      openPrintLabels({ title: `In tem cuộn (${picked.name})`, labels, printWindow })
+      openPrintLabels({
+        title: `In tem cuộn (${picked.name})`,
+        labels,
+        printWindow,
+        columns: doubleLabelPrint ? 2 : 1,
+      })
     } finally {
       setBusy(false)
     }
@@ -753,6 +774,22 @@ export default function ReceivePrintPage() {
                       Số lượng
                     </div>
                     <input className="input" value={qty} onChange={(e) => setQty(e.target.value)} placeholder="Ví dụ: 5" />
+                    <label className={`rcvDoubleLabelOption ${doubleLabelPrint ? "rcvDoubleLabelOptionOn" : ""}`}>
+                      <input
+                        type="checkbox"
+                        checked={doubleLabelPrint}
+                        onChange={(e) => setDoubleLabelPrint(e.target.checked)}
+                        disabled={busy}
+                      />
+                      <span className="rcvDoubleLabelIcon" aria-hidden="true">
+                        <span />
+                        <span />
+                      </span>
+                      <span>
+                        <b>In tem đôi</b>
+                        <small>2 tem trên cùng một hàng</small>
+                      </span>
+                    </label>
                     <div className="hint">
                       {tab === "normal"
                         ? "Hàng thường: nhập số lượng tăng tồn và in đúng số tem barcode. Hoặc chỉ in tem mà không nhập."

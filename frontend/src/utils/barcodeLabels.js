@@ -6,7 +6,15 @@ import {
 import { formatMoneyVN } from "./number"
 import { buildPrintAutoCloseScript, openPrintDocument } from "./print"
 
-export function openPrintLabels({ title, labels, printWindow = null }) {
+function chunkLabels(labels, columns) {
+  const rows = []
+  for (let index = 0; index < labels.length; index += columns) {
+    rows.push(labels.slice(index, index + columns))
+  }
+  return rows
+}
+
+export function openPrintLabels({ title, labels, printWindow = null, columns = 1 }) {
   const w =
     printWindow ||
     openPrintDocument({
@@ -16,6 +24,10 @@ export function openPrintLabels({ title, labels, printWindow = null }) {
     })
   if (!w) return
   const cfg = normalizeBarcodeTemplate(loadBarcodeTemplate())
+  const labelColumns = columns === 2 ? 2 : 1
+  const labelGapMm = labelColumns === 2 ? 2 : 0
+  const pageWidthMm = cfg.labelWidthMm * labelColumns + labelGapMm * (labelColumns - 1)
+  const labelRows = chunkLabels(Array.isArray(labels) ? labels : [], labelColumns)
 
   const safeTitle = String(title || cfg.title || "In mã vạch")
     .replaceAll("<", "")
@@ -32,14 +44,16 @@ export function openPrintLabels({ title, labels, printWindow = null }) {
     .h1{ font-weight: 700; font-size: 16px; }
     .muted{ color:#6b7280; font-size: 12px; }
     .grid{ display:block; }
-    .lb{ box-sizing: border-box; border:none; border-radius:0; padding:1.2mm; width:${cfg.labelWidthMm}mm; height:${cfg.labelHeightMm}mm; display:grid; grid-template-rows:auto auto 1fr; overflow:hidden; break-after:page; page-break-after:always; }
-    .lb:last-child{ break-after:auto; page-break-after:auto; }
+    .label-row{ box-sizing:border-box; width:${pageWidthMm}mm; height:${cfg.labelHeightMm}mm; display:grid; grid-template-columns:repeat(${labelColumns}, ${cfg.labelWidthMm}mm); gap:${labelGapMm}mm; overflow:hidden; break-after:page; page-break-after:always; }
+    .label-row:last-child{ break-after:auto; page-break-after:auto; }
+    .lb{ box-sizing: border-box; border:none; border-radius:0; padding:1.2mm; width:${cfg.labelWidthMm}mm; height:${cfg.labelHeightMm}mm; display:grid; grid-template-rows:auto auto 1fr; overflow:hidden; }
+    .lb-empty{ visibility:hidden; }
     .name{ font-size: 12px; font-weight: 700; line-height: 1.15; max-height: 28px; overflow:hidden; }
     .price{ margin-top: 1mm; font-size: 11px; color:#111827; font-weight: 700; }
     .code{ font-size: 11px; color:#6b7280; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
     .img{ margin-top: 1mm; display:flex; justify-content:center; align-items:center; height: ${cfg.barcodeHeightMm + 4}mm; }
     img{ max-width: 100%; max-height: ${cfg.barcodeHeightMm + 2}mm; object-fit: contain; }
-    @page{ size: ${cfg.labelWidthMm}mm ${cfg.labelHeightMm}mm; margin: 0; }
+    @page{ size: ${pageWidthMm}mm ${cfg.labelHeightMm}mm; margin: 0; }
     @media print{
       .top{ display:none; }
       .wrap{ padding:0; }
@@ -53,8 +67,11 @@ export function openPrintLabels({ title, labels, printWindow = null }) {
       <div class="muted">Gợi ý: chỉnh Scale trong hộp thoại in nếu tem quá nhỏ/lớn.</div>
     </div>
     <div class="grid">
-      ${labels
-        .map((lb) => {
+      ${labelRows
+        .map((row) => {
+          const cells = Array.from({ length: labelColumns }).map((_, cellIndex) => {
+            const lb = row[cellIndex]
+            if (!lb) return `<div class="lb lb-empty"></div>`
           const code = String(lb.code || "")
           const bcid = barcodeBcidForValue(code)
           const img = code
@@ -69,6 +86,8 @@ export function openPrintLabels({ title, labels, printWindow = null }) {
               <div class="img">${img ? `<img alt="${code}" src="${img}"/>` : `<div class="code">${code}</div>`}</div>
             </div>
           `
+          })
+          return `<div class="label-row">${cells.join("")}</div>`
         })
         .join("")}
     </div>
