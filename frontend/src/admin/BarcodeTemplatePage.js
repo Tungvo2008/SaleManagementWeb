@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from "react"
 import {
   barcodePresets,
+  createBarcodePreset,
+  deleteBarcodePreset,
   defaultBarcodeTemplate,
+  loadActiveBarcodePresetId,
+  loadBarcodePresets,
   normalizeBarcodeTemplate,
+  renameBarcodePreset,
+  setActiveBarcodePreset,
 } from "../receive/barcodeTemplate"
 import { formatMoneyVN } from "../utils/number"
 import "./barcode-template.css"
@@ -16,10 +22,19 @@ const sampleLabels = [
 export default function BarcodeTemplatePage({ template, onSave, onReset }) {
   const [form, setForm] = useState(template || defaultBarcodeTemplate)
   const [templateMode, setTemplateMode] = useState("single")
+  const [presets, setPresets] = useState(() => loadBarcodePresets())
+  const [activePresetId, setActivePresetId] = useState(() => loadActiveBarcodePresetId())
+  const [presetName, setPresetName] = useState("")
+  const [presetMessage, setPresetMessage] = useState("")
 
   useEffect(() => {
     setForm(template || defaultBarcodeTemplate)
   }, [template])
+
+  useEffect(() => {
+    const active = presets.find((preset) => preset.id === activePresetId)
+    setPresetName(active?.name || "")
+  }, [activePresetId, presets])
 
   const cfg = useMemo(() => normalizeBarcodeTemplate(form), [form])
   const isDouble = templateMode === "double"
@@ -39,6 +54,66 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
     setForm(normalizeBarcodeTemplate(p))
   }
 
+  function refreshPresets(selectedId = loadActiveBarcodePresetId()) {
+    setPresets(loadBarcodePresets())
+    setActivePresetId(selectedId)
+  }
+
+  function choosePreset(id) {
+    const selected = setActiveBarcodePreset(id)
+    setForm(selected.template)
+    refreshPresets(selected.id)
+    setPresetMessage(`Đang dùng preset “${selected.name}”.`)
+  }
+
+  function saveCurrentPreset() {
+    onSave(cfg)
+    refreshPresets(activePresetId)
+    setPresetMessage("Đã lưu cấu hình vào preset hiện tại.")
+  }
+
+  function addPreset() {
+    const name = presetName.trim() || `Mẫu tem ${presets.length + 1}`
+    const created = createBarcodePreset(name, cfg)
+    setForm(created.template)
+    refreshPresets(created.id)
+    onSave(created.template)
+    setPresetMessage(`Đã tạo preset “${created.name}”.`)
+  }
+
+  function duplicatePreset() {
+    const active = presets.find((preset) => preset.id === activePresetId)
+    const created = createBarcodePreset(`${active?.name || "Mẫu tem"} - bản sao`, cfg)
+    setForm(created.template)
+    refreshPresets(created.id)
+    onSave(created.template)
+    setPresetMessage(`Đã nhân bản thành “${created.name}”.`)
+  }
+
+  function renamePreset() {
+    try {
+      renameBarcodePreset(activePresetId, presetName)
+      refreshPresets(activePresetId)
+      setPresetMessage("Đã đổi tên preset.")
+    } catch (error) {
+      setPresetMessage(error.message)
+    }
+  }
+
+  function removePreset() {
+    const active = presets.find((preset) => preset.id === activePresetId)
+    if (!window.confirm(`Xoá preset “${active?.name || "này"}”?`)) return
+    try {
+      const selected = deleteBarcodePreset(activePresetId)
+      setForm(selected.template)
+      refreshPresets(selected.id)
+      onSave(selected.template)
+      setPresetMessage("Đã xoá preset và chuyển sang mẫu còn lại.")
+    } catch (error) {
+      setPresetMessage(error.message)
+    }
+  }
+
   return (
     <div className="bct">
       <div className="bctTop">
@@ -48,10 +123,10 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
         </div>
         <div className="bctTopActions">
           <button className="bctBtn" onClick={() => applyPreset("label_25x50")}>
-            Preset 25x50
+            Áp dụng 50x25
           </button>
           <button className="bctBtn" onClick={() => applyPreset("label_16x28")}>
-            Preset 16x28
+            Áp dụng 28x16
           </button>
           <button
             className="bctBtn bctBtnDanger"
@@ -62,10 +137,34 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
           >
             Reset
           </button>
-          <button className="bctBtn bctBtnPrimary" onClick={() => onSave(cfg)}>
-            Lưu mẫu tem
+          <button className="bctBtn bctBtnPrimary" onClick={saveCurrentPreset}>
+            Lưu preset
           </button>
         </div>
+      </div>
+
+      <div className="bctPresetManager">
+        <div className="bctPresetIntro">
+          <b>Preset tem</b>
+          <span>Lưu nhiều kích thước tem và chọn lại khi in mà không cần nhập thông số mỗi lần.</span>
+        </div>
+        <label className="bctPresetField">
+          <span>Preset đang dùng</span>
+          <select value={activePresetId} onChange={(event) => choosePreset(event.target.value)}>
+            {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+          </select>
+        </label>
+        <label className="bctPresetField bctPresetNameField">
+          <span>Tên preset</span>
+          <input value={presetName} onChange={(event) => setPresetName(event.target.value)} placeholder="VD: Tem đôi 25x15" />
+        </label>
+        <div className="bctPresetActions">
+          <button className="bctBtn" type="button" onClick={addPreset}>+ Tạo mới</button>
+          <button className="bctBtn" type="button" onClick={renamePreset}>Đổi tên</button>
+          <button className="bctBtn" type="button" onClick={duplicatePreset}>Nhân bản</button>
+          <button className="bctBtn bctBtnDanger" type="button" onClick={removePreset} disabled={presets.length <= 1}>Xoá</button>
+        </div>
+        {presetMessage ? <div className="bctPresetMessage">{presetMessage}</div> : null}
       </div>
 
       <div className="bctModeTabs">

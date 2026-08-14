@@ -23,6 +23,39 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+.bctPresetManager {
+  display: grid;
+  grid-template-columns: minmax(210px, .8fr) minmax(190px, .65fr) minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #cbd8f2;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f5f8ff, #fff);
+}
+.bctPresetIntro { display: grid; gap: 4px; align-self: center; }
+.bctPresetIntro b { color: #1d4ed8; font-size: 15px; }
+.bctPresetIntro span,
+.bctPresetField > span { color: #64748b; font-size: 12px; }
+.bctPresetField { display: grid; gap: 5px; }
+.bctPresetField select,
+.bctPresetField input {
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0 10px;
+  font: inherit;
+}
+.bctPresetActions { display: flex; gap: 6px; flex-wrap: wrap; }
+.bctPresetActions .bctBtn:disabled { opacity: .45; cursor: not-allowed; }
+.bctPresetMessage {
+  grid-column: 2 / -1;
+  color: #356ae6;
+  font-size: 12px;
+  font-weight: 600;
+}
 .bctModeTabs {
   display:flex;
   gap:8px;
@@ -87,6 +120,14 @@
   display: grid;
   grid-template-columns: 1.2fr 0.8fr 1.2fr;
   gap: 12px;
+}
+@media (max-width: 1100px) {
+  .bctPresetManager { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bctPresetMessage { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .bctPresetManager { grid-template-columns: 1fr; }
+  .bctPresetMessage { grid-column: 1; }
 }
 .bctPanel {
   border: 1px solid #dbe2ef;

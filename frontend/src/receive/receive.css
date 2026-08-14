@@ -318,6 +318,39 @@
   background:rgba(var(--accent-rgb),.045);
 }
 
+.rcvPresetPicker{
+  display:grid;
+  grid-template-columns:auto minmax(150px, 220px);
+  align-items:center;
+  gap:8px;
+  margin-right:auto;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+
+.rcvPresetPicker select{
+  min-height:40px;
+  min-width:0;
+  border:1px solid rgba(var(--accent-rgb),.28);
+  border-radius:11px;
+  background:#fff;
+  color:#344054;
+  padding:0 34px 0 11px;
+  font:inherit;
+  cursor:pointer;
+}
+
+.rcvPresetPicker select:focus{
+  outline:3px solid rgba(var(--accent-rgb),.10);
+  border-color:rgba(var(--accent-rgb),.55);
+}
+
+@media (max-width: 700px){
+  .rcvPresetPicker{ width:100%; grid-template-columns:1fr; }
+  .rcvPresetPicker select{ width:100%; }
+}
+
 .rcvPrintLayoutTitle{
   color:var(--muted);
   font-size:12px;

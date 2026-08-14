@@ -6,6 +6,11 @@ import FieldLabel from "../ui/FieldLabel"
 import { AUTO_EAN13_SENTINEL } from "../utils/ean13"
 import { formatMoneyVN } from "../utils/number"
 import { openPrintLabels } from "../utils/barcodeLabels"
+import {
+  loadActiveBarcodePresetId,
+  loadBarcodePresets,
+  setActiveBarcodePreset,
+} from "./barcodeTemplate"
 import "./receive.css"
 import "../pos/pos.css"
 
@@ -324,6 +329,8 @@ export default function ReceivePrintPage() {
   const [picked, setPicked] = useState(null)
   const [labelBusy, setLabelBusy] = useState(false)
   const [doubleLabelPrint, setDoubleLabelPrint] = useState(false)
+  const [barcodePresetOptions, setBarcodePresetOptions] = useState(() => loadBarcodePresets())
+  const [selectedBarcodePresetId, setSelectedBarcodePresetId] = useState(() => loadActiveBarcodePresetId())
 
   const [qty, setQty] = useState("1")
   const [normalCostPrice, setNormalCostPrice] = useState("")
@@ -342,6 +349,19 @@ export default function ReceivePrintPage() {
   const [showCreateCategory, setShowCreateCategory] = useState(false)
   const [showCreateSupplier, setShowCreateSupplier] = useState(false)
   const [showCreateProduct, setShowCreateProduct] = useState(false)
+
+  useEffect(() => {
+    function refreshBarcodePresets() {
+      setBarcodePresetOptions(loadBarcodePresets())
+      setSelectedBarcodePresetId(loadActiveBarcodePresetId())
+    }
+    window.addEventListener("barcode:preset-change", refreshBarcodePresets)
+    window.addEventListener("storage", refreshBarcodePresets)
+    return () => {
+      window.removeEventListener("barcode:preset-change", refreshBarcodePresets)
+      window.removeEventListener("storage", refreshBarcodePresets)
+    }
+  }, [])
 
   const searchTimerRef = useRef(null)
   const rightCardRef = useRef(null)
@@ -844,6 +864,21 @@ export default function ReceivePrintPage() {
                 </div>
 
                 <div className="rcvPrintLayoutBar">
+                  <label className="rcvPresetPicker">
+                    <span>Preset tem</span>
+                    <select
+                      value={selectedBarcodePresetId}
+                      disabled={busy}
+                      onChange={(event) => {
+                        const selected = setActiveBarcodePreset(event.target.value)
+                        setSelectedBarcodePresetId(selected.id)
+                      }}
+                    >
+                      {barcodePresetOptions.map((preset) => (
+                        <option key={preset.id} value={preset.id}>{preset.name}</option>
+                      ))}
+                    </select>
+                  </label>
                   <div className="rcvPrintLayoutTitle">Kiểu xếp tem khi in</div>
                   <label className={`rcvDoubleLabelOption ${doubleLabelPrint ? "rcvDoubleLabelOptionOn" : ""}`}>
                     <input
