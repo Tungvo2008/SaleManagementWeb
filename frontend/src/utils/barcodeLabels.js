@@ -29,13 +29,14 @@ export function openPrintLabels({ title, labels, printWindow = null, columns = 1
   const labelHeightMm = labelColumns === 2 ? cfg.doubleLabelHeightMm : cfg.labelHeightMm
   const barcodeHeightMm = labelColumns === 2 ? cfg.doubleBarcodeHeightMm : cfg.barcodeHeightMm
   const barcodeScale = labelColumns === 2 ? cfg.doubleBarcodeScale : cfg.barcodeScale
+  const textScale = labelColumns === 2 ? cfg.doubleTextScale : cfg.textScale
   const labelGapMm = labelColumns === 2 ? cfg.doubleLabelGapMm : 0
   const pageWidthMm = labelWidthMm * labelColumns + labelGapMm * (labelColumns - 1)
   const labelRows = chunkLabels(Array.isArray(labels) ? labels : [], labelColumns)
   const compact = labelHeightMm <= 18 || labelWidthMm <= 28
   const labelPaddingMm = compact ? 0.55 : 1.2
-  const nameFontPx = compact ? 7 : 12
-  const priceFontPx = compact ? 7 : 11
+  const nameFontPx = (compact ? 7 : 12) * textScale
+  const priceFontPx = (compact ? 7 : 11) * textScale
   const textLineHeight = compact ? 1.05 : 1.15
   const effectiveBarcodeHeightMm = Math.min(
     barcodeHeightMm,

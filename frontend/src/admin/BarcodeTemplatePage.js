@@ -43,6 +43,7 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
   const previewGap = isDouble ? cfg.doubleLabelGapMm : 0
   const previewPageWidth = isDouble ? previewWidth * 2 + previewGap : previewWidth
   const compactPreview = previewHeight <= 18 || previewWidth <= 28
+  const textScale = isDouble ? cfg.doubleTextScale : cfg.textScale
 
   function setField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -216,6 +217,17 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
               <span>Barcode scale</span>
               <input type="number" value={isDouble ? cfg.doubleBarcodeScale : cfg.barcodeScale} onChange={(e) => setField(isDouble ? "doubleBarcodeScale" : "barcodeScale", e.target.value)} />
             </label>
+            <label>
+              <span>Text scale (0.4 - 2)</span>
+              <input
+                type="number"
+                min="0.4"
+                max="2"
+                step="0.1"
+                value={textScale}
+                onChange={(e) => setField(isDouble ? "doubleTextScale" : "textScale", e.target.value)}
+              />
+            </label>
           </div>
         </div>
 
@@ -240,9 +252,9 @@ export default function BarcodeTemplatePage({ template, onSave, onReset }) {
                     className={`bctLabel ${compactPreview ? "bctLabelCompact" : ""}`}
                     style={{ width: `${previewWidth}mm`, height: `${previewHeight}mm` }}
                   >
-                    <div className="bctName">{lb.name}</div>
-                    <div className="bctPrice">{formatMoneyVN(lb.price)}đ</div>
-                    <div className="bctCode">[{lb.code}]</div>
+                    <div className="bctName" style={{ fontSize: `${(compactPreview ? 7 : 9) * textScale}px` }}>{lb.name}</div>
+                    <div className="bctPrice" style={{ fontSize: `${(compactPreview ? 7 : 8) * textScale}px` }}>{formatMoneyVN(lb.price)}đ</div>
+                    <div className="bctCode" style={{ fontSize: `${(compactPreview ? 6 : 9) * textScale}px` }}>[{lb.code}]</div>
                   </div>
                 ))}
                 </div>
